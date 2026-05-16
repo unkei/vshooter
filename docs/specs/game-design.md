@@ -198,6 +198,17 @@ Initial stage structure:
 - Late: heavy enemies and higher bullet density.
 - Boss: one boss with phase-based patterns.
 
+Current tuning target:
+
+- The default stage should include several waves before the boss, with early
+  straight enemies, middle sway enemies, and late heavy enemies before the boss
+  appears.
+- The boss should be durable enough to survive sustained upgraded fire for a
+  meaningful fight; its first implementation target is at least triple the
+  original 60 HP budget.
+- Boss movement should be driven only by its scripted motion. Bullet hits should
+  damage the boss without nudging or shaking its position.
+
 ## Visual Direction
 
 Use a neon/vector style. Favor simple geometric shapes, glow-like colors, and clear
@@ -271,4 +282,3 @@ These should be decided during implementation playtesting:
 - Item drop rates.
 
 These are tuning values, not blockers for the initial architecture.
-

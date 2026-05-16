@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { StageDirector } from '../systems/StageDirector';
+import { createDefaultStage, StageDirector } from '../systems/StageDirector';
 
 describe('StageDirector', () => {
   it('emits each scheduled wave once and then emits boss start', () => {
@@ -20,5 +20,21 @@ describe('StageDirector', () => {
     expect(stage.update(5000)).toEqual([]);
     expect(stage.isTimelineComplete()).toBe(true);
   });
-});
 
+  it('default stage builds pressure with several waves before the boss', () => {
+    const events = createDefaultStage();
+    const waves = events.filter((event) => event.type === 'wave');
+    const boss = events.find((event) => event.type === 'boss');
+
+    expect(waves).toHaveLength(6);
+    expect(waves.map((event) => event.enemyType)).toEqual([
+      'straight',
+      'straight',
+      'sway',
+      'sway',
+      'heavy',
+      'heavy',
+    ]);
+    expect(boss?.atMs).toBeGreaterThan(20000);
+  });
+});

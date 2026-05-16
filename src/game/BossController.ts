@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from './constants';
-import { isRenderableBossSprite } from './bossState';
+import { BOSS_MAX_HP, configureBossBody, isRenderableBossSprite } from './bossState';
 import { syncArcadeBody } from './physics';
 import type { ProjectileManager } from './ProjectileManager';
 
@@ -11,7 +11,7 @@ type BossSprite = Phaser.GameObjects.Rectangle & {
 export class BossController {
   sprite: BossSprite | null = null;
   private hp = 0;
-  private readonly maxHp = 60;
+  private readonly maxHp = BOSS_MAX_HP;
   private nextFireAtMs = 0;
   private healthBar: Phaser.GameObjects.Graphics | null = null;
 
@@ -96,6 +96,7 @@ export class BossController {
     this.sprite.setDepth(20);
     this.scene.physics.add.existing(this.sprite);
     this.sprite.body.setSize(136, 64);
+    configureBossBody(this.sprite.body);
     syncArcadeBody(this.sprite);
   }
 

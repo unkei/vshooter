@@ -42,7 +42,11 @@ export class StageDirector {
 export function createDefaultStage(): StageEvent[] {
   return [
     { atMs: 0, type: 'wave', enemyType: 'straight', count: 4 },
-    { atMs: 5000, type: 'wave', enemyType: 'sway', count: 4 },
-    { atMs: 8500, type: 'boss' },
+    { atMs: 4200, type: 'wave', enemyType: 'straight', count: 5 },
+    { atMs: 8200, type: 'wave', enemyType: 'sway', count: 4 },
+    { atMs: 12400, type: 'wave', enemyType: 'sway', count: 5 },
+    { atMs: 16800, type: 'wave', enemyType: 'heavy', count: 3 },
+    { atMs: 21200, type: 'wave', enemyType: 'heavy', count: 4 },
+    { atMs: 26800, type: 'boss' },
   ];
 }
