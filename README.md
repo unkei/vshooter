@@ -3,11 +3,11 @@
 VShooter is a planned browser-based vertical scrolling shooter built with Vite,
 TypeScript, and Phaser.
 
-The project is currently in the specification stage. The agreed direction is a
+The project has an initial playable implementation. The direction is a
 system-first implementation: Phaser scenes handle screen flow, while gameplay
 logic is split into focused managers and controllers.
 
-## Planned Game
+## Game
 
 - One-stage vertical scrolling shooter.
 - Title, gameplay, and result screens.
@@ -19,6 +19,32 @@ logic is split into focused managers and controllers.
 - Neon/vector-style visuals.
 - Procedural BGM and sound effects with Web Audio API.
 - Combo scoring and local high score persistence.
+
+## Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the local dev server:
+
+```bash
+npm run dev
+```
+
+Run tests:
+
+```bash
+npm test
+```
+
+Build:
+
+```bash
+npm run build
+```
 
 ## Documentation
 
@@ -33,6 +59,5 @@ There is also a dated mirror of the design spec at:
 
 ## Next Step
 
-Create an implementation plan from `docs/specs/game-design.md`, then scaffold the
-Vite + TypeScript + Phaser project around the agreed architecture.
-
+Playtest and tune movement speed, shot cadence, enemy health, boss health, combo
+timing, bullet density, and item drop rates.
