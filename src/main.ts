@@ -65,6 +65,7 @@ if (typeof window !== 'undefined') {
 
     window.__vshooterDebug = {
       defeatBoss,
+      getActiveScene: () => game.scene.getScenes(true)[0]?.scene.key ?? null,
     };
 
     const button = document.createElement('button');

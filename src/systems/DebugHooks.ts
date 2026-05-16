@@ -1,5 +1,6 @@
 export type VShooterDebugHooks = {
   defeatBoss: () => void;
+  getActiveScene: () => string | null;
 };
 
 export type VShooterDebugStatus = {

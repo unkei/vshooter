@@ -269,6 +269,13 @@ Manual/browser checks:
 - Game over and clear results.
 - Audio starts after interaction.
 
+CI browser checks:
+
+- Playwright should run the boss defeat clear flow from the command line with
+  `npm run e2e`.
+- Browser-only test helpers must be gated behind a local/debug flag so normal
+  play is unaffected.
+
 ## Open Tuning Decisions
 
 These should be decided during implementation playtesting:
