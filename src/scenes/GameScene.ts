@@ -227,7 +227,7 @@ export class GameScene extends Phaser.Scene {
       this.boss.sprite,
       (bullet) => {
         bullet.destroy();
-        if (this.boss.damage(1)) {
+        if (this.boss.damage(3)) {
           this.audio.play('enemyDown');
           this.projectiles.clearEnemyBullets();
           this.score.addBossDefeat(2500);
