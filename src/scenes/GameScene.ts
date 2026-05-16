@@ -6,6 +6,7 @@ import {
   PLAYER_MAX_SHOT_LEVEL,
 } from '../game/constants';
 import { BossController } from '../game/BossController';
+import { BOSS_DEFEAT_CLEAR_DELAY_MS } from '../game/bossState';
 import { EnemyManager } from '../game/EnemyManager';
 import { PlayerController } from '../game/PlayerController';
 import { ProjectileManager } from '../game/ProjectileManager';
@@ -33,6 +34,7 @@ export class GameScene extends Phaser.Scene {
   private startedAtMs: number | null = null;
   private hud!: Phaser.GameObjects.Text;
   private finished = false;
+  private clearPending = false;
   private keyboardGate!: KeyboardReleaseGate;
 
   constructor() {
@@ -41,6 +43,7 @@ export class GameScene extends Phaser.Scene {
 
   create(): void {
     this.finished = false;
+    this.clearPending = false;
     this.startedAtMs = null;
     this.input.keyboard?.resetKeys();
     this.keyboardGate = new KeyboardReleaseGate();
@@ -99,6 +102,9 @@ export class GameScene extends Phaser.Scene {
 
   update(timeMs: number, deltaMs: number): void {
     if (this.finished) {
+      return;
+    }
+    if (this.clearPending) {
       return;
     }
     if (this.startedAtMs === null) {
@@ -231,10 +237,39 @@ export class GameScene extends Phaser.Scene {
           this.audio.play('enemyDown');
           this.projectiles.clearEnemyBullets();
           this.score.addBossDefeat(2500);
-          this.finish('clear');
+          this.scheduleStageClear();
         }
       },
     );
+  }
+
+  debugDefeatBoss(): void {
+    if (this.finished || this.clearPending) {
+      return;
+    }
+
+    if (!this.boss.isActive()) {
+      this.enemies.clear();
+      this.projectiles.clearEnemyBullets();
+      this.boss.spawn();
+      this.boss.update(this.time.now, 0);
+    }
+
+    if (this.boss.damage(Number.MAX_SAFE_INTEGER)) {
+      this.audio.play('enemyDown');
+      this.projectiles.clearEnemyBullets();
+      this.score.addBossDefeat(2500);
+      this.scheduleStageClear();
+    }
+  }
+
+  private scheduleStageClear(): void {
+    if (this.clearPending) {
+      return;
+    }
+
+    this.clearPending = true;
+    this.time.delayedCall(BOSS_DEFEAT_CLEAR_DELAY_MS, () => this.finish('clear'));
   }
 
   private updateHud(): void {

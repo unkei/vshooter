@@ -208,6 +208,8 @@ Current tuning target:
   original 60 HP budget.
 - Boss movement should be driven only by its scripted motion. Bullet hits should
   damage the boss without nudging or shaking its position.
+- Defeating the boss should play a visible reaction before moving to the clear
+  result screen, so the final hit has impact instead of cutting away instantly.
 
 ## Visual Direction
 

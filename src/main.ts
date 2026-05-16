@@ -4,6 +4,18 @@ import { GAME_HEIGHT, GAME_WIDTH } from './game/constants';
 import { GameScene } from './scenes/GameScene';
 import { ResultScene } from './scenes/ResultScene';
 import { TitleScene } from './scenes/TitleScene';
+import {
+  shouldInstallDebugHooks,
+  type VShooterDebugHooks,
+  type VShooterDebugStatus,
+} from './systems/DebugHooks';
+
+declare global {
+  interface Window {
+    __vshooterDebug?: VShooterDebugHooks;
+    __vshooterDebugStatus?: VShooterDebugStatus;
+  }
+}
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -27,4 +39,44 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [TitleScene, GameScene, ResultScene],
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+if (typeof window !== 'undefined') {
+  const isLocalHost =
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === 'localhost';
+  const enabled = shouldInstallDebugHooks(
+    import.meta.env.DEV || isLocalHost,
+    window.location.search,
+  );
+  window.__vshooterDebugStatus = {
+    enabled,
+    isAllowedHost: import.meta.env.DEV || isLocalHost,
+    search: window.location.search,
+  };
+
+  if (enabled) {
+    const defeatBoss = (): void => {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        scene.debugDefeatBoss();
+      }
+    };
+
+    window.__vshooterDebug = {
+      defeatBoss,
+    };
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.testid = 'debug-defeat-boss';
+    button.textContent = 'Debug defeat boss';
+    button.style.position = 'fixed';
+    button.style.left = '8px';
+    button.style.bottom = '8px';
+    button.style.zIndex = '10';
+    button.style.fontSize = '12px';
+    button.addEventListener('click', defeatBoss);
+    document.body.append(button);
+  }
+}

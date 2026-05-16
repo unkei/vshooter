@@ -1,6 +1,12 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from './constants';
-import { BOSS_MAX_HP, configureBossBody, isRenderableBossSprite } from './bossState';
+import {
+  BOSS_MAX_HP,
+  configureBossBody,
+  createBossDefeatBursts,
+  disableBossBody,
+  isRenderableBossSprite,
+} from './bossState';
 import { syncArcadeBody } from './physics';
 import type { ProjectileManager } from './ProjectileManager';
 
@@ -14,6 +20,7 @@ export class BossController {
   private readonly maxHp = BOSS_MAX_HP;
   private nextFireAtMs = 0;
   private healthBar: Phaser.GameObjects.Graphics | null = null;
+  private defeatStarted = false;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -26,12 +33,17 @@ export class BossController {
     }
 
     this.hp = this.maxHp;
+    this.defeatStarted = false;
     this.createSprite();
     this.healthBar = this.scene.add.graphics();
     this.healthBar.setDepth(30);
   }
 
   update(timeMs: number, _deltaMs: number): void {
+    if (this.defeatStarted) {
+      return;
+    }
+
     if (this.hp <= 0) {
       return;
     }
@@ -70,16 +82,15 @@ export class BossController {
 
     this.hp -= amount;
     if (this.hp <= 0) {
-      this.sprite?.destroy();
-      this.sprite = null;
-      this.healthBar?.clear();
+      this.hp = 0;
+      this.startDefeatReaction();
       return true;
     }
     return false;
   }
 
   isActive(): boolean {
-    return this.hp > 0;
+    return this.hp > 0 && !this.defeatStarted;
   }
 
   private createSprite(): void {
@@ -114,5 +125,56 @@ export class BossController {
     this.healthBar.fillRect((GAME_WIDTH - width) / 2, 40, width * ratio, 8);
     this.healthBar.lineStyle(1, 0xffffff, 0.8);
     this.healthBar.strokeRect((GAME_WIDTH - width) / 2, 40, width, 8);
+  }
+
+  private startDefeatReaction(): void {
+    if (this.defeatStarted) {
+      return;
+    }
+
+    this.defeatStarted = true;
+    this.healthBar?.clear();
+    this.projectiles.clearEnemyBullets();
+
+    if (this.sprite === null) {
+      return;
+    }
+
+    const { x, y } = this.sprite;
+    disableBossBody(this.sprite.body);
+    this.scene.tweens.add({
+      targets: this.sprite,
+      alpha: 0,
+      angle: 18,
+      scaleX: 1.35,
+      scaleY: 1.35,
+      duration: 900,
+      ease: 'Cubic.easeOut',
+      onComplete: () => {
+        this.sprite?.destroy();
+        this.sprite = null;
+      },
+    });
+
+    this.scene.cameras.main.flash(280, 255, 92, 128, false);
+    for (const burst of createBossDefeatBursts(x, y)) {
+      this.scene.time.delayedCall(burst.delayMs, () => {
+        this.createDefeatBurst(burst.x, burst.y, burst.radius);
+      });
+    }
+  }
+
+  private createDefeatBurst(x: number, y: number, radius: number): void {
+    const ring = this.scene.add.circle(x, y, 8, 0xfff27a, 0.22);
+    ring.setStrokeStyle(3, 0xffffff, 0.95);
+    ring.setDepth(35);
+    this.scene.tweens.add({
+      targets: ring,
+      alpha: 0,
+      radius,
+      duration: 520,
+      ease: 'Quad.easeOut',
+      onComplete: () => ring.destroy(),
+    });
   }
 }
