@@ -72,6 +72,10 @@ export class EnemyManager {
     return (enemy.getData('enemy') as EnemyData).points;
   }
 
+  clear(): void {
+    this.enemies.clear(true, true);
+  }
+
   private spawn(type: EnemyType, x: number, y: number): void {
     const config: Record<EnemyType, { hp: number; speed: number; points: number }> = {
       straight: { hp: 2, speed: 80, points: 100 },
@@ -109,7 +113,9 @@ export class EnemyManager {
   ): void {
     const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, playerX, playerY);
     if (data.type === 'heavy') {
-      this.projectiles.fireRadialBurst(enemy.x, enemy.y, 10, 135, angle);
+      for (const offset of [-0.5, -0.25, 0, 0.25, 0.5]) {
+        this.projectiles.fireEnemyShot(enemy.x, enemy.y, angle + offset, 155);
+      }
       return;
     }
 

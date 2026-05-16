@@ -27,16 +27,18 @@ export class BossController {
     this.hp = this.maxHp;
     this.sprite = this.scene.add.rectangle(
       GAME_WIDTH / 2,
-      -70,
-      112,
-      54,
+      78,
+      136,
+      64,
       0xff3768,
       1,
     ) as BossSprite;
     this.sprite.setStrokeStyle(3, 0xffffff, 0.9);
+    this.sprite.setDepth(20);
     this.scene.physics.add.existing(this.sprite);
-    this.sprite.body.setSize(112, 54);
+    this.sprite.body.setSize(136, 64);
     this.healthBar = this.scene.add.graphics();
+    this.healthBar.setDepth(30);
   }
 
   update(timeMs: number, deltaMs: number): void {
@@ -44,15 +46,11 @@ export class BossController {
       return;
     }
 
-    if (this.sprite.y < 95) {
-      this.sprite.y += 40 * (deltaMs / 1000);
-      syncArcadeBody(this.sprite);
-    } else {
-      this.sprite.x = GAME_WIDTH / 2 + Math.sin(timeMs / 900) * 120;
-      syncArcadeBody(this.sprite);
-    }
+    this.sprite.y = 78 + Math.sin(timeMs / 1200) * 12;
+    this.sprite.x = GAME_WIDTH / 2 + Math.sin(timeMs / 900) * 120;
+    syncArcadeBody(this.sprite);
 
-    if (timeMs >= this.nextFireAtMs && this.sprite.y > 60) {
+    if (timeMs >= this.nextFireAtMs) {
       const phase = this.hp / this.maxHp > 0.5 ? 0 : 1;
       this.projectiles.fireRadialBurst(
         this.sprite.x,
@@ -98,5 +96,7 @@ export class BossController {
     this.healthBar.fillRect((GAME_WIDTH - width) / 2, 40, width, 8);
     this.healthBar.fillStyle(0xff3768, 1);
     this.healthBar.fillRect((GAME_WIDTH - width) / 2, 40, width * ratio, 8);
+    this.healthBar.lineStyle(1, 0xffffff, 0.8);
+    this.healthBar.strokeRect((GAME_WIDTH - width) / 2, 40, width, 8);
   }
 }

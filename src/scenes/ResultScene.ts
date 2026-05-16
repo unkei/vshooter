@@ -25,6 +25,7 @@ export class ResultScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.input.keyboard?.resetKeys();
     this.cameras.main.setBackgroundColor(0x050710);
     const title = this.dataFromRun.status === 'clear' ? 'STAGE CLEAR' : 'GAME OVER';
     const color = this.dataFromRun.status === 'clear' ? '#6ffcff' : '#ff4fd8';
@@ -74,7 +75,7 @@ export class ResultScene extends Phaser.Scene {
   }
 
   private retry(): void {
+    this.input.keyboard?.resetKeys();
     this.scene.start('GameScene');
   }
 }
-

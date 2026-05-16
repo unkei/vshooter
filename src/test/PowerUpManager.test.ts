@@ -22,7 +22,12 @@ describe('applyPowerUp', () => {
       score: 0,
     });
     expect(applyPowerUp({ lives: 3, shotLevel: 1, score: 0 }, 'life')).toEqual({
-      lives: 3,
+      lives: 4,
+      shotLevel: 1,
+      score: 0,
+    });
+    expect(applyPowerUp({ lives: 5, shotLevel: 1, score: 0 }, 'life')).toEqual({
+      lives: 5,
       shotLevel: 1,
       score: 0,
     });
@@ -33,4 +38,3 @@ describe('applyPowerUp', () => {
     });
   });
 });
-

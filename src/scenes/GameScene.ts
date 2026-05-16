@@ -11,6 +11,7 @@ import { PlayerController } from '../game/PlayerController';
 import { ProjectileManager } from '../game/ProjectileManager';
 import type { PowerUpType } from '../game/types';
 import { AudioManager } from '../systems/AudioManager';
+import { KeyboardReleaseGate } from '../systems/InputGate';
 import { normalizeInput, type RawInputState } from '../systems/InputManager';
 import { PowerUpDropManager } from '../systems/PowerUpManager';
 import { ScoreManager } from '../systems/ScoreManager';
@@ -32,6 +33,7 @@ export class GameScene extends Phaser.Scene {
   private startedAtMs: number | null = null;
   private hud!: Phaser.GameObjects.Text;
   private finished = false;
+  private keyboardGate!: KeyboardReleaseGate;
 
   constructor() {
     super('GameScene');
@@ -40,6 +42,8 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     this.finished = false;
     this.startedAtMs = null;
+    this.input.keyboard?.resetKeys();
+    this.keyboardGate = new KeyboardReleaseGate();
     this.cameras.main.setBackgroundColor(0x050710);
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
     this.addStarfield();
@@ -117,6 +121,8 @@ export class GameScene extends Phaser.Scene {
         this.enemies.spawnWave(event.enemyType, event.count);
       } else {
         this.audio.play('boss');
+        this.enemies.clear();
+        this.projectiles.clearEnemyBullets();
         this.boss.spawn();
       }
     }
@@ -135,15 +141,17 @@ export class GameScene extends Phaser.Scene {
     const axisX = pad?.axes[0]?.getValue() ?? 0;
     const axisY = pad?.axes[1]?.getValue() ?? 0;
 
+    const keyboard = this.keyboardGate.filter({
+      left: this.cursors.left.isDown || this.keys.A.isDown,
+      right: this.cursors.right.isDown || this.keys.D.isDown,
+      up: this.cursors.up.isDown || this.keys.W.isDown,
+      down: this.cursors.down.isDown || this.keys.S.isDown,
+      shoot: this.keys.SPACE.isDown,
+      confirm: this.keys.ENTER.isDown,
+    });
+
     return {
-      keyboard: {
-        left: this.cursors.left.isDown || this.keys.A.isDown,
-        right: this.cursors.right.isDown || this.keys.D.isDown,
-        up: this.cursors.up.isDown || this.keys.W.isDown,
-        down: this.cursors.down.isDown || this.keys.S.isDown,
-        shoot: this.keys.SPACE.isDown,
-        confirm: this.keys.ENTER.isDown,
-      },
+      keyboard,
       pointer: {
         active: pointer.isDown,
         x: pointer.x,
@@ -242,6 +250,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.finished = true;
+    this.input.keyboard?.resetKeys();
     this.audio.stop();
     this.score.finishRun();
     const snapshot = this.score.snapshot();
