@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from './constants';
+import { syncArcadeBody } from './physics';
 
 type Projectile = Phaser.GameObjects.Arc & {
   body: Phaser.Physics.Arcade.Body;
@@ -86,7 +87,7 @@ export class ProjectileManager {
       const velocity = object.getData('velocity') as { x: number; y: number };
       object.x += velocity.x * deltaSeconds;
       object.y += velocity.y * deltaSeconds;
-      object.body.updateFromGameObject();
+      syncArcadeBody(object);
     }
   }
 

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from './constants';
+import { syncArcadeBody } from './physics';
 import type { ProjectileManager } from './ProjectileManager';
 
 type BossSprite = Phaser.GameObjects.Rectangle & {
@@ -45,10 +46,10 @@ export class BossController {
 
     if (this.sprite.y < 95) {
       this.sprite.y += 40 * (deltaMs / 1000);
-      this.sprite.body.updateFromGameObject();
+      syncArcadeBody(this.sprite);
     } else {
       this.sprite.x = GAME_WIDTH / 2 + Math.sin(timeMs / 900) * 120;
-      this.sprite.body.updateFromGameObject();
+      syncArcadeBody(this.sprite);
     }
 
     if (timeMs >= this.nextFireAtMs && this.sprite.y > 60) {

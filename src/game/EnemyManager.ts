@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from './constants';
+import { syncArcadeBody } from './physics';
 import type { EnemyType } from './types';
 import type { ProjectileManager } from './ProjectileManager';
 
@@ -44,7 +45,7 @@ export class EnemyManager {
       if (data.type === 'sway') {
         enemy.x = data.originX + Math.sin((timeMs + data.originX * 9) / 450) * 45;
       }
-      enemy.body.updateFromGameObject();
+      syncArcadeBody(enemy);
 
       if (timeMs >= data.nextFireAtMs) {
         this.fire(enemy, data, playerX, playerY);

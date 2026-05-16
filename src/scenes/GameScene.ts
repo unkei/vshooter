@@ -38,6 +38,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.finished = false;
+    this.startedAtMs = null;
     this.cameras.main.setBackgroundColor(0x050710);
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
     this.addStarfield();
@@ -56,7 +58,6 @@ export class GameScene extends Phaser.Scene {
     this.powerUps = new PowerUpDropManager(this);
     this.score = new ScoreManager({ comboTimeoutMs: 1800 });
     this.stage = new StageDirector(createDefaultStage());
-    this.startedAtMs = null;
 
     this.hud = this.add.text(12, 12, '', {
       fontSize: '16px',

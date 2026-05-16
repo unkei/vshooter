@@ -7,6 +7,7 @@ import {
   PLAYER_SHOT_INTERVAL_MS,
   PLAYER_SPEED,
 } from './constants';
+import { syncArcadeBody } from './physics';
 import type { NormalizedInputState } from '../systems/InputManager';
 
 export class PlayerController {
@@ -54,7 +55,7 @@ export class PlayerController {
 
     this.sprite.x = Phaser.Math.Clamp(this.sprite.x, 18, GAME_WIDTH - 18);
     this.sprite.y = Phaser.Math.Clamp(this.sprite.y, 24, GAME_HEIGHT - 24);
-    body.updateFromGameObject();
+    syncArcadeBody(this.sprite);
     this.sprite.setAlpha(timeMs < this.invincibleUntilMs ? 0.45 : 1);
 
     if (input.shoot && timeMs - this.lastShotAtMs >= PLAYER_SHOT_INTERVAL_MS) {
