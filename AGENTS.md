@@ -11,4 +11,6 @@ Project intent:
 
 Do not implement before checking the current spec and any implementation plan.
 If the spec changes, update `docs/specs/game-design.md` first.
-
+When addressing user-reported gameplay issues or tuning requests, document the
+resolved behavior and regression expectation in `docs/specs/game-design.md` as
+part of the same change.

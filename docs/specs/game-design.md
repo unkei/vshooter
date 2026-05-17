@@ -94,6 +94,9 @@ Movement feel:
 
 - Keyboard and gamepad movement should ramp up instead of jumping immediately to
   maximum speed, so the player can make small line-up corrections.
+- The ramp should be responsive, not sluggish. The initial acceleration should
+  be high enough that the player can start moving quickly while still retaining
+  finer control than instant full-speed movement.
 - Releasing input should decelerate quickly enough to remain responsive.
 - Pointer/touch movement may remain direct, but should still clamp to the play
   bounds and avoid overshooting the pointer target.
@@ -196,6 +199,12 @@ Initial sounds:
 
 Audio should be started only after user interaction to satisfy browser autoplay
 restrictions.
+
+Repeated sounds should be restrained:
+
+- Player shot sound plays very frequently during hold-to-fire, so it should be
+  short, low-gain, and softer than alert sounds such as player damage or boss
+  warning.
 
 ### `StageDirector`
 

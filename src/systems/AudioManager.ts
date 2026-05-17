@@ -1,5 +1,45 @@
 type SoundName = 'shot' | 'enemyDown' | 'damage' | 'pickup' | 'boss';
 
+type SoundPreset = {
+  frequency: number;
+  durationSeconds: number;
+  type: OscillatorType;
+  gain: number;
+};
+
+export const SOUND_PRESETS: Record<SoundName, SoundPreset> = {
+  shot: {
+    frequency: 640,
+    durationSeconds: 0.022,
+    type: 'triangle',
+    gain: 0.028,
+  },
+  enemyDown: {
+    frequency: 180,
+    durationSeconds: 0.12,
+    type: 'sawtooth',
+    gain: 0.08,
+  },
+  damage: {
+    frequency: 90,
+    durationSeconds: 0.22,
+    type: 'sawtooth',
+    gain: 0.08,
+  },
+  pickup: {
+    frequency: 980,
+    durationSeconds: 0.1,
+    type: 'triangle',
+    gain: 0.08,
+  },
+  boss: {
+    frequency: 120,
+    durationSeconds: 0.5,
+    type: 'square',
+    gain: 0.08,
+  },
+};
+
 export class AudioManager {
   private context: AudioContext | null = null;
   private musicOscillator: OscillatorNode | null = null;
@@ -20,15 +60,7 @@ export class AudioManager {
       return;
     }
 
-    const presets: Record<SoundName, [number, number, OscillatorType]> = {
-      shot: [720, 0.04, 'square'],
-      enemyDown: [180, 0.12, 'sawtooth'],
-      damage: [90, 0.22, 'sawtooth'],
-      pickup: [980, 0.1, 'triangle'],
-      boss: [120, 0.5, 'square'],
-    };
-    const [frequency, duration, type] = presets[name];
-    this.beep(frequency, duration, type);
+    this.beep(SOUND_PRESETS[name]);
   }
 
   stop(): void {
@@ -54,28 +86,23 @@ export class AudioManager {
     this.musicGain = gain;
   }
 
-  private beep(
-    frequency: number,
-    durationSeconds: number,
-    type: OscillatorType,
-  ): void {
+  private beep(preset: SoundPreset): void {
     if (this.context === null) {
       return;
     }
 
     const oscillator = this.context.createOscillator();
     const gain = this.context.createGain();
-    oscillator.type = type;
-    oscillator.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.08, this.context.currentTime);
+    oscillator.type = preset.type;
+    oscillator.frequency.value = preset.frequency;
+    gain.gain.setValueAtTime(preset.gain, this.context.currentTime);
     gain.gain.exponentialRampToValueAtTime(
       0.001,
-      this.context.currentTime + durationSeconds,
+      this.context.currentTime + preset.durationSeconds,
     );
     oscillator.connect(gain);
     gain.connect(this.context.destination);
     oscillator.start();
-    oscillator.stop(this.context.currentTime + durationSeconds);
+    oscillator.stop(this.context.currentTime + preset.durationSeconds);
   }
 }
-
