@@ -3,8 +3,9 @@ import { GAME_WIDTH } from './constants';
 import { configureManualArcadeBody, syncArcadeBody } from './physics';
 import type { EnemyType } from './types';
 import type { ProjectileManager } from './ProjectileManager';
+import { ENEMY_TEXTURE_KEYS } from './visualAssets';
 
-type EnemySprite = Phaser.GameObjects.Rectangle & {
+type EnemySprite = Phaser.GameObjects.Image & {
   body: Phaser.Physics.Arcade.Body;
 };
 
@@ -76,20 +77,18 @@ export class EnemyManager {
     this.enemies.clear(true, true);
   }
 
+  activeCount(): number {
+    return this.enemies.getChildren().length;
+  }
+
   private spawn(type: EnemyType, x: number, y: number): void {
     const config: Record<EnemyType, { hp: number; speed: number; points: number }> = {
       straight: { hp: 2, speed: 80, points: 100 },
       sway: { hp: 3, speed: 65, points: 140 },
       heavy: { hp: 8, speed: 42, points: 300 },
     };
-    const color: Record<EnemyType, number> = {
-      straight: 0xff4f8b,
-      sway: 0xffd24f,
-      heavy: 0xa66bff,
-    };
     const size = type === 'heavy' ? 34 : 24;
-    const enemy = this.scene.add.rectangle(x, y, size, size, color[type], 1) as EnemySprite;
-    enemy.setStrokeStyle(2, 0xffffff, 0.8);
+    const enemy = this.scene.add.image(x, y, ENEMY_TEXTURE_KEYS[type]) as EnemySprite;
     this.scene.physics.add.existing(enemy);
     enemy.body.setSize(size, size);
     configureManualArcadeBody(enemy.body);

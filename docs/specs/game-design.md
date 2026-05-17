@@ -203,8 +203,8 @@ restrictions.
 Repeated sounds should be restrained:
 
 - Player shot sound plays very frequently during hold-to-fire, so it should be
-  short, low-gain, and softer than alert sounds such as player damage or boss
-  warning.
+  short and softer than alert sounds such as player damage or boss warning, but
+  still audible during normal play.
 
 ### `StageDirector`
 
@@ -229,25 +229,40 @@ Current tuning target:
   straight enemies, middle sway enemies, and late heavy enemies before the boss
   appears.
 - The boss should not enter while regular enemies from the final wave are still
-  naturally on screen. The default timeline should leave enough time for late
-  heavy enemies to either be defeated or leave the play area before boss entry.
+  naturally on screen. Boss entry should be triggered after all regular waves
+  have been issued and the active regular enemy count reaches zero, either
+  because the player defeated them or because they left the play area. It should
+  not rely on a fixed boss timestamp that creates a long wait after the player
+  clears the final wave quickly.
+- After the active regular enemy count reaches zero, boss entry should play a
+  short warning/entrance animation before the boss becomes attackable. The pause
+  should make the boss arrival feel deliberate without reintroducing a long fixed
+  timeline wait.
 - The boss should be durable enough to survive sustained upgraded fire for a
-  meaningful fight; its first implementation target is at least triple the
-  original 60 HP budget.
+  meaningful fight; its current implementation target is 1890 HP, triple the
+  previous 630 HP budget.
 - Boss movement should be driven only by its scripted motion. Bullet hits should
   damage the boss without nudging or shaking its position.
+- Normal boss hit feedback should not change boss visibility, opacity, fill, or
+  position. The boss should remain visually stable while taking damage until the
+  defeat reaction begins.
 - Defeating the boss should play a visible reaction before moving to the clear
   result screen, so the final hit has impact instead of cutting away instantly.
 
 ## Visual Direction
 
-Use a neon/vector style. Favor simple geometric shapes, glow-like colors, and clear
-silhouettes. The first version should not depend on hand-authored sprite assets.
+Use a neon/vector arcade style. Characters should use generated game-like
+textures instead of raw placeholder primitives: a player ship, distinct regular
+enemy craft, a heavier enemy craft, and a large boss craft. The first version
+should not depend on hand-authored external sprite assets.
 
 Visibility matters more than decoration:
 
 - Player bullets, enemy bullets, enemies, items, and the player must be clearly distinct.
 - Enemy bullets should be readable even when many are on screen.
+- Projectile visuals should be large enough to read at speed; current tuning uses
+  bullets 1.5x larger than the original radius and applies a 30% speed reduction
+  to projectile movement.
 - Damage and invincibility states should be visually obvious.
 - Boss attacks should feel intense but still fair.
 

@@ -10,10 +10,11 @@ import {
   PLAYER_SPEED,
 } from './constants';
 import { approachVelocity, syncArcadeBody } from './physics';
+import { PLAYER_TEXTURE_KEY } from './visualAssets';
 import type { NormalizedInputState } from '../systems/InputManager';
 
 export class PlayerController {
-  readonly sprite: Phaser.GameObjects.Triangle;
+  readonly sprite: Phaser.GameObjects.Image;
   lives = PLAYER_INITIAL_LIVES;
   shotLevel = 1;
   private lastShotAtMs = -Infinity;
@@ -22,22 +23,14 @@ export class PlayerController {
   private velocityY = 0;
 
   constructor(private readonly scene: Phaser.Scene) {
-    this.sprite = scene.add.triangle(
+    this.sprite = scene.add.image(
       GAME_WIDTH / 2,
       GAME_HEIGHT - 70,
-      0,
-      22,
-      14,
-      0,
-      28,
-      22,
-      0x4ffcff,
-      1,
+      PLAYER_TEXTURE_KEY,
     );
-    this.sprite.setStrokeStyle(2, 0xffffff, 0.9);
     scene.physics.add.existing(this.sprite);
     const body = this.sprite.body as Phaser.Physics.Arcade.Body;
-    body.setCircle(10, 4, 2);
+    body.setCircle(11, 13, 8);
     body.setCollideWorldBounds(true);
   }
 

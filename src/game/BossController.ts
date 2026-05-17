@@ -9,8 +9,9 @@ import {
 } from './bossState';
 import { syncArcadeBody } from './physics';
 import type { ProjectileManager } from './ProjectileManager';
+import { BOSS_TEXTURE_KEY } from './visualAssets';
 
-type BossSprite = Phaser.GameObjects.Rectangle & {
+type BossSprite = Phaser.GameObjects.Image & {
   body: Phaser.Physics.Arcade.Body;
 };
 
@@ -95,15 +96,11 @@ export class BossController {
 
   private createSprite(): void {
     this.sprite?.destroy();
-    this.sprite = this.scene.add.rectangle(
+    this.sprite = this.scene.add.image(
       GAME_WIDTH / 2,
       120,
-      136,
-      64,
-      0xff3768,
-      1,
+      BOSS_TEXTURE_KEY,
     ) as BossSprite;
-    this.sprite.setStrokeStyle(3, 0xffffff, 0.9);
     this.sprite.setDepth(20);
     this.scene.physics.add.existing(this.sprite);
     this.sprite.body.setSize(136, 64);

@@ -6,6 +6,9 @@ type Projectile = Phaser.GameObjects.Arc & {
   body: Phaser.Physics.Arcade.Body;
 };
 
+export const PROJECTILE_RADIUS = 6;
+export const PROJECTILE_SPEED_SCALE = 0.7;
+
 export class ProjectileManager {
   readonly playerBullets: Phaser.Physics.Arcade.Group;
   readonly enemyBullets: Phaser.Physics.Arcade.Group;
@@ -71,12 +74,14 @@ export class ProjectileManager {
     velocityY: number,
     color: number,
   ): void {
-    const bullet = this.scene.add.circle(x, y, 4, color, 1) as Projectile;
+    const scaledVelocityX = velocityX * PROJECTILE_SPEED_SCALE;
+    const scaledVelocityY = velocityY * PROJECTILE_SPEED_SCALE;
+    const bullet = this.scene.add.circle(x, y, PROJECTILE_RADIUS, color, 1) as Projectile;
     bullet.setStrokeStyle(1, 0xffffff, 0.75);
-    bullet.setData('velocity', { x: velocityX, y: velocityY });
+    bullet.setData('velocity', { x: scaledVelocityX, y: scaledVelocityY });
     this.scene.physics.add.existing(bullet);
-    bullet.body.setCircle(4);
-    bullet.body.setVelocity(velocityX, velocityY);
+    bullet.body.setCircle(PROJECTILE_RADIUS);
+    bullet.body.setVelocity(scaledVelocityX, scaledVelocityY);
     group.add(bullet);
   }
 

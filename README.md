@@ -57,6 +57,20 @@ Build:
 npm run build
 ```
 
+## Deployment
+
+The app is configured for free GitHub Pages hosting through GitHub Actions.
+
+To publish:
+
+1. Push the repository to GitHub.
+2. In the GitHub repository settings, set Pages source to GitHub Actions.
+3. Push to `main` or run the `Deploy to GitHub Pages` workflow manually.
+
+The workflow builds with `VITE_BASE_PATH=/<repository-name>/`, so Vite asset
+URLs work when the project is hosted from the normal GitHub Pages repository
+subpath.
+
 ## Documentation
 
 Start here:

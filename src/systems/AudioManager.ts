@@ -12,7 +12,7 @@ export const SOUND_PRESETS: Record<SoundName, SoundPreset> = {
     frequency: 640,
     durationSeconds: 0.022,
     type: 'triangle',
-    gain: 0.028,
+    gain: 0.045,
   },
   enemyDown: {
     frequency: 180,

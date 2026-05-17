@@ -6,11 +6,15 @@ import {
   PLAYER_MAX_SHOT_LEVEL,
 } from '../game/constants';
 import { BossController } from '../game/BossController';
-import { BOSS_DEFEAT_CLEAR_DELAY_MS } from '../game/bossState';
+import {
+  BOSS_DEFEAT_CLEAR_DELAY_MS,
+  BOSS_ENTRANCE_DELAY_MS,
+} from '../game/bossState';
 import { EnemyManager } from '../game/EnemyManager';
 import { PlayerController } from '../game/PlayerController';
 import { ProjectileManager } from '../game/ProjectileManager';
 import type { PowerUpType } from '../game/types';
+import { ensureGameTextures } from '../game/visualAssets';
 import { AudioManager } from '../systems/AudioManager';
 import { KeyboardReleaseGate } from '../systems/InputGate';
 import { normalizeInput, type RawInputState } from '../systems/InputManager';
@@ -35,6 +39,7 @@ export class GameScene extends Phaser.Scene {
   private hud!: Phaser.GameObjects.Text;
   private finished = false;
   private clearPending = false;
+  private bossEntrancePending = false;
   private keyboardGate!: KeyboardReleaseGate;
 
   constructor() {
@@ -44,11 +49,13 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     this.finished = false;
     this.clearPending = false;
+    this.bossEntrancePending = false;
     this.startedAtMs = null;
     this.input.keyboard?.resetKeys();
     this.keyboardGate = new KeyboardReleaseGate();
     this.cameras.main.setBackgroundColor(0x050710);
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    ensureGameTextures(this);
     this.addStarfield();
 
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -123,17 +130,14 @@ export class GameScene extends Phaser.Scene {
 
     const elapsedMs = timeMs - this.startedAtMs;
     for (const event of this.stage.update(elapsedMs)) {
-      if (event.type === 'wave') {
-        this.enemies.spawnWave(event.enemyType, event.count);
-      } else {
-        this.audio.play('boss');
-        this.enemies.clear();
-        this.projectiles.clearEnemyBullets();
-        this.boss.spawn();
-      }
+      this.enemies.spawnWave(event.enemyType, event.count);
     }
 
     this.enemies.update(timeMs, deltaMs, this.player.sprite.x, this.player.sprite.y);
+    if (this.stage.consumeBossReady(this.enemies.activeCount())) {
+      this.startBossEntrance();
+    }
+
     this.boss.update(timeMs, deltaMs);
     this.powerUps.update();
     this.projectiles.update();
@@ -278,6 +282,54 @@ export class GameScene extends Phaser.Scene {
 
     this.clearPending = true;
     this.time.delayedCall(BOSS_DEFEAT_CLEAR_DELAY_MS, () => this.finish('clear'));
+  }
+
+  private startBossEntrance(): void {
+    if (this.bossEntrancePending || this.finished || this.clearPending) {
+      return;
+    }
+
+    this.bossEntrancePending = true;
+    this.audio.play('boss');
+    this.projectiles.clearEnemyBullets();
+    this.cameras.main.flash(220, 255, 55, 104, false);
+
+    const warning = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36, 'WARNING', {
+        fontSize: '34px',
+        color: '#ff3768',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5)
+      .setDepth(60);
+    const subtext = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36 + 42, 'BOSS APPROACHING', {
+        fontSize: '16px',
+        color: '#ffffff',
+      })
+      .setOrigin(0.5)
+      .setDepth(60);
+
+    this.tweens.add({
+      targets: [warning, subtext],
+      alpha: 0.25,
+      duration: 160,
+      yoyo: true,
+      repeat: 5,
+      ease: 'Sine.easeInOut',
+    });
+
+    this.time.delayedCall(BOSS_ENTRANCE_DELAY_MS, () => {
+      warning.destroy();
+      subtext.destroy();
+      if (this.finished || this.clearPending) {
+        return;
+      }
+
+      this.bossEntrancePending = false;
+      this.boss.spawn();
+      this.cameras.main.shake(180, 0.006);
+    });
   }
 
   private updateHud(): void {

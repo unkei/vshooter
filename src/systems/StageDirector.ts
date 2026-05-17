@@ -1,19 +1,16 @@
 import type { EnemyType } from '../game/types';
 
 export type StageEvent =
-  | {
-      atMs: number;
-      type: 'wave';
-      enemyType: EnemyType;
-      count: number;
-    }
-  | {
-      atMs: number;
-      type: 'boss';
-    };
+  {
+    atMs: number;
+    type: 'wave';
+    enemyType: EnemyType;
+    count: number;
+  };
 
 export class StageDirector {
   private nextEventIndex = 0;
+  private bossStarted = false;
   private readonly events: StageEvent[];
 
   constructor(events: StageEvent[]) {
@@ -37,6 +34,15 @@ export class StageDirector {
   isTimelineComplete(): boolean {
     return this.nextEventIndex >= this.events.length;
   }
+
+  consumeBossReady(activeEnemyCount: number): boolean {
+    if (this.bossStarted || !this.isTimelineComplete() || activeEnemyCount > 0) {
+      return false;
+    }
+
+    this.bossStarted = true;
+    return true;
+  }
 }
 
 export function createDefaultStage(): StageEvent[] {
@@ -47,6 +53,5 @@ export function createDefaultStage(): StageEvent[] {
     { atMs: 12400, type: 'wave', enemyType: 'sway', count: 5 },
     { atMs: 16800, type: 'wave', enemyType: 'heavy', count: 3 },
     { atMs: 21200, type: 'wave', enemyType: 'heavy', count: 4 },
-    { atMs: 43000, type: 'boss' },
   ];
 }

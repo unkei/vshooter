@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   BOSS_DEFEAT_CLEAR_DELAY_MS,
+  BOSS_ENTRANCE_DELAY_MS,
+  BOSS_HIT_FEEDBACK_MODE,
   BOSS_MAX_HP,
   createBossDefeatBursts,
   configureBossBody,
@@ -54,12 +56,20 @@ describe('isRenderableBossSprite', () => {
     ]);
   });
 
-  it('gives the boss at least triple the original health budget', () => {
-    expect(BOSS_MAX_HP).toBeGreaterThanOrEqual(180);
+  it('triples the boss health budget from the previous tuning value', () => {
+    expect(BOSS_MAX_HP).toBe(1890);
+  });
+
+  it('holds boss spawn briefly after regular enemies are gone for an entrance reaction', () => {
+    expect(BOSS_ENTRANCE_DELAY_MS).toBeGreaterThanOrEqual(1500);
   });
 
   it('leaves time for a boss defeat reaction before the clear screen', () => {
     expect(BOSS_DEFEAT_CLEAR_DELAY_MS).toBeGreaterThanOrEqual(1200);
+  });
+
+  it('keeps normal boss hits visually stable until the defeat reaction', () => {
+    expect(BOSS_HIT_FEEDBACK_MODE).toBe('none');
   });
 
   it('creates several boss defeat bursts around the boss center', () => {
