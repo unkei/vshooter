@@ -29,7 +29,24 @@ export class KeyboardReleaseGate {
   }
 }
 
+export class FreshPressGate {
+  private releasedSinceLock = false;
+
+  accepts(pressed: boolean): boolean {
+    if (!pressed) {
+      this.releasedSinceLock = true;
+      return false;
+    }
+
+    if (!this.releasedSinceLock) {
+      return false;
+    }
+
+    this.releasedSinceLock = false;
+    return true;
+  }
+}
+
 function hasAnyGameplayInput(input: KeyboardInput): boolean {
   return input.left || input.right || input.up || input.down || input.shoot;
 }
-

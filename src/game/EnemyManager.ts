@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from './constants';
-import { syncArcadeBody } from './physics';
+import { configureManualArcadeBody, syncArcadeBody } from './physics';
 import type { EnemyType } from './types';
 import type { ProjectileManager } from './ProjectileManager';
 
@@ -91,8 +91,8 @@ export class EnemyManager {
     const enemy = this.scene.add.rectangle(x, y, size, size, color[type], 1) as EnemySprite;
     enemy.setStrokeStyle(2, 0xffffff, 0.8);
     this.scene.physics.add.existing(enemy);
-    enemy.body.setVelocityY(config[type].speed);
     enemy.body.setSize(size, size);
+    configureManualArcadeBody(enemy.body);
     enemy.setData('enemy', {
       type,
       hp: config[type].hp,

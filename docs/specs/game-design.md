@@ -57,6 +57,9 @@ Responsibilities:
 - Show clear or game-over result.
 - Show score, max combo, and high score.
 - Allow retry and return to title.
+- Retry must require a fresh confirm press after entering the result screen. Held
+  shot, pointer, keyboard, or gamepad buttons from gameplay must not immediately
+  start a new run.
 
 ## Gameplay Systems
 
@@ -87,6 +90,14 @@ Responsibilities:
 The player should not die from one hit. The target feel is approachable, but the
 screen should still contain enough bullets to require active dodging.
 
+Movement feel:
+
+- Keyboard and gamepad movement should ramp up instead of jumping immediately to
+  maximum speed, so the player can make small line-up corrections.
+- Releasing input should decelerate quickly enough to remain responsive.
+- Pointer/touch movement may remain direct, but should still clamp to the play
+  bounds and avoid overshooting the pointer target.
+
 ### `ProjectileManager`
 
 Responsibilities:
@@ -115,6 +126,11 @@ Initial enemy types:
 - Straight enemy: moves downward and fires simple aimed or straight shots.
 - Sway enemy: moves downward while drifting horizontally and fires periodically.
 - Heavy enemy: higher health and fires multi-direction patterns.
+
+Enemy positioning should be controlled by `EnemyManager`, not by Arcade Physics
+velocity. Enemy Arcade bodies are collision shapes synchronized from scripted
+positions. This avoids double movement and visual jitter, especially for sway
+enemies.
 
 ### `BossController`
 
@@ -203,6 +219,9 @@ Current tuning target:
 - The default stage should include several waves before the boss, with early
   straight enemies, middle sway enemies, and late heavy enemies before the boss
   appears.
+- The boss should not enter while regular enemies from the final wave are still
+  naturally on screen. The default timeline should leave enough time for late
+  heavy enemies to either be defeated or leave the play area before boss entry.
 - The boss should be durable enough to survive sustained upgraded fire for a
   meaningful fight; its first implementation target is at least triple the
   original 60 HP budget.
@@ -255,18 +274,23 @@ and browser verification.
 Recommended testable units:
 
 - Input normalization.
+- Fresh-press/release gating for retry and restart input.
 - Score and combo rules.
 - Stage timeline data.
 - Power-up effects.
 - High score persistence wrapper.
+- Scripted movement helpers and Arcade body synchronization wrappers.
 
 Manual/browser checks:
 
 - Keyboard movement and shooting.
+- Keyboard state after game over and retry; held movement or shot keys from the
+  previous run must not carry into the next run.
 - Mouse/touch movement and shooting.
 - Gamepad movement and shooting when available.
 - Scene transitions.
 - Game over and clear results.
+- Boss appearance, persistence, damage, defeat, and transition to clear result.
 - Audio starts after interaction.
 
 CI browser checks:

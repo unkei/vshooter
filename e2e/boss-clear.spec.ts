@@ -36,10 +36,40 @@ test('debug boss defeat reaches stage clear without browser errors', async ({ pa
   expect(browserErrors).toEqual([]);
 });
 
+test('result retry requires a fresh confirm press', async ({ page }) => {
+  await page.goto('/?debug=1');
+  await expect(page.getByTestId('debug-game-over')).toBeVisible();
+
+  await page.keyboard.press('Enter');
+  await waitForActiveScene(page, 'GameScene');
+
+  await page.keyboard.down('Enter');
+  await page.getByTestId('debug-game-over').click();
+  await waitForActiveScene(page, 'ResultScene');
+  await page.waitForTimeout(300);
+  expect(await windowText(page)).toBe('ResultScene');
+
+  await page.keyboard.up('Enter');
+  await page.waitForTimeout(100);
+  await page.keyboard.down('Enter');
+  await waitForActiveScene(page, 'GameScene');
+  await page.keyboard.up('Enter');
+});
+
 async function windowText(page: Page): Promise<string> {
   return page.evaluate(
     () =>
       (window as unknown as { __vshooterDebug?: { getActiveScene?: () => string | null } })
         .__vshooterDebug?.getActiveScene?.() ?? '',
+  );
+}
+
+async function waitForActiveScene(page: Page, sceneKey: string): Promise<void> {
+  await page.waitForFunction(
+    (expected) =>
+      (window as unknown as { __vshooterDebug?: { getActiveScene?: () => string | null } })
+        .__vshooterDebug?.getActiveScene?.() === expected,
+    sceneKey,
+    { timeout: 5_000 },
   );
 }

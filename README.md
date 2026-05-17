@@ -20,6 +20,17 @@ logic is split into focused managers and controllers.
 - Procedural BGM and sound effects with Web Audio API.
 - Combo scoring and local high score persistence.
 
+## Current Playability Notes
+
+- Keyboard movement is intentionally slower than the first prototype and uses
+  acceleration/deceleration for finer control.
+- Retrying after game over requires fresh input. Held movement, shot, pointer, or
+  gamepad buttons from the previous run should not carry into the next run.
+- Boss entry clears regular enemies and enemy bullets so the boss is the clear
+  target of the phase.
+- The boss must remain visible while active and be defeatable in the first
+  playable version.
+
 ## Development
 
 Install dependencies:

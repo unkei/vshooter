@@ -263,6 +263,14 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  debugGameOver(): void {
+    if (this.finished || this.clearPending) {
+      return;
+    }
+
+    this.finish('gameover');
+  }
+
   private scheduleStageClear(): void {
     if (this.clearPending) {
       return;

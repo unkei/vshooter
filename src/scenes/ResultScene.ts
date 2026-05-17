@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../game/constants';
+import { FreshPressGate } from '../systems/InputGate';
 
 export type ResultSceneData = {
   status: 'clear' | 'gameover';
@@ -9,6 +10,10 @@ export type ResultSceneData = {
 };
 
 export class ResultScene extends Phaser.Scene {
+  private enterKey: Phaser.Input.Keyboard.Key | null = null;
+  private keyboardRetryGate = new FreshPressGate();
+  private pointerRetryGate = new FreshPressGate();
+  private gamepadRetryGate = new FreshPressGate();
   private dataFromRun: ResultSceneData = {
     status: 'gameover',
     score: 0,
@@ -26,6 +31,11 @@ export class ResultScene extends Phaser.Scene {
 
   create(): void {
     this.input.keyboard?.resetKeys();
+    this.keyboardRetryGate = new FreshPressGate();
+    this.pointerRetryGate = new FreshPressGate();
+    this.gamepadRetryGate = new FreshPressGate();
+    this.enterKey =
+      this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER) ?? null;
     this.cameras.main.setBackgroundColor(0x050710);
     const title = this.dataFromRun.status === 'clear' ? 'STAGE CLEAR' : 'GAME OVER';
     const color = this.dataFromRun.status === 'clear' ? '#6ffcff' : '#ff4fd8';
@@ -63,13 +73,21 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.input.keyboard?.once('keydown-ENTER', () => this.retry());
-    this.input.once('pointerdown', () => this.retry());
   }
 
   update(): void {
     const pad = this.input.gamepad?.pad1;
-    if (pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed) {
+    const keyboardConfirm = this.enterKey?.isDown ?? false;
+    const pointerConfirm = this.input.activePointer.isDown;
+    const gamepadConfirm = Boolean(
+      pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed,
+    );
+
+    if (
+      this.keyboardRetryGate.accepts(keyboardConfirm) ||
+      this.pointerRetryGate.accepts(pointerConfirm) ||
+      this.gamepadRetryGate.accepts(gamepadConfirm)
+    ) {
       this.retry();
     }
   }

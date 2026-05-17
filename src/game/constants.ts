@@ -7,5 +7,7 @@ export const PLAYER_MAX_SHOT_LEVEL = 4;
 export const SCORE_BONUS_ITEM_VALUE = 500;
 
 export const PLAYER_SPEED = 190;
+export const PLAYER_ACCELERATION = 520;
+export const PLAYER_DECELERATION = 900;
 export const PLAYER_SHOT_INTERVAL_MS = 120;
 export const PLAYER_INVINCIBLE_MS = 1400;

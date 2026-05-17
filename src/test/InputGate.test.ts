@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { KeyboardReleaseGate } from '../systems/InputGate';
+import { FreshPressGate, KeyboardReleaseGate } from '../systems/InputGate';
 import type { KeyboardInput } from '../systems/InputManager';
 
 const released: KeyboardInput = {
@@ -41,3 +41,22 @@ describe('KeyboardReleaseGate', () => {
   });
 });
 
+describe('FreshPressGate', () => {
+  it('requires a release before accepting a held confirm press', () => {
+    const gate = new FreshPressGate();
+
+    expect(gate.accepts(true)).toBe(false);
+    expect(gate.accepts(false)).toBe(false);
+    expect(gate.accepts(true)).toBe(true);
+  });
+
+  it('requires another release after accepting a press', () => {
+    const gate = new FreshPressGate();
+
+    gate.accepts(false);
+    expect(gate.accepts(true)).toBe(true);
+    expect(gate.accepts(true)).toBe(false);
+    expect(gate.accepts(false)).toBe(false);
+    expect(gate.accepts(true)).toBe(true);
+  });
+});

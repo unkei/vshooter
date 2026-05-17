@@ -35,6 +35,6 @@ describe('StageDirector', () => {
       'heavy',
       'heavy',
     ]);
-    expect(boss?.atMs).toBeGreaterThan(20000);
+    expect(boss?.atMs).toBeGreaterThanOrEqual(42000);
   });
 });

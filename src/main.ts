@@ -62,9 +62,16 @@ if (typeof window !== 'undefined') {
         scene.debugDefeatBoss();
       }
     };
+    const gameOver = (): void => {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        scene.debugGameOver();
+      }
+    };
 
     window.__vshooterDebug = {
       defeatBoss,
+      gameOver,
       getActiveScene: () => game.scene.getScenes(true)[0]?.scene.key ?? null,
     };
 
@@ -79,5 +86,17 @@ if (typeof window !== 'undefined') {
     button.style.fontSize = '12px';
     button.addEventListener('click', defeatBoss);
     document.body.append(button);
+
+    const gameOverButton = document.createElement('button');
+    gameOverButton.type = 'button';
+    gameOverButton.dataset.testid = 'debug-game-over';
+    gameOverButton.textContent = 'Debug game over';
+    gameOverButton.style.position = 'fixed';
+    gameOverButton.style.left = '132px';
+    gameOverButton.style.bottom = '8px';
+    gameOverButton.style.zIndex = '10';
+    gameOverButton.style.fontSize = '12px';
+    gameOverButton.addEventListener('click', gameOver);
+    document.body.append(gameOverButton);
   }
 }
