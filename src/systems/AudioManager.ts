@@ -7,6 +7,8 @@ type SoundPreset = {
   gain: number;
 };
 
+type AudioContextConstructor = new () => AudioContext;
+
 export const SOUND_PRESETS: Record<SoundName, SoundPreset> = {
   shot: {
     frequency: 640,
@@ -47,12 +49,16 @@ export class AudioManager {
 
   async start(): Promise<void> {
     if (this.context === null) {
-      this.context = new AudioContext();
+      this.context = createAudioContext();
     }
-    if (this.context.state === 'suspended') {
-      await this.context.resume();
-    }
+
+    const resumePromise =
+      this.context.state === 'suspended'
+        ? this.context.resume().catch(() => undefined)
+        : Promise.resolve();
+    this.primeOutput();
     this.startMusic();
+    await resumePromise;
   }
 
   play(name: SoundName): void {
@@ -67,6 +73,26 @@ export class AudioManager {
     this.musicOscillator?.stop();
     this.musicOscillator = null;
     this.musicGain = null;
+  }
+
+  private primeOutput(): void {
+    if (this.context === null) {
+      return;
+    }
+
+    const oscillator = this.context.createOscillator();
+    const gain = this.context.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 440;
+    gain.gain.setValueAtTime(0.0001, this.context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.00001,
+      this.context.currentTime + 0.03,
+    );
+    oscillator.connect(gain);
+    gain.connect(this.context.destination);
+    oscillator.start();
+    oscillator.stop(this.context.currentTime + 0.03);
   }
 
   private startMusic(): void {
@@ -111,4 +137,16 @@ const sharedAudioManager = new AudioManager();
 
 export function getSharedAudioManager(): AudioManager {
   return sharedAudioManager;
+}
+
+function createAudioContext(): AudioContext {
+  const globalScope = globalThis as typeof globalThis & {
+    webkitAudioContext?: AudioContextConstructor;
+  };
+  const ContextConstructor = globalScope.AudioContext ?? globalScope.webkitAudioContext;
+  if (ContextConstructor === undefined) {
+    throw new Error('Web Audio API is not available in this browser.');
+  }
+
+  return new ContextConstructor();
 }

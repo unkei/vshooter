@@ -212,6 +212,14 @@ manager. Regression expectation: starting from touch on iOS Safari unlocks BGM
 and sound effects; entering gameplay still attempts a fallback start for
 non-iOS/browser paths.
 
+Safari compatibility requires both standard `AudioContext` and prefixed
+`webkitAudioContext` support. Audio startup should schedule a tiny output pulse
+and the BGM oscillator synchronously during the start gesture before awaiting
+`resume()`, so iOS does not drop the unlock because no audio node was started
+inside the gesture. Regression expectation: when `resume()` remains pending,
+audio nodes have already been started; when only `webkitAudioContext` exists, the
+game still creates an audio context.
+
 Repeated sounds should be restrained:
 
 - Player shot sound plays very frequently during hold-to-fire, so it should be
