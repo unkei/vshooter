@@ -4,6 +4,7 @@ import {
   BOSS_DEFEAT_FADES_SPRITE,
   BOSS_ENTRANCE_DELAY_MS,
   BOSS_HIT_FEEDBACK_MODE,
+  BOSS_LOCKS_VISUAL_STATE_ON_HIT,
   BOSS_MAX_HP,
   BOSS_USES_CAMERA_FLASH,
   createBossDefeatBursts,
@@ -72,6 +73,7 @@ describe('isRenderableBossSprite', () => {
 
   it('keeps normal boss hits visually stable until the defeat reaction', () => {
     expect(BOSS_HIT_FEEDBACK_MODE).toBe('none');
+    expect(BOSS_LOCKS_VISUAL_STATE_ON_HIT).toBe(true);
   });
 
   it('does not use screen flashes or boss alpha fades for boss events', () => {

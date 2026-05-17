@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { ScoreManager } from '../systems/ScoreManager';
+import {
+  STAGE_CLEAR_BASE_BONUS,
+  STAGE_CLEAR_MAX_COMBO_BONUS,
+  ScoreManager,
+} from '../systems/ScoreManager';
 
 describe('ScoreManager', () => {
   it('increases combo and applies a multiplier to enemy defeats', () => {
@@ -39,5 +43,18 @@ describe('ScoreManager', () => {
     });
     expect(storage.get('vshooter.highScore')).toBe('350');
   });
-});
 
+  it('adds stage clear base and max combo bonuses', () => {
+    const score = new ScoreManager({ comboTimeoutMs: 2000 });
+    score.addEnemyDefeat(100, 0);
+    score.addEnemyDefeat(100, 500);
+
+    const bonuses = score.addStageClearBonuses();
+
+    expect(bonuses).toEqual({
+      clearBonus: STAGE_CLEAR_BASE_BONUS,
+      comboBonus: STAGE_CLEAR_MAX_COMBO_BONUS * 2,
+    });
+    expect(score.snapshot().score).toBe(210 + STAGE_CLEAR_BASE_BONUS + 100);
+  });
+});

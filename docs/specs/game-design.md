@@ -169,6 +169,11 @@ Initial item types:
 Power-ups should create risk/reward: the player may need to move into danger to
 collect them.
 
+Power-up drops should appear near the defeated enemy with a small random offset
+instead of at a fixed-looking point. Items scroll downward with the stage, remain
+collectible for a short lifetime, blink near expiry, and then disappear. The
+blink should warn the player without changing the item type or collision.
+
 ### `ScoreManager`
 
 Responsibilities:
@@ -197,6 +202,7 @@ Initial sounds:
 
 - Player shot.
 - Enemy defeat.
+- Boss explosion.
 - Player damage.
 - Item pickup.
 - Boss warning or boss entrance.
@@ -277,8 +283,18 @@ Current tuning target:
   fades because these read as boss flicker on mobile displays. Boss entrance,
   normal hits, and defeat should keep the boss sprite continuously opaque while
   using text, bursts, scale, or rotation for feedback instead.
+- When player bullets hit the boss, the boss sprite should explicitly keep
+  alpha, tint, visibility, scale, and blend state stable. The hit should destroy
+  the bullet and reduce HP only; no normal-hit flash, tint, or blink is allowed.
 - Defeating the boss should play a visible reaction before moving to the clear
   result screen, so the final hit has impact instead of cutting away instantly.
+  It should also play a distinct explosion sound effect.
+- Stage clear should not jump straight to the retry result screen. After the
+  boss defeat reaction, show a clear bonus scene with score, clear bonus, combo
+  bonus, and total score, then animate the player ship warping upward toward the
+  next stage before entering the result/retry screen.
+- The final regular wave should use lower heavy-enemy bullet density than the
+  earlier heavy wave to keep the boss approach readable.
 
 ## Visual Direction
 

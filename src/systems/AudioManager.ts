@@ -1,4 +1,4 @@
-type SoundName = 'shot' | 'enemyDown' | 'damage' | 'pickup' | 'boss';
+type SoundName = 'shot' | 'enemyDown' | 'explosion' | 'damage' | 'pickup' | 'boss';
 
 type SoundPreset = {
   frequency: number;
@@ -23,6 +23,12 @@ export const SOUND_PRESETS: Record<SoundName, SoundPreset> = {
     durationSeconds: 0.12,
     type: 'sawtooth',
     gain: 0.13,
+  },
+  explosion: {
+    frequency: 72,
+    durationSeconds: 0.48,
+    type: 'sawtooth',
+    gain: 0.2,
   },
   damage: {
     frequency: 90,

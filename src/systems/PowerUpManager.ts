@@ -34,6 +34,39 @@ type PowerUpSprite = Phaser.GameObjects.Arc & {
   body: Phaser.Physics.Arcade.Body;
 };
 
+export const POWER_UP_SCROLL_SPEED = 70;
+export const POWER_UP_LIFETIME_MS = 5600;
+export const POWER_UP_BLINK_AFTER_MS = 3800;
+const POWER_UP_SPAWN_SPREAD_X = 34;
+const POWER_UP_SPAWN_LIFT_Y = 12;
+
+export type PowerUpSpawnPoint = {
+  x: number;
+  y: number;
+};
+
+export function createPowerUpSpawnPoint(
+  x: number,
+  y: number,
+  random: () => number = Math.random,
+): PowerUpSpawnPoint {
+  return {
+    x: x + (random() - 0.5) * POWER_UP_SPAWN_SPREAD_X * 2,
+    y: y - POWER_UP_SPAWN_LIFT_Y + (random() - 0.5) * 18,
+  };
+}
+
+export function computePowerUpAlpha(ageMs: number): number {
+  if (ageMs > POWER_UP_LIFETIME_MS) {
+    return 0;
+  }
+  if (ageMs < POWER_UP_BLINK_AFTER_MS) {
+    return 1;
+  }
+
+  return Math.floor(ageMs / 130) % 2 === 0 ? 0.35 : 1;
+}
+
 export class PowerUpDropManager {
   readonly items: Phaser.Physics.Arcade.Group;
 
@@ -53,19 +86,31 @@ export class PowerUpDropManager {
       life: 0x61ff77,
       score: 0xfff06a,
     };
-    const item = this.scene.add.circle(x, y, 9, color[type], 1) as PowerUpSprite;
+    const spawnPoint = createPowerUpSpawnPoint(x, y);
+    const item = this.scene.add.circle(
+      spawnPoint.x,
+      spawnPoint.y,
+      9,
+      color[type],
+      1,
+    ) as PowerUpSprite;
     item.setStrokeStyle(2, 0xffffff, 0.85);
     item.setData('type', type);
+    item.setData('spawnedAtMs', this.scene.time.now);
     this.scene.physics.add.existing(item);
     item.body.setCircle(9);
-    item.body.setVelocityY(85);
+    item.body.setVelocityY(POWER_UP_SCROLL_SPEED);
     this.items.add(item);
   }
 
-  update(): void {
+  update(timeMs: number = this.scene.time.now): void {
     for (const child of this.items.getChildren()) {
       const item = child as PowerUpSprite;
-      if (item.y > GAME_HEIGHT + 32) {
+      const spawnedAtMs = Number(item.getData('spawnedAtMs') ?? timeMs);
+      const ageMs = timeMs - spawnedAtMs;
+      const alpha = computePowerUpAlpha(ageMs);
+      item.setAlpha(alpha);
+      if (alpha <= 0 || item.y > GAME_HEIGHT + 32) {
         item.destroy();
       }
     }

@@ -2,6 +2,7 @@ import './style.css';
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from './game/constants';
 import { GameScene } from './scenes/GameScene';
+import { ClearBonusScene } from './scenes/ClearBonusScene';
 import { ResultScene } from './scenes/ResultScene';
 import { TitleScene } from './scenes/TitleScene';
 import {
@@ -36,7 +37,7 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [TitleScene, GameScene, ResultScene],
+  scene: [TitleScene, GameScene, ClearBonusScene, ResultScene],
 };
 
 const game = new Phaser.Game(config);

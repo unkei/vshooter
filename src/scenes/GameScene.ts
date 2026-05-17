@@ -130,7 +130,9 @@ export class GameScene extends Phaser.Scene {
 
     const elapsedMs = timeMs - this.startedAtMs;
     for (const event of this.stage.update(elapsedMs)) {
-      this.enemies.spawnWave(event.enemyType, event.count);
+      this.enemies.spawnWave(event.enemyType, event.count, {
+        pressure: event.pressure,
+      });
     }
 
     this.enemies.update(timeMs, deltaMs, this.player.sprite.x, this.player.sprite.y);
@@ -139,7 +141,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.boss.update(timeMs, deltaMs);
-    this.powerUps.update();
+    this.powerUps.update(timeMs);
     this.projectiles.update();
     this.checkBossHits();
     this.updateHud();
@@ -239,7 +241,7 @@ export class GameScene extends Phaser.Scene {
       (bullet) => {
         bullet.destroy();
         if (this.boss.damage(3)) {
-          this.audio.play('enemyDown');
+          this.audio.play('explosion');
           this.projectiles.clearEnemyBullets();
           this.score.addBossDefeat(2500);
           this.scheduleStageClear();
@@ -261,7 +263,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.boss.damage(Number.MAX_SAFE_INTEGER)) {
-      this.audio.play('enemyDown');
+      this.audio.play('explosion');
       this.projectiles.clearEnemyBullets();
       this.score.addBossDefeat(2500);
       this.scheduleStageClear();
@@ -347,6 +349,20 @@ export class GameScene extends Phaser.Scene {
     this.finished = true;
     this.input.keyboard?.resetKeys();
     this.audio.stop();
+    if (status === 'clear') {
+      const bonuses = this.score.addStageClearBonuses();
+      this.score.finishRun();
+      const snapshot = this.score.snapshot();
+      this.scene.start('ClearBonusScene', {
+        score: snapshot.score,
+        clearBonus: bonuses.clearBonus,
+        comboBonus: bonuses.comboBonus,
+        maxCombo: snapshot.maxCombo,
+        highScore: snapshot.highScore,
+      });
+      return;
+    }
+
     this.score.finishRun();
     const snapshot = this.score.snapshot();
     this.scene.start('ResultScene', {

@@ -57,6 +57,7 @@ export class BossController {
       return;
     }
 
+    this.lockVisualState();
     this.sprite.y = 120 + Math.sin(timeMs / 1200) * 12;
     this.sprite.x = GAME_WIDTH / 2 + Math.sin(timeMs / 900) * 120;
     syncArcadeBody(this.sprite);
@@ -87,6 +88,7 @@ export class BossController {
       this.startDefeatReaction();
       return true;
     }
+    this.lockVisualState();
     return false;
   }
 
@@ -102,10 +104,23 @@ export class BossController {
       BOSS_TEXTURE_KEY,
     ) as BossSprite;
     this.sprite.setDepth(20);
+    this.lockVisualState();
     this.scene.physics.add.existing(this.sprite);
     this.sprite.body.setSize(136, 64);
     configureBossBody(this.sprite.body);
     syncArcadeBody(this.sprite);
+  }
+
+  private lockVisualState(): void {
+    if (this.sprite === null || this.defeatStarted) {
+      return;
+    }
+
+    this.sprite.setVisible(true);
+    this.sprite.setAlpha(1);
+    this.sprite.clearTint();
+    this.sprite.setBlendMode(Phaser.BlendModes.NORMAL);
+    this.sprite.setScale(1);
   }
 
   private drawHealthBar(): void {

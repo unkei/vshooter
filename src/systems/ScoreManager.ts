@@ -14,6 +14,13 @@ export type ScoreSnapshot = {
 };
 
 const HIGH_SCORE_KEY = 'vshooter.highScore';
+export const STAGE_CLEAR_BASE_BONUS = 1000;
+export const STAGE_CLEAR_MAX_COMBO_BONUS = 50;
+
+export type StageClearBonuses = {
+  clearBonus: number;
+  comboBonus: number;
+};
 
 export class ScoreManager {
   private score = 0;
@@ -52,6 +59,15 @@ export class ScoreManager {
 
   addScoreBonus(points: number): void {
     this.score += points;
+  }
+
+  addStageClearBonuses(): StageClearBonuses {
+    const bonuses = {
+      clearBonus: STAGE_CLEAR_BASE_BONUS,
+      comboBonus: this.maxCombo * STAGE_CLEAR_MAX_COMBO_BONUS,
+    };
+    this.score += bonuses.clearBonus + bonuses.comboBonus;
+    return bonuses;
   }
 
   registerDamage(): void {

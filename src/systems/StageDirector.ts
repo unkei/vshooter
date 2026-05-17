@@ -6,6 +6,7 @@ export type StageEvent =
     type: 'wave';
     enemyType: EnemyType;
     count: number;
+    pressure?: 'normal' | 'reduced';
   };
 
 export class StageDirector {
@@ -52,6 +53,6 @@ export function createDefaultStage(): StageEvent[] {
     { atMs: 8200, type: 'wave', enemyType: 'sway', count: 4 },
     { atMs: 12400, type: 'wave', enemyType: 'sway', count: 5 },
     { atMs: 16800, type: 'wave', enemyType: 'heavy', count: 3 },
-    { atMs: 21200, type: 'wave', enemyType: 'heavy', count: 4 },
+    { atMs: 21200, type: 'wave', enemyType: 'heavy', count: 4, pressure: 'reduced' },
   ];
 }

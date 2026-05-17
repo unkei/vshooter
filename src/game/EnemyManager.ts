@@ -1,5 +1,11 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from './constants';
+import {
+  DEFAULT_HEAVY_BULLET_COUNT,
+  DEFAULT_HEAVY_FIRE_INTERVAL_MS,
+  FINAL_WAVE_HEAVY_BULLET_COUNT,
+  FINAL_WAVE_HEAVY_FIRE_INTERVAL_MS,
+} from './enemyTuning';
 import { configureManualArcadeBody, syncArcadeBody } from './physics';
 import type { EnemyType } from './types';
 import type { ProjectileManager } from './ProjectileManager';
@@ -17,6 +23,7 @@ type EnemyData = {
   nextFireAtMs: number;
   originX: number;
   speed: number;
+  bulletCount: number;
 };
 
 export class EnemyManager {
@@ -29,10 +36,14 @@ export class EnemyManager {
     this.enemies = scene.physics.add.group();
   }
 
-  spawnWave(type: EnemyType, count: number): void {
+  spawnWave(
+    type: EnemyType,
+    count: number,
+    options: { pressure?: 'normal' | 'reduced' } = {},
+  ): void {
     const spacing = GAME_WIDTH / (count + 1);
     for (let i = 0; i < count; i += 1) {
-      this.spawn(type, spacing * (i + 1), -40 - i * 18);
+      this.spawn(type, spacing * (i + 1), -40 - i * 18, options);
     }
   }
 
@@ -81,12 +92,18 @@ export class EnemyManager {
     return this.enemies.getChildren().length;
   }
 
-  private spawn(type: EnemyType, x: number, y: number): void {
+  private spawn(
+    type: EnemyType,
+    x: number,
+    y: number,
+    options: { pressure?: 'normal' | 'reduced' },
+  ): void {
     const config: Record<EnemyType, { hp: number; speed: number; points: number }> = {
       straight: { hp: 2, speed: 80, points: 100 },
       sway: { hp: 3, speed: 65, points: 140 },
       heavy: { hp: 8, speed: 42, points: 300 },
     };
+    const reducedPressure = options.pressure === 'reduced';
     const size = type === 'heavy' ? 34 : 24;
     const enemy = this.scene.add.image(x, y, ENEMY_TEXTURE_KEYS[type]) as EnemySprite;
     this.scene.physics.add.existing(enemy);
@@ -96,10 +113,21 @@ export class EnemyManager {
       type,
       hp: config[type].hp,
       points: config[type].points,
-      fireEveryMs: type === 'heavy' ? 900 : 1300,
+      fireEveryMs:
+        type === 'heavy'
+          ? reducedPressure
+            ? FINAL_WAVE_HEAVY_FIRE_INTERVAL_MS
+            : DEFAULT_HEAVY_FIRE_INTERVAL_MS
+          : 1300,
       nextFireAtMs: 800 + Math.random() * 700,
       originX: x,
       speed: config[type].speed,
+      bulletCount:
+        type === 'heavy'
+          ? reducedPressure
+            ? FINAL_WAVE_HEAVY_BULLET_COUNT
+            : DEFAULT_HEAVY_BULLET_COUNT
+          : 1,
     } satisfies EnemyData);
     this.enemies.add(enemy);
   }
@@ -112,7 +140,10 @@ export class EnemyManager {
   ): void {
     const angle = Phaser.Math.Angle.Between(enemy.x, enemy.y, playerX, playerY);
     if (data.type === 'heavy') {
-      for (const offset of [-0.5, -0.25, 0, 0.25, 0.5]) {
+      const spacing = data.bulletCount === 3 ? 0.3 : 0.25;
+      const center = (data.bulletCount - 1) / 2;
+      for (let i = 0; i < data.bulletCount; i += 1) {
+        const offset = (i - center) * spacing;
         this.projectiles.fireEnemyShot(enemy.x, enemy.y, angle + offset, 155);
       }
       return;

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PLAYER_ACCELERATION } from '../game/constants';
 import { PROJECTILE_RADIUS, PROJECTILE_SPEED_SCALE } from '../game/ProjectileManager';
 import { SOUND_PRESETS } from '../systems/AudioManager';
+import { FINAL_WAVE_HEAVY_BULLET_COUNT } from '../game/enemyTuning';
 
 describe('play tuning constants', () => {
   it('starts keyboard and gamepad movement with a responsive acceleration ramp', () => {
@@ -20,6 +21,11 @@ describe('play tuning constants', () => {
     expect(SOUND_PRESETS.damage.gain).toBeGreaterThanOrEqual(0.14);
     expect(SOUND_PRESETS.pickup.gain).toBeGreaterThanOrEqual(0.12);
     expect(SOUND_PRESETS.boss.gain).toBeGreaterThanOrEqual(0.14);
+    expect(SOUND_PRESETS.explosion.gain).toBeGreaterThanOrEqual(0.18);
+  });
+
+  it('reduces the final heavy wave bullet spread pressure', () => {
+    expect(FINAL_WAVE_HEAVY_BULLET_COUNT).toBeLessThan(5);
   });
 
   it('uses larger and slower projectiles for readability', () => {
