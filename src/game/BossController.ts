@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from './constants';
 import {
+  BOSS_HIT_FLASH_DURATION_MS,
   BOSS_MAX_HP,
   configureBossBody,
   createBossDefeatBursts,
@@ -22,6 +23,7 @@ export class BossController {
   private nextFireAtMs = 0;
   private healthBar: Phaser.GameObjects.Graphics | null = null;
   private defeatStarted = false;
+  private hitFlashUntilMs = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -88,6 +90,7 @@ export class BossController {
       this.startDefeatReaction();
       return true;
     }
+    this.hitFlashUntilMs = this.scene.time.now + BOSS_HIT_FLASH_DURATION_MS;
     this.lockVisualState();
     return false;
   }
@@ -118,7 +121,11 @@ export class BossController {
 
     this.sprite.setVisible(true);
     this.sprite.setAlpha(1);
-    this.sprite.clearTint();
+    if (this.scene.time.now < this.hitFlashUntilMs) {
+      this.sprite.setTint(0xffffff);
+    } else {
+      this.sprite.clearTint();
+    }
     this.sprite.setBlendMode(Phaser.BlendModes.NORMAL);
     this.sprite.setScale(1);
   }

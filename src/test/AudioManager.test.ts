@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   AudioManager,
+  CLEAR_MUSIC_LAYER_COUNT,
   MUSIC_LAYER_COUNT,
   getSharedAudioManager,
 } from '../systems/AudioManager';
@@ -101,6 +102,33 @@ describe('AudioManager', () => {
     expect(context.oscillators.some((oscillator) => oscillator.started)).toBe(true);
   });
 
+  it('queues music before requesting resume for browser unlock compatibility', () => {
+    const context = new FakeAudioContext();
+    const callOrder: string[] = [];
+    context.resume = vi.fn(() => {
+      callOrder.push('resume');
+      return new Promise<void>(() => {});
+    });
+    const originalCreateOscillator = context.createOscillator.bind(context);
+    context.createOscillator = vi.fn(() => {
+      callOrder.push('oscillator');
+      return originalCreateOscillator();
+    });
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        constructor() {
+          return context;
+        }
+      },
+    );
+
+    void new AudioManager().start();
+
+    expect(callOrder[0]).toBe('oscillator');
+    expect(callOrder).toContain('resume');
+  });
+
   it('starts layered BGM instead of a single low drone', () => {
     const context = new FakeAudioContext();
     context.state = 'running';
@@ -117,6 +145,25 @@ describe('AudioManager', () => {
 
     expect(context.oscillators.filter((oscillator) => oscillator.started)).toHaveLength(
       MUSIC_LAYER_COUNT + 1,
+    );
+  });
+
+  it('starts a distinct clear BGM with generated layers', () => {
+    const context = new FakeAudioContext();
+    context.state = 'running';
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        constructor() {
+          return context;
+        }
+      },
+    );
+
+    void new AudioManager().start('clear');
+
+    expect(context.oscillators.filter((oscillator) => oscillator.started)).toHaveLength(
+      CLEAR_MUSIC_LAYER_COUNT + 1,
     );
   });
 });

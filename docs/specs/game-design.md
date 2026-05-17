@@ -278,23 +278,29 @@ Current tuning target:
   previous 630 HP budget.
 - Boss movement should be driven only by its scripted motion. Bullet hits should
   damage the boss without nudging or shaking its position.
-- Normal boss hit feedback should not change boss visibility, opacity, fill, or
-  position. The boss should remain visually stable while taking damage until the
-  defeat reaction begins.
+- Normal boss hit feedback should use a short tint flash so hits are readable.
+  The flash must not move, scale, hide, fade, or otherwise destabilize the boss
+  sprite; it should return to the normal opaque boss appearance automatically.
 - Boss-related events should avoid full-screen camera flashes and boss alpha
   fades because these read as boss flicker on mobile displays. Boss entrance,
   normal hits, and defeat should keep the boss sprite continuously opaque while
   using text, bursts, scale, or rotation for feedback instead.
-- When player bullets hit the boss, the boss sprite should explicitly keep
-  alpha, tint, visibility, scale, and blend state stable. The hit should destroy
-  the bullet and reduce HP only; no normal-hit flash, tint, or blink is allowed.
+- When player bullets hit the boss, the hit should destroy the bullet, reduce HP,
+  and briefly flash the boss tint. Regression expectation: boss hit feedback is
+  visible, while boss position, opacity, visibility, scale, and blend state remain
+  stable.
 - Defeating the boss should play a visible reaction before moving to the clear
   result screen, so the final hit has impact instead of cutting away instantly.
-  It should also play a distinct explosion sound effect.
+  It should also play a distinct explosion sound effect. On boss entrance and on
+  boss defeat, all active player bullets should be cleared and player firing
+  should be paused until the transition has ended, so stale bullets cannot carry
+  into the boss intro or clear sequence.
 - Stage clear should not jump straight to the retry result screen. After the
   boss defeat reaction, show a clear bonus scene with score, clear bonus, combo
   bonus, and total score, then animate the player ship warping upward toward the
-  next stage before entering the result/retry screen.
+  next stage before entering the result/retry screen. The clear bonus scene
+  should play a distinct clear BGM and count bonus displays upward from 0 to the
+  awarded bonus values.
 - The final regular wave should use lower heavy-enemy bullet density than the
   earlier heavy wave to keep the boss approach readable.
 

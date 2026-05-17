@@ -119,13 +119,16 @@ export class GameScene extends Phaser.Scene {
     }
 
     const input = normalizeInput(this.readInput());
+    const canFirePlayerShot = !this.bossEntrancePending;
     if (this.player.update(input, timeMs, deltaMs)) {
-      this.projectiles.firePlayerShot(
-        this.player.sprite.x,
-        this.player.sprite.y,
-        this.player.shotLevel,
-      );
-      this.audio.play('shot');
+      if (canFirePlayerShot) {
+        this.projectiles.firePlayerShot(
+          this.player.sprite.x,
+          this.player.sprite.y,
+          this.player.shotLevel,
+        );
+        this.audio.play('shot');
+      }
     }
 
     const elapsedMs = timeMs - this.startedAtMs;
@@ -246,6 +249,7 @@ export class GameScene extends Phaser.Scene {
         bullet.destroy();
         if (this.boss.damage(3)) {
           this.audio.play('explosion');
+          this.projectiles.clearPlayerBullets();
           this.projectiles.clearEnemyBullets();
           this.score.addBossDefeat(2500);
           this.scheduleStageClear();
@@ -268,6 +272,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.boss.damage(Number.MAX_SAFE_INTEGER)) {
       this.audio.play('explosion');
+      this.projectiles.clearPlayerBullets();
       this.projectiles.clearEnemyBullets();
       this.score.addBossDefeat(2500);
       this.scheduleStageClear();
@@ -288,6 +293,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.clearPending = true;
+    this.projectiles.clearPlayerBullets();
     this.time.delayedCall(BOSS_DEFEAT_CLEAR_DELAY_MS, () => this.finish('clear'));
   }
 
@@ -298,6 +304,7 @@ export class GameScene extends Phaser.Scene {
 
     this.bossEntrancePending = true;
     this.audio.play('boss');
+    this.projectiles.clearPlayerBullets();
     this.projectiles.clearEnemyBullets();
 
     const warning = this.add

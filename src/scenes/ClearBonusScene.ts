@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../game/constants';
 import { PLAYER_TEXTURE_KEY, ensureGameTextures } from '../game/visualAssets';
+import { getSharedAudioManager } from '../systems/AudioManager';
+import { buildClearBonusLines } from './clearBonusDisplay';
 
 export type ClearBonusSceneData = {
   score: number;
@@ -30,6 +32,7 @@ export class ClearBonusScene extends Phaser.Scene {
   create(): void {
     this.input.keyboard?.resetKeys();
     this.cameras.main.setBackgroundColor(0x050710);
+    void getSharedAudioManager().start('clear');
     ensureGameTextures(this);
     this.addStarfield();
 
@@ -41,24 +44,43 @@ export class ClearBonusScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.add
-      .text(
-        GAME_WIDTH / 2,
-        255,
-        [
-          `SCORE ${this.dataFromRun.score}`,
-          `CLEAR BONUS ${this.dataFromRun.clearBonus}`,
-          `MAX COMBO BONUS ${this.dataFromRun.comboBonus}`,
-          `MAX COMBO ${this.dataFromRun.maxCombo}`,
-        ],
-        {
-          fontSize: '22px',
-          color: '#ffffff',
-          align: 'center',
-          lineSpacing: 12,
-        },
-      )
+    const bonusCounter = {
+      clearBonus: 0,
+      comboBonus: 0,
+    };
+    const bonusText = this.add
+      .text(GAME_WIDTH / 2, 255, buildClearBonusLines(this.dataFromRun, 0, 0), {
+        fontSize: '22px',
+        color: '#ffffff',
+        align: 'center',
+        lineSpacing: 12,
+      })
       .setOrigin(0.5);
+    this.tweens.add({
+      targets: bonusCounter,
+      clearBonus: this.dataFromRun.clearBonus,
+      comboBonus: this.dataFromRun.comboBonus,
+      duration: 1300,
+      ease: 'Cubic.easeOut',
+      onUpdate: () => {
+        bonusText.setText(
+          buildClearBonusLines(
+            this.dataFromRun,
+            bonusCounter.clearBonus,
+            bonusCounter.comboBonus,
+          ),
+        );
+      },
+      onComplete: () => {
+        bonusText.setText(
+          buildClearBonusLines(
+            this.dataFromRun,
+            this.dataFromRun.clearBonus,
+            this.dataFromRun.comboBonus,
+          ),
+        );
+      },
+    });
 
     const player = this.add
       .image(GAME_WIDTH / 2, GAME_HEIGHT - 86, PLAYER_TEXTURE_KEY)

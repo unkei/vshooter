@@ -66,6 +66,10 @@ export class ProjectileManager {
     this.enemyBullets.clear(true, true);
   }
 
+  clearPlayerBullets(): void {
+    this.playerBullets.clear(true, true);
+  }
+
   private createBullet(
     group: Phaser.Physics.Arcade.Group,
     x: number,
