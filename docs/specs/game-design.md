@@ -100,6 +100,11 @@ Movement feel:
 - Releasing input should decelerate quickly enough to remain responsive.
 - Pointer/touch movement may remain direct, but should still clamp to the play
   bounds and avoid overshooting the pointer target.
+- On touch devices, the controlled player should appear slightly above the
+  pressed finger position instead of directly under it. This keeps the ship
+  visible during mobile play while preserving direct drag control. Regression
+  expectation: mouse/pointer control continues to target the pointer position
+  directly, while touch input offsets only the movement target upward.
 
 ### `ProjectileManager`
 
@@ -199,6 +204,13 @@ Initial sounds:
 
 Audio should be started only after user interaction to satisfy browser autoplay
 restrictions.
+
+iOS Safari requires Web Audio unlock to happen inside the same user gesture that
+starts the game. The title pointer/keyboard start path should start or resume the
+shared audio manager before switching to gameplay, and gameplay should reuse that
+manager. Regression expectation: starting from touch on iOS Safari unlocks BGM
+and sound effects; entering gameplay still attempts a fallback start for
+non-iOS/browser paths.
 
 Repeated sounds should be restrained:
 

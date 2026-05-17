@@ -14,6 +14,7 @@ export type PointerInput = {
   x: number;
   y: number;
   shoot: boolean;
+  source?: 'mouse' | 'touch';
 };
 
 export type GamepadInput = {
@@ -37,6 +38,7 @@ export type NormalizedInputState = {
 };
 
 const DEAD_ZONE = 0.2;
+export const TOUCH_PLAYER_Y_OFFSET = 72;
 
 export function normalizeInput(raw: RawInputState): NormalizedInputState {
   const keyboardX =
@@ -52,7 +54,15 @@ export function normalizeInput(raw: RawInputState): NormalizedInputState {
   });
 
   const pointerTarget =
-    raw.pointer?.active === true ? { x: raw.pointer.x, y: raw.pointer.y } : null;
+    raw.pointer?.active === true
+      ? {
+          x: raw.pointer.x,
+          y:
+            raw.pointer.source === 'touch'
+              ? raw.pointer.y - TOUCH_PLAYER_Y_OFFSET
+              : raw.pointer.y,
+        }
+      : null;
 
   return {
     move,
@@ -77,4 +87,3 @@ function normalizeVector(vector: Vector2): Vector2 {
     y: vector.y / length,
   };
 }
-

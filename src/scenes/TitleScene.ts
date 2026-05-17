@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../game/constants';
+import { getSharedAudioManager } from '../systems/AudioManager';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -54,6 +55,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private startGame(): void {
+    void getSharedAudioManager().start();
     this.scene.start('GameScene');
   }
 
@@ -69,4 +71,3 @@ export class TitleScene extends Phaser.Scene {
     }
   }
 }
-

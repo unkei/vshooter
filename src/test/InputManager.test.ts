@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeInput } from '../systems/InputManager';
+import { TOUCH_PLAYER_Y_OFFSET, normalizeInput } from '../systems/InputManager';
 
 describe('normalizeInput', () => {
   it('combines keyboard axes and clamps diagonal movement', () => {
@@ -40,5 +40,21 @@ describe('normalizeInput', () => {
     expect(input.shoot).toBe(true);
     expect(input.confirm).toBe(true);
   });
-});
 
+  it('places touch-controlled player above the finger target', () => {
+    const input = normalizeInput({
+      pointer: {
+        active: true,
+        x: 180,
+        y: 520,
+        shoot: true,
+        source: 'touch',
+      },
+    });
+
+    expect(input.pointerTarget).toEqual({
+      x: 180,
+      y: 520 - TOUCH_PLAYER_Y_OFFSET,
+    });
+  });
+});

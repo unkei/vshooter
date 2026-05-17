@@ -106,3 +106,9 @@ export class AudioManager {
     oscillator.stop(this.context.currentTime + preset.durationSeconds);
   }
 }
+
+const sharedAudioManager = new AudioManager();
+
+export function getSharedAudioManager(): AudioManager {
+  return sharedAudioManager;
+}

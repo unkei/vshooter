@@ -15,7 +15,7 @@ import { PlayerController } from '../game/PlayerController';
 import { ProjectileManager } from '../game/ProjectileManager';
 import type { PowerUpType } from '../game/types';
 import { ensureGameTextures } from '../game/visualAssets';
-import { AudioManager } from '../systems/AudioManager';
+import { getSharedAudioManager } from '../systems/AudioManager';
 import { KeyboardReleaseGate } from '../systems/InputGate';
 import { normalizeInput, type RawInputState } from '../systems/InputManager';
 import { PowerUpDropManager } from '../systems/PowerUpManager';
@@ -34,7 +34,7 @@ export class GameScene extends Phaser.Scene {
   private powerUps!: PowerUpDropManager;
   private score!: ScoreManager;
   private stage!: StageDirector;
-  private audio = new AudioManager();
+  private audio = getSharedAudioManager();
   private startedAtMs: number | null = null;
   private hud!: Phaser.GameObjects.Text;
   private finished = false;
@@ -167,6 +167,7 @@ export class GameScene extends Phaser.Scene {
         x: pointer.x,
         y: pointer.y,
         shoot: pointer.isDown,
+        source: pointer.wasTouch ? 'touch' : 'mouse',
       },
       gamepad: {
         axisX,
