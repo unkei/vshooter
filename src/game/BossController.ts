@@ -141,7 +141,6 @@ export class BossController {
     disableBossBody(this.sprite.body);
     this.scene.tweens.add({
       targets: this.sprite,
-      alpha: 0,
       angle: 18,
       scaleX: 1.35,
       scaleY: 1.35,
@@ -153,7 +152,6 @@ export class BossController {
       },
     });
 
-    this.scene.cameras.main.flash(280, 255, 92, 128, false);
     for (const burst of createBossDefeatBursts(x, y)) {
       this.scene.time.delayedCall(burst.delayMs, () => {
         this.createDefeatBurst(burst.x, burst.y, burst.radius);

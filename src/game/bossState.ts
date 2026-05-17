@@ -5,6 +5,8 @@ export type RenderableState = {
 
 export const BOSS_MAX_HP = 1890;
 export const BOSS_HIT_FEEDBACK_MODE = 'none';
+export const BOSS_USES_CAMERA_FLASH = false;
+export const BOSS_DEFEAT_FADES_SPRITE = false;
 export const BOSS_ENTRANCE_DELAY_MS = 1700;
 export const BOSS_DEFEAT_CLEAR_DELAY_MS = 1500;
 

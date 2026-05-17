@@ -225,6 +225,13 @@ Repeated sounds should be restrained:
 - Player shot sound plays very frequently during hold-to-fire, so it should be
   short and softer than alert sounds such as player damage or boss warning, but
   still audible during normal play.
+- Sound effects should remain clearly audible over the BGM on mobile speakers.
+  The player shot should be louder than the original restrained prototype while
+  staying short enough not to smear during hold-to-fire. Damage, pickup, enemy
+  defeat, and boss warning sounds should sit above the music mix.
+- BGM should sound like an intentional looping arcade track, not a barely audible
+  single-note drone. It should start with the same unlocked audio context and use
+  multiple generated layers such as bass, lead, and harmony.
 
 ### `StageDirector`
 
@@ -266,6 +273,10 @@ Current tuning target:
 - Normal boss hit feedback should not change boss visibility, opacity, fill, or
   position. The boss should remain visually stable while taking damage until the
   defeat reaction begins.
+- Boss-related events should avoid full-screen camera flashes and boss alpha
+  fades because these read as boss flicker on mobile displays. Boss entrance,
+  normal hits, and defeat should keep the boss sprite continuously opaque while
+  using text, bursts, scale, or rotation for feedback instead.
 - Defeating the boss should play a visible reaction before moving to the clear
   result screen, so the final hit has impact instead of cutting away instantly.
 

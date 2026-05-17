@@ -10,9 +10,16 @@ describe('play tuning constants', () => {
 
   it('keeps the repeated player shot sound short, restrained, and audible', () => {
     expect(SOUND_PRESETS.shot.durationSeconds).toBeLessThanOrEqual(0.025);
-    expect(SOUND_PRESETS.shot.gain).toBeGreaterThanOrEqual(0.04);
-    expect(SOUND_PRESETS.shot.gain).toBeLessThanOrEqual(0.055);
+    expect(SOUND_PRESETS.shot.gain).toBeGreaterThanOrEqual(0.07);
+    expect(SOUND_PRESETS.shot.gain).toBeLessThanOrEqual(0.09);
     expect(SOUND_PRESETS.shot.type).not.toBe('square');
+  });
+
+  it('keeps alert and reward effects clearly audible over the BGM', () => {
+    expect(SOUND_PRESETS.enemyDown.gain).toBeGreaterThanOrEqual(0.12);
+    expect(SOUND_PRESETS.damage.gain).toBeGreaterThanOrEqual(0.14);
+    expect(SOUND_PRESETS.pickup.gain).toBeGreaterThanOrEqual(0.12);
+    expect(SOUND_PRESETS.boss.gain).toBeGreaterThanOrEqual(0.14);
   });
 
   it('uses larger and slower projectiles for readability', () => {

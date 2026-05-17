@@ -293,7 +293,6 @@ export class GameScene extends Phaser.Scene {
     this.bossEntrancePending = true;
     this.audio.play('boss');
     this.projectiles.clearEnemyBullets();
-    this.cameras.main.flash(220, 255, 55, 104, false);
 
     const warning = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36, 'WARNING', {

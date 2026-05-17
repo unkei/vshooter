@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AudioManager, getSharedAudioManager } from '../systems/AudioManager';
+import {
+  AudioManager,
+  MUSIC_LAYER_COUNT,
+  getSharedAudioManager,
+} from '../systems/AudioManager';
 
 class FakeAudioParam {
   value = 0;
@@ -95,5 +99,24 @@ describe('AudioManager', () => {
 
     expect(context.resume).toHaveBeenCalled();
     expect(context.oscillators.some((oscillator) => oscillator.started)).toBe(true);
+  });
+
+  it('starts layered BGM instead of a single low drone', () => {
+    const context = new FakeAudioContext();
+    context.state = 'running';
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        constructor() {
+          return context;
+        }
+      },
+    );
+
+    void new AudioManager().start();
+
+    expect(context.oscillators.filter((oscillator) => oscillator.started)).toHaveLength(
+      MUSIC_LAYER_COUNT + 1,
+    );
   });
 });

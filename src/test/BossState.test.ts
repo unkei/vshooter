@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   BOSS_DEFEAT_CLEAR_DELAY_MS,
+  BOSS_DEFEAT_FADES_SPRITE,
   BOSS_ENTRANCE_DELAY_MS,
   BOSS_HIT_FEEDBACK_MODE,
   BOSS_MAX_HP,
+  BOSS_USES_CAMERA_FLASH,
   createBossDefeatBursts,
   configureBossBody,
   disableBossBody,
@@ -70,6 +72,11 @@ describe('isRenderableBossSprite', () => {
 
   it('keeps normal boss hits visually stable until the defeat reaction', () => {
     expect(BOSS_HIT_FEEDBACK_MODE).toBe('none');
+  });
+
+  it('does not use screen flashes or boss alpha fades for boss events', () => {
+    expect(BOSS_USES_CAMERA_FLASH).toBe(false);
+    expect(BOSS_DEFEAT_FADES_SPRITE).toBe(false);
   });
 
   it('creates several boss defeat bursts around the boss center', () => {
