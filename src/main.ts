@@ -69,10 +69,35 @@ if (typeof window !== 'undefined') {
         scene.debugGameOver();
       }
     };
+    const spawnBoss = (): void => {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        scene.debugSpawnBoss();
+      }
+    };
+    const damageBoss = (amount?: number): boolean => {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        return scene.debugDamageBoss(amount);
+      }
+      return false;
+    };
+    const getBossVisualState = (): ReturnType<
+      GameScene['debugBossVisualState']
+    > => {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        return scene.debugBossVisualState();
+      }
+      return null;
+    };
 
     window.__vshooterDebug = {
       defeatBoss,
       gameOver,
+      spawnBoss,
+      damageBoss,
+      getBossVisualState,
       getActiveScene: () => game.scene.getScenes(true)[0]?.scene.key ?? null,
     };
 

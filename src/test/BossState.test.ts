@@ -5,6 +5,7 @@ import {
   BOSS_ENTRANCE_DELAY_MS,
   BOSS_HIT_FEEDBACK_MODE,
   BOSS_HIT_FLASH_DURATION_MS,
+  BOSS_HIT_FLASH_MIN_INTERVAL_MS,
   BOSS_LOCKS_VISUAL_STATE_ON_HIT,
   BOSS_MAX_HP,
   BOSS_USES_CAMERA_FLASH,
@@ -12,6 +13,7 @@ import {
   configureBossBody,
   disableBossBody,
   isRenderableBossSprite,
+  shouldStartBossHitFlash,
 } from '../game/bossState';
 
 describe('isRenderableBossSprite', () => {
@@ -76,7 +78,16 @@ describe('isRenderableBossSprite', () => {
     expect(BOSS_HIT_FEEDBACK_MODE).toBe('tint-flash');
     expect(BOSS_HIT_FLASH_DURATION_MS).toBeGreaterThanOrEqual(60);
     expect(BOSS_HIT_FLASH_DURATION_MS).toBeLessThanOrEqual(140);
+    expect(BOSS_HIT_FLASH_MIN_INTERVAL_MS).toBeGreaterThan(
+      BOSS_HIT_FLASH_DURATION_MS,
+    );
     expect(BOSS_LOCKS_VISUAL_STATE_ON_HIT).toBe(true);
+  });
+
+  it('does not restart boss hit flash on every rapid-fire hit', () => {
+    expect(shouldStartBossHitFlash(-Infinity, 1000)).toBe(true);
+    expect(shouldStartBossHitFlash(1000, 1060)).toBe(false);
+    expect(shouldStartBossHitFlash(1000, 1180)).toBe(true);
   });
 
   it('does not use screen flashes or boss alpha fades for boss events', () => {

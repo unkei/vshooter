@@ -289,6 +289,11 @@ Current tuning target:
   and briefly flash the boss tint. Regression expectation: boss hit feedback is
   visible, while boss position, opacity, visibility, scale, and blend state remain
   stable.
+- Sustained rapid-fire hits must not keep the boss in a permanent flash state.
+  Normal boss tint should be visible between hit flashes even while bullets are
+  landing continuously. Regression expectation: during continuous boss damage,
+  E2E checks observe stable visible/opaque/scale-1 boss state and at least one
+  non-flashing sample after the initial hit flash window.
 - Defeating the boss should play a visible reaction before moving to the clear
   result screen, so the final hit has impact instead of cutting away instantly.
   It should also play a distinct explosion sound effect. On boss entrance and on

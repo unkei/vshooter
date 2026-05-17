@@ -287,6 +287,30 @@ export class GameScene extends Phaser.Scene {
     this.finish('gameover');
   }
 
+  debugSpawnBoss(): void {
+    if (this.finished || this.clearPending) {
+      return;
+    }
+
+    this.enemies.clear();
+    this.projectiles.clearPlayerBullets();
+    this.projectiles.clearEnemyBullets();
+    this.boss.spawn();
+    this.boss.update(this.time.now, 0);
+  }
+
+  debugDamageBoss(amount = 1): boolean {
+    if (this.finished || this.clearPending || !this.boss.isActive()) {
+      return false;
+    }
+
+    return this.boss.damage(amount);
+  }
+
+  debugBossVisualState(): ReturnType<BossController['debugVisualState']> {
+    return this.boss.debugVisualState();
+  }
+
   private scheduleStageClear(): void {
     if (this.clearPending) {
       return;

@@ -6,6 +6,7 @@ export type RenderableState = {
 export const BOSS_MAX_HP = 1890;
 export const BOSS_HIT_FEEDBACK_MODE = 'tint-flash';
 export const BOSS_HIT_FLASH_DURATION_MS = 90;
+export const BOSS_HIT_FLASH_MIN_INTERVAL_MS = 170;
 export const BOSS_LOCKS_VISUAL_STATE_ON_HIT = true;
 export const BOSS_USES_CAMERA_FLASH = false;
 export const BOSS_DEFEAT_FADES_SPRITE = false;
@@ -41,6 +42,13 @@ export function configureBossBody(body: KinematicBossBody): void {
   body.setVelocity?.(0, 0);
   body.setAllowGravity?.(false);
   body.moves = false;
+}
+
+export function shouldStartBossHitFlash(
+  lastFlashStartedAtMs: number,
+  timeMs: number,
+): boolean {
+  return timeMs - lastFlashStartedAtMs >= BOSS_HIT_FLASH_MIN_INTERVAL_MS;
 }
 
 export function createBossDefeatBursts(x: number, y: number): BossDefeatBurst[] {

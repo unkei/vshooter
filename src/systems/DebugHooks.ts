@@ -1,6 +1,16 @@
 export type VShooterDebugHooks = {
   defeatBoss: () => void;
   gameOver: () => void;
+  spawnBoss: () => void;
+  damageBoss: (amount?: number) => boolean;
+  getBossVisualState: () => {
+    exists: boolean;
+    visible: boolean;
+    alpha: number;
+    scaleX: number;
+    scaleY: number;
+    flashActive: boolean;
+  } | null;
   getActiveScene: () => string | null;
 };
 

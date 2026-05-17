@@ -7,6 +7,7 @@ import {
   createBossDefeatBursts,
   disableBossBody,
   isRenderableBossSprite,
+  shouldStartBossHitFlash,
 } from './bossState';
 import { syncArcadeBody } from './physics';
 import type { ProjectileManager } from './ProjectileManager';
@@ -24,6 +25,7 @@ export class BossController {
   private healthBar: Phaser.GameObjects.Graphics | null = null;
   private defeatStarted = false;
   private hitFlashUntilMs = 0;
+  private lastHitFlashStartedAtMs = -Infinity;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -37,6 +39,8 @@ export class BossController {
 
     this.hp = this.maxHp;
     this.defeatStarted = false;
+    this.hitFlashUntilMs = 0;
+    this.lastHitFlashStartedAtMs = -Infinity;
     this.createSprite();
     this.healthBar = this.scene.add.graphics();
     this.healthBar.setDepth(30);
@@ -90,13 +94,40 @@ export class BossController {
       this.startDefeatReaction();
       return true;
     }
-    this.hitFlashUntilMs = this.scene.time.now + BOSS_HIT_FLASH_DURATION_MS;
+    const timeMs = this.scene.time.now;
+    if (shouldStartBossHitFlash(this.lastHitFlashStartedAtMs, timeMs)) {
+      this.lastHitFlashStartedAtMs = timeMs;
+      this.hitFlashUntilMs = timeMs + BOSS_HIT_FLASH_DURATION_MS;
+    }
     this.lockVisualState();
     return false;
   }
 
   isActive(): boolean {
     return this.hp > 0 && !this.defeatStarted;
+  }
+
+  debugVisualState(): {
+    exists: boolean;
+    visible: boolean;
+    alpha: number;
+    scaleX: number;
+    scaleY: number;
+    flashActive: boolean;
+  } | null {
+    if (this.sprite === null) {
+      return null;
+    }
+
+    this.lockVisualState();
+    return {
+      exists: true,
+      visible: this.sprite.visible,
+      alpha: this.sprite.alpha,
+      scaleX: this.sprite.scaleX,
+      scaleY: this.sprite.scaleY,
+      flashActive: this.scene.time.now < this.hitFlashUntilMs,
+    };
   }
 
   private createSprite(): void {
