@@ -7,7 +7,7 @@ import {
   FINAL_WAVE_HEAVY_FIRE_INTERVAL_MS,
 } from './enemyTuning';
 import { configureManualArcadeBody, syncArcadeBody } from './physics';
-import type { EnemyType } from './types';
+import type { EnemyType, PowerUpType } from './types';
 import type { ProjectileManager } from './ProjectileManager';
 import { ENEMY_TEXTURE_KEYS } from './visualAssets';
 
@@ -24,6 +24,7 @@ type EnemyData = {
   originX: number;
   speed: number;
   bulletCount: number;
+  powerUpDrop?: PowerUpType;
 };
 
 export class EnemyManager {
@@ -39,11 +40,17 @@ export class EnemyManager {
   spawnWave(
     type: EnemyType,
     count: number,
-    options: { pressure?: 'normal' | 'reduced' } = {},
+    options: {
+      pressure?: 'normal' | 'reduced';
+      drops?: Array<{ enemyIndex: number; type: PowerUpType }>;
+    } = {},
   ): void {
     const spacing = GAME_WIDTH / (count + 1);
     for (let i = 0; i < count; i += 1) {
-      this.spawn(type, spacing * (i + 1), -40 - i * 18, options);
+      this.spawn(type, spacing * (i + 1), -40 - i * 18, {
+        pressure: options.pressure,
+        powerUpDrop: options.drops?.find((drop) => drop.enemyIndex === i)?.type,
+      });
     }
   }
 
@@ -84,6 +91,10 @@ export class EnemyManager {
     return (enemy.getData('enemy') as EnemyData).points;
   }
 
+  getPowerUpDrop(enemy: Phaser.GameObjects.GameObject): PowerUpType | null {
+    return (enemy.getData('enemy') as EnemyData).powerUpDrop ?? null;
+  }
+
   clear(): void {
     this.enemies.clear(true, true);
   }
@@ -96,7 +107,7 @@ export class EnemyManager {
     type: EnemyType,
     x: number,
     y: number,
-    options: { pressure?: 'normal' | 'reduced' },
+    options: { pressure?: 'normal' | 'reduced'; powerUpDrop?: PowerUpType },
   ): void {
     const config: Record<EnemyType, { hp: number; speed: number; points: number }> = {
       straight: { hp: 2, speed: 80, points: 100 },
@@ -122,6 +133,7 @@ export class EnemyManager {
       nextFireAtMs: 800 + Math.random() * 700,
       originX: x,
       speed: config[type].speed,
+      powerUpDrop: options.powerUpDrop,
       bulletCount:
         type === 'heavy'
           ? reducedPressure

@@ -1,4 +1,9 @@
-import type { EnemyType } from '../game/types';
+import type { EnemyType, PowerUpType } from '../game/types';
+
+export type StagePowerUpDrop = {
+  enemyIndex: number;
+  type: PowerUpType;
+};
 
 export type StageEvent =
   {
@@ -7,6 +12,7 @@ export type StageEvent =
     enemyType: EnemyType;
     count: number;
     pressure?: 'normal' | 'reduced';
+    drops?: StagePowerUpDrop[];
   };
 
 export class StageDirector {
@@ -49,10 +55,38 @@ export class StageDirector {
 export function createDefaultStage(): StageEvent[] {
   return [
     { atMs: 0, type: 'wave', enemyType: 'straight', count: 4 },
-    { atMs: 4200, type: 'wave', enemyType: 'straight', count: 5 },
+    {
+      atMs: 4200,
+      type: 'wave',
+      enemyType: 'straight',
+      count: 5,
+      drops: [{ enemyIndex: 2, type: 'shot' }],
+    },
     { atMs: 8200, type: 'wave', enemyType: 'sway', count: 4 },
-    { atMs: 12400, type: 'wave', enemyType: 'sway', count: 5 },
-    { atMs: 16800, type: 'wave', enemyType: 'heavy', count: 3 },
-    { atMs: 21200, type: 'wave', enemyType: 'heavy', count: 4, pressure: 'reduced' },
+    {
+      atMs: 12400,
+      type: 'wave',
+      enemyType: 'sway',
+      count: 5,
+      drops: [
+        { enemyIndex: 1, type: 'life' },
+        { enemyIndex: 3, type: 'score' },
+      ],
+    },
+    {
+      atMs: 16800,
+      type: 'wave',
+      enemyType: 'heavy',
+      count: 3,
+      drops: [{ enemyIndex: 1, type: 'shot' }],
+    },
+    {
+      atMs: 21200,
+      type: 'wave',
+      enemyType: 'heavy',
+      count: 4,
+      pressure: 'reduced',
+      drops: [{ enemyIndex: 2, type: 'score' }],
+    },
   ];
 }

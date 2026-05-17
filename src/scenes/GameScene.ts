@@ -132,6 +132,7 @@ export class GameScene extends Phaser.Scene {
     for (const event of this.stage.update(elapsedMs)) {
       this.enemies.spawnWave(event.enemyType, event.count, {
         pressure: event.pressure,
+        drops: event.drops,
       });
     }
 
@@ -141,7 +142,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.boss.update(timeMs, deltaMs);
-    this.powerUps.update(timeMs);
+    this.powerUps.update(timeMs, deltaMs);
     this.projectiles.update();
     this.checkBossHits();
     this.updateHud();
@@ -190,6 +191,7 @@ export class GameScene extends Phaser.Scene {
   ): void {
     bullet.destroy();
     const points = this.enemies.getPoints(enemy);
+    const powerUpDrop = this.enemies.getPowerUpDrop(enemy);
     const defeated = this.enemies.damage(enemy, 1);
     if (!defeated) {
       return;
@@ -197,8 +199,10 @@ export class GameScene extends Phaser.Scene {
 
     this.audio.play('enemyDown');
     this.score.addEnemyDefeat(points, this.time.now);
-    const enemyObject = enemy as unknown as { x: number; y: number };
-    this.powerUps.maybeDrop(enemyObject.x, enemyObject.y);
+    if (powerUpDrop !== null) {
+      const enemyObject = enemy as unknown as { x: number; y: number };
+      this.powerUps.drop(powerUpDrop, enemyObject.x, enemyObject.y);
+    }
   }
 
   private onPlayerHit(

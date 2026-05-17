@@ -37,23 +37,16 @@ type PowerUpSprite = Phaser.GameObjects.Arc & {
 export const POWER_UP_SCROLL_SPEED = 70;
 export const POWER_UP_LIFETIME_MS = 5600;
 export const POWER_UP_BLINK_AFTER_MS = 3800;
-const POWER_UP_SPAWN_SPREAD_X = 34;
-const POWER_UP_SPAWN_LIFT_Y = 12;
-
 export type PowerUpSpawnPoint = {
   x: number;
   y: number;
 };
 
-export function createPowerUpSpawnPoint(
+export function createPowerUpPosition(
   x: number,
   y: number,
-  random: () => number = Math.random,
 ): PowerUpSpawnPoint {
-  return {
-    x: x + (random() - 0.5) * POWER_UP_SPAWN_SPREAD_X * 2,
-    y: y - POWER_UP_SPAWN_LIFT_Y + (random() - 0.5) * 18,
-  };
+  return { x, y };
 }
 
 export function computePowerUpAlpha(ageMs: number): number {
@@ -74,19 +67,13 @@ export class PowerUpDropManager {
     this.items = scene.physics.add.group();
   }
 
-  maybeDrop(x: number, y: number): void {
-    if (Math.random() > 0.35) {
-      return;
-    }
-
-    const roll = Math.random();
-    const type: PowerUpType = roll < 0.45 ? 'shot' : roll < 0.65 ? 'life' : 'score';
+  drop(type: PowerUpType, x: number, y: number): void {
     const color: Record<PowerUpType, number> = {
       shot: 0x6ffcff,
       life: 0x61ff77,
       score: 0xfff06a,
     };
-    const spawnPoint = createPowerUpSpawnPoint(x, y);
+    const spawnPoint = createPowerUpPosition(x, y);
     const item = this.scene.add.circle(
       spawnPoint.x,
       spawnPoint.y,
@@ -99,13 +86,16 @@ export class PowerUpDropManager {
     item.setData('spawnedAtMs', this.scene.time.now);
     this.scene.physics.add.existing(item);
     item.body.setCircle(9);
-    item.body.setVelocityY(POWER_UP_SCROLL_SPEED);
+    item.body.setVelocityY(0);
     this.items.add(item);
   }
 
-  update(timeMs: number = this.scene.time.now): void {
+  update(timeMs: number = this.scene.time.now, deltaMs = this.scene.game.loop.delta): void {
+    const deltaSeconds = deltaMs / 1000;
     for (const child of this.items.getChildren()) {
       const item = child as PowerUpSprite;
+      item.y += POWER_UP_SCROLL_SPEED * deltaSeconds;
+      item.body.updateFromGameObject();
       const spawnedAtMs = Number(item.getData('spawnedAtMs') ?? timeMs);
       const ageMs = timeMs - spawnedAtMs;
       const alpha = computePowerUpAlpha(ageMs);

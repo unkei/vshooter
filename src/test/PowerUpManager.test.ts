@@ -5,7 +5,7 @@ import {
   POWER_UP_SCROLL_SPEED,
   applyPowerUp,
   computePowerUpAlpha,
-  createPowerUpSpawnPoint,
+  createPowerUpPosition,
 } from '../systems/PowerUpManager';
 
 describe('applyPowerUp', () => {
@@ -45,13 +45,12 @@ describe('applyPowerUp', () => {
     });
   });
 
-  it('spawns drops near the defeated enemy instead of at one fixed point', () => {
-    const first = createPowerUpSpawnPoint(240, 160, () => 0);
-    const second = createPowerUpSpawnPoint(240, 160, () => 1);
+  it('spawns deterministic drops at the defeated enemy position', () => {
+    const first = createPowerUpPosition(240, 160);
+    const second = createPowerUpPosition(240, 160);
 
-    expect(first).not.toEqual(second);
-    expect(first.x).toBeLessThan(240);
-    expect(second.x).toBeGreaterThan(240);
+    expect(first).toEqual({ x: 240, y: 160 });
+    expect(second).toEqual(first);
   });
 
   it('scrolls, blinks near expiry, then expires power-up items', () => {

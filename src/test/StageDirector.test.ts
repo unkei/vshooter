@@ -50,4 +50,18 @@ describe('StageDirector', () => {
     ]);
     expect(events.every((event) => event.type === 'wave')).toBe(true);
   });
+
+  it('marks specific enemies as deterministic power-up carriers', () => {
+    const waves = createDefaultStage();
+    const drops = waves.flatMap((wave) => wave.drops ?? []);
+
+    expect(drops).toEqual(
+      expect.arrayContaining([
+        { enemyIndex: 2, type: 'shot' },
+        { enemyIndex: 1, type: 'life' },
+        { enemyIndex: 3, type: 'score' },
+      ]),
+    );
+    expect(drops).toHaveLength(5);
+  });
 });

@@ -169,10 +169,12 @@ Initial item types:
 Power-ups should create risk/reward: the player may need to move into danger to
 collect them.
 
-Power-up drops should appear near the defeated enemy with a small random offset
-instead of at a fixed-looking point. Items scroll downward with the stage, remain
-collectible for a short lifetime, blink near expiry, and then disappear. The
-blink should warn the player without changing the item type or collision.
+Power-up drops should be deterministic stage design, not random chance. Each wave
+may mark specific enemy indexes as carriers for a specific item type; only those
+enemies drop items when defeated. Drops should appear at the defeated enemy
+position, then flow downward with the stage scroll, remain collectible for a
+short lifetime, blink near expiry, and disappear. The blink should warn the
+player without changing the item type or collision.
 
 ### `ScoreManager`
 
