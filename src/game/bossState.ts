@@ -7,11 +7,16 @@ export const BOSS_MAX_HP = 1890;
 export const BOSS_HIT_FEEDBACK_MODE = 'tint-flash';
 export const BOSS_HIT_FLASH_DURATION_MS = 90;
 export const BOSS_HIT_FLASH_MIN_INTERVAL_MS = 170;
+export const BOSS_HIT_FLASH_OVERLAY_ALPHA = 0.48;
 export const BOSS_LOCKS_VISUAL_STATE_ON_HIT = true;
+export const BOSS_PRESERVES_BASE_SPRITE_DURING_HIT_FLASH = true;
 export const BOSS_USES_CAMERA_FLASH = false;
 export const BOSS_DEFEAT_FADES_SPRITE = false;
 export const BOSS_ENTRANCE_DELAY_MS = 1700;
-export const BOSS_DEFEAT_CLEAR_DELAY_MS = 1500;
+export const BOSS_DEFEAT_CLEAR_DELAY_MS = 1800;
+export const BOSS_DEFEAT_SPRITE_DEPTH = 34;
+export const BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS = BOSS_DEFEAT_CLEAR_DELAY_MS;
+export const BOSS_DEFEAT_USES_DEDICATED_BODY = true;
 
 export type BossDefeatBurst = {
   x: number;

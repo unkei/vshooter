@@ -7,9 +7,23 @@ export type VShooterDebugHooks = {
     exists: boolean;
     visible: boolean;
     alpha: number;
+    depth: number;
+    x: number;
+    y: number;
     scaleX: number;
     scaleY: number;
     flashActive: boolean;
+    defeatBodyVisible: boolean;
+    flashOverlay: {
+      visible: boolean;
+      alpha: number;
+      x: number;
+      y: number;
+    } | null;
+  } | null;
+  getPlayerState: () => {
+    x: number;
+    y: number;
   } | null;
   getActiveScene: () => string | null;
 };

@@ -1,6 +1,12 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../game/constants';
+import { getSharedAudioManager } from '../systems/AudioManager';
 import { FreshPressGate } from '../systems/InputGate';
+import {
+  CLEAR_RESULT_RETURN_DELAY_MS,
+  resultPromptText,
+  resultReturnsToTitleAutomatically,
+} from './resultFlow';
 
 export type ResultSceneData = {
   status: 'clear' | 'gameover';
@@ -67,15 +73,27 @@ export class ResultScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(GAME_WIDTH / 2, 500, 'Enter / Click / Gamepad Start: Retry', {
-        fontSize: '18px',
-        color: '#fff06a',
-      })
+      .text(
+        GAME_WIDTH / 2,
+        500,
+        resultPromptText(this.dataFromRun.status),
+        {
+          fontSize: '18px',
+          color: '#fff06a',
+        },
+      )
       .setOrigin(0.5);
 
+    if (resultReturnsToTitleAutomatically(this.dataFromRun.status)) {
+      this.time.delayedCall(CLEAR_RESULT_RETURN_DELAY_MS, () => this.returnToTitle());
+    }
   }
 
   update(): void {
+    if (resultReturnsToTitleAutomatically(this.dataFromRun.status)) {
+      return;
+    }
+
     const pad = this.input.gamepad?.pad1;
     const keyboardConfirm = this.enterKey?.isDown ?? false;
     const pointerConfirm = this.input.activePointer.isDown;
@@ -94,6 +112,13 @@ export class ResultScene extends Phaser.Scene {
 
   private retry(): void {
     this.input.keyboard?.resetKeys();
+    void getSharedAudioManager().start();
     this.scene.start('GameScene');
+  }
+
+  private returnToTitle(): void {
+    getSharedAudioManager().stop();
+    this.input.keyboard?.resetKeys();
+    this.scene.start('TitleScene');
   }
 }

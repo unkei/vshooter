@@ -8,6 +8,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
+    getSharedAudioManager().stop();
     this.cameras.main.setBackgroundColor(0x050710);
     this.addStarfield();
 
@@ -55,7 +56,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private startGame(): void {
-    void getSharedAudioManager().start();
+    void getSharedAudioManager().start('gameplay');
     this.scene.start('GameScene');
   }
 

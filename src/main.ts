@@ -10,6 +10,7 @@ import {
   type VShooterDebugHooks,
   type VShooterDebugStatus,
 } from './systems/DebugHooks';
+import { installGamepadShutdownGuard } from './systems/GamepadShutdownGuard';
 
 declare global {
   interface Window {
@@ -17,6 +18,8 @@ declare global {
     __vshooterDebugStatus?: VShooterDebugStatus;
   }
 }
+
+installGamepadShutdownGuard(Phaser);
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -91,6 +94,13 @@ if (typeof window !== 'undefined') {
       }
       return null;
     };
+    const getPlayerState = (): ReturnType<GameScene['debugPlayerState']> | null => {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        return scene.debugPlayerState();
+      }
+      return null;
+    };
 
     window.__vshooterDebug = {
       defeatBoss,
@@ -98,6 +108,7 @@ if (typeof window !== 'undefined') {
       spawnBoss,
       damageBoss,
       getBossVisualState,
+      getPlayerState,
       getActiveScene: () => game.scene.getScenes(true)[0]?.scene.key ?? null,
     };
 

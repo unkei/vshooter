@@ -311,6 +311,13 @@ export class GameScene extends Phaser.Scene {
     return this.boss.debugVisualState();
   }
 
+  debugPlayerState(): { x: number; y: number } {
+    return {
+      x: this.player.sprite.x,
+      y: this.player.sprite.y,
+    };
+  }
+
   private scheduleStageClear(): void {
     if (this.clearPending) {
       return;

@@ -2,12 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   BOSS_DEFEAT_CLEAR_DELAY_MS,
   BOSS_DEFEAT_FADES_SPRITE,
+  BOSS_DEFEAT_SPRITE_DEPTH,
+  BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS,
+  BOSS_DEFEAT_USES_DEDICATED_BODY,
   BOSS_ENTRANCE_DELAY_MS,
   BOSS_HIT_FEEDBACK_MODE,
   BOSS_HIT_FLASH_DURATION_MS,
   BOSS_HIT_FLASH_MIN_INTERVAL_MS,
+  BOSS_HIT_FLASH_OVERLAY_ALPHA,
   BOSS_LOCKS_VISUAL_STATE_ON_HIT,
   BOSS_MAX_HP,
+  BOSS_PRESERVES_BASE_SPRITE_DURING_HIT_FLASH,
   BOSS_USES_CAMERA_FLASH,
   createBossDefeatBursts,
   configureBossBody,
@@ -74,6 +79,14 @@ describe('isRenderableBossSprite', () => {
     expect(BOSS_DEFEAT_CLEAR_DELAY_MS).toBeGreaterThanOrEqual(1200);
   });
 
+  it('keeps the boss sprite present through the defeat reaction', () => {
+    expect(BOSS_DEFEAT_USES_DEDICATED_BODY).toBe(true);
+    expect(BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS).toBeGreaterThanOrEqual(
+      BOSS_DEFEAT_CLEAR_DELAY_MS,
+    );
+    expect(BOSS_DEFEAT_SPRITE_DEPTH).toBeGreaterThanOrEqual(34);
+  });
+
   it('uses a short stable flash for normal boss hits', () => {
     expect(BOSS_HIT_FEEDBACK_MODE).toBe('tint-flash');
     expect(BOSS_HIT_FLASH_DURATION_MS).toBeGreaterThanOrEqual(60);
@@ -82,6 +95,12 @@ describe('isRenderableBossSprite', () => {
       BOSS_HIT_FLASH_DURATION_MS,
     );
     expect(BOSS_LOCKS_VISUAL_STATE_ON_HIT).toBe(true);
+  });
+
+  it('keeps the base boss visible under a partial white hit flash overlay', () => {
+    expect(BOSS_PRESERVES_BASE_SPRITE_DURING_HIT_FLASH).toBe(true);
+    expect(BOSS_HIT_FLASH_OVERLAY_ALPHA).toBeGreaterThanOrEqual(0.35);
+    expect(BOSS_HIT_FLASH_OVERLAY_ALPHA).toBeLessThanOrEqual(0.65);
   });
 
   it('does not restart boss hit flash on every rapid-fire hit', () => {

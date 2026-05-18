@@ -166,4 +166,25 @@ describe('AudioManager', () => {
       CLEAR_MUSIC_LAYER_COUNT + 1,
     );
   });
+
+  it('stops clear BGM before returning to a silent title', () => {
+    const context = new FakeAudioContext();
+    context.state = 'running';
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        constructor() {
+          return context;
+        }
+      },
+    );
+    const audio = new AudioManager();
+
+    void audio.start('clear');
+    audio.stop();
+
+    const musicOscillators = context.oscillators.slice(1);
+    expect(musicOscillators).toHaveLength(CLEAR_MUSIC_LAYER_COUNT);
+    expect(musicOscillators.every((oscillator) => oscillator.stopped)).toBe(true);
+  });
 });

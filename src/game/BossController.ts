@@ -2,7 +2,10 @@ import Phaser from 'phaser';
 import { GAME_WIDTH } from './constants';
 import {
   BOSS_HIT_FLASH_DURATION_MS,
+  BOSS_HIT_FLASH_OVERLAY_ALPHA,
   BOSS_MAX_HP,
+  BOSS_DEFEAT_SPRITE_DEPTH,
+  BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS,
   configureBossBody,
   createBossDefeatBursts,
   disableBossBody,
@@ -19,6 +22,8 @@ type BossSprite = Phaser.GameObjects.Image & {
 
 export class BossController {
   sprite: BossSprite | null = null;
+  private hitFlashOverlay: Phaser.GameObjects.Image | null = null;
+  private defeatBody: Phaser.GameObjects.Image | null = null;
   private hp = 0;
   private readonly maxHp = BOSS_MAX_HP;
   private nextFireAtMs = 0;
@@ -63,10 +68,10 @@ export class BossController {
       return;
     }
 
-    this.lockVisualState();
     this.sprite.y = 120 + Math.sin(timeMs / 1200) * 12;
     this.sprite.x = GAME_WIDTH / 2 + Math.sin(timeMs / 900) * 120;
     syncArcadeBody(this.sprite);
+    this.lockVisualState();
 
     if (timeMs >= this.nextFireAtMs) {
       const phase = this.hp / this.maxHp > 0.5 ? 0 : 1;
@@ -111,33 +116,68 @@ export class BossController {
     exists: boolean;
     visible: boolean;
     alpha: number;
+    depth: number;
+    x: number;
+    y: number;
     scaleX: number;
     scaleY: number;
     flashActive: boolean;
+    defeatBodyVisible: boolean;
+    flashOverlay: {
+      visible: boolean;
+      alpha: number;
+      x: number;
+      y: number;
+    } | null;
   } | null {
-    if (this.sprite === null) {
+    const visualBody = this.defeatBody ?? this.sprite;
+    if (visualBody === null) {
       return null;
     }
 
-    this.lockVisualState();
     return {
       exists: true,
-      visible: this.sprite.visible,
-      alpha: this.sprite.alpha,
-      scaleX: this.sprite.scaleX,
-      scaleY: this.sprite.scaleY,
+      visible: visualBody.visible,
+      alpha: visualBody.alpha,
+      depth: visualBody.depth,
+      x: visualBody.x,
+      y: visualBody.y,
+      scaleX: visualBody.scaleX,
+      scaleY: visualBody.scaleY,
       flashActive: this.scene.time.now < this.hitFlashUntilMs,
+      defeatBodyVisible: this.defeatBody?.visible === true,
+      flashOverlay:
+        this.hitFlashOverlay === null
+          ? null
+          : {
+              visible: this.hitFlashOverlay.visible,
+              alpha: this.hitFlashOverlay.alpha,
+              x: this.hitFlashOverlay.x,
+              y: this.hitFlashOverlay.y,
+            },
     };
   }
 
   private createSprite(): void {
     this.sprite?.destroy();
+    this.hitFlashOverlay?.destroy();
+    this.defeatBody?.destroy();
+    this.defeatBody = null;
     this.sprite = this.scene.add.image(
       GAME_WIDTH / 2,
       120,
       BOSS_TEXTURE_KEY,
     ) as BossSprite;
     this.sprite.setDepth(20);
+    this.hitFlashOverlay = this.scene.add.image(
+      this.sprite.x,
+      this.sprite.y,
+      BOSS_TEXTURE_KEY,
+    );
+    this.hitFlashOverlay.setDepth(21);
+    this.hitFlashOverlay.setTintFill(0xffffff);
+    this.hitFlashOverlay.setAlpha(0);
+    this.hitFlashOverlay.setVisible(false);
     this.lockVisualState();
     this.scene.physics.add.existing(this.sprite);
     this.sprite.body.setSize(136, 64);
@@ -152,13 +192,25 @@ export class BossController {
 
     this.sprite.setVisible(true);
     this.sprite.setAlpha(1);
-    if (this.scene.time.now < this.hitFlashUntilMs) {
-      this.sprite.setTint(0xffffff);
-    } else {
-      this.sprite.clearTint();
-    }
+    this.sprite.clearTint();
     this.sprite.setBlendMode(Phaser.BlendModes.NORMAL);
     this.sprite.setScale(1);
+
+    if (this.hitFlashOverlay === null) {
+      return;
+    }
+
+    this.hitFlashOverlay.setPosition(this.sprite.x, this.sprite.y);
+    this.hitFlashOverlay.setAngle(this.sprite.angle);
+    this.hitFlashOverlay.setScale(this.sprite.scaleX, this.sprite.scaleY);
+    this.hitFlashOverlay.setBlendMode(Phaser.BlendModes.ADD);
+    if (this.scene.time.now < this.hitFlashUntilMs) {
+      this.hitFlashOverlay.setVisible(true);
+      this.hitFlashOverlay.setAlpha(BOSS_HIT_FLASH_OVERLAY_ALPHA);
+    } else {
+      this.hitFlashOverlay.setAlpha(0);
+      this.hitFlashOverlay.setVisible(false);
+    }
   }
 
   private drawHealthBar(): void {
@@ -185,23 +237,36 @@ export class BossController {
     this.defeatStarted = true;
     this.healthBar?.clear();
     this.projectiles.clearEnemyBullets();
+    this.hitFlashOverlay?.destroy();
+    this.hitFlashOverlay = null;
 
     if (this.sprite === null) {
       return;
     }
 
-    const { x, y } = this.sprite;
+    const { x, y, angle, scaleX, scaleY } = this.sprite;
     disableBossBody(this.sprite.body);
+    this.sprite.destroy();
+    this.sprite = null;
+
+    this.defeatBody = this.scene.add.image(x, y, BOSS_TEXTURE_KEY);
+    this.defeatBody.setDepth(BOSS_DEFEAT_SPRITE_DEPTH);
+    this.defeatBody.setVisible(true);
+    this.defeatBody.setAlpha(1);
+    this.defeatBody.clearTint();
+    this.defeatBody.setBlendMode(Phaser.BlendModes.NORMAL);
+    this.defeatBody.setAngle(angle);
+    this.defeatBody.setScale(scaleX, scaleY);
     this.scene.tweens.add({
-      targets: this.sprite,
+      targets: this.defeatBody,
       angle: 18,
       scaleX: 1.35,
       scaleY: 1.35,
-      duration: 900,
+      duration: BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS,
       ease: 'Cubic.easeOut',
       onComplete: () => {
-        this.sprite?.destroy();
-        this.sprite = null;
+        this.defeatBody?.destroy();
+        this.defeatBody = null;
       },
     });
 

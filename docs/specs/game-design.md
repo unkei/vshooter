@@ -278,9 +278,12 @@ Current tuning target:
   previous 630 HP budget.
 - Boss movement should be driven only by its scripted motion. Bullet hits should
   damage the boss without nudging or shaking its position.
-- Normal boss hit feedback should use a short tint flash so hits are readable.
-  The flash must not move, scale, hide, fade, or otherwise destabilize the boss
-  sprite; it should return to the normal opaque boss appearance automatically.
+- Normal boss hit feedback should use a short white flash overlay so hits are
+  readable. The base boss sprite must remain visible and fully opaque underneath
+  the overlay; the flash must not move, scale, hide, fade, or otherwise
+  destabilize the boss sprite, and it should clear automatically. The flash
+  overlay must be synchronized after the boss scripted movement for the current
+  frame, so it cannot momentarily appear at a previous boss position.
 - Boss-related events should avoid full-screen camera flashes and boss alpha
   fades because these read as boss flicker on mobile displays. Boss entrance,
   normal hits, and defeat should keep the boss sprite continuously opaque while
@@ -296,16 +299,34 @@ Current tuning target:
   non-flashing sample after the initial hit flash window.
 - Defeating the boss should play a visible reaction before moving to the clear
   result screen, so the final hit has impact instead of cutting away instantly.
-  It should also play a distinct explosion sound effect. On boss entrance and on
-  boss defeat, all active player bullets should be cleared and player firing
-  should be paused until the transition has ended, so stale bullets cannot carry
-  into the boss intro or clear sequence.
+  The boss body should remain visible and opaque for the full defeat reaction
+  while explosion bursts play around it, so the explosions clearly read as the
+  boss being destroyed rather than effects in empty space. During the defeat
+  reaction, a dedicated visible boss body should render on the defeat visual
+  layer, just below the explosion rings, and remain visible until the clear
+  transition begins. It should also play a distinct explosion sound effect. On
+  boss entrance and on boss defeat, all active player bullets should be cleared
+  and player firing should be paused until the transition has ended, so stale
+  bullets cannot carry into the boss intro or clear sequence.
 - Stage clear should not jump straight to the retry result screen. After the
   boss defeat reaction, show a clear bonus scene with score, clear bonus, combo
   bonus, and total score, then animate the player ship warping upward toward the
   next stage before entering the result/retry screen. The clear bonus scene
   should play a distinct clear BGM and count bonus displays upward from 0 to the
   awarded bonus values.
+- The clear result screen should be temporary. After a readable delay it should
+  stop any clear BGM and return to the title screen automatically. The title
+  screen must remain silent until the next explicit start input. Regression
+  expectation: clear BGM does not continue on the title screen, while starting
+  from the title calls the shared audio manager from the user input handler so
+  suspended Web Audio contexts can resume on iOS Safari.
+- Chrome may expose connected gamepads in sparse `navigator.getGamepads()` slots
+  such as index 1 with index 0 empty. Scene transitions must avoid Phaser
+  shutdown errors from those sparse slots while preserving the original pad
+  indexes, so replaying after a result screen keeps gamepad retry and gameplay
+  movement working. Regression expectation: with a sparse Chrome-style gamepad,
+  clearing or ending a run does not throw during scene shutdown, and after retry
+  the same pad can still move the player.
 - The final regular wave should use lower heavy-enemy bullet density than the
   earlier heavy wave to keep the boss approach readable.
 
