@@ -21,6 +21,7 @@ import { normalizeInput, type RawInputState } from '../systems/InputManager';
 import { PowerUpDropManager } from '../systems/PowerUpManager';
 import { ScoreManager } from '../systems/ScoreManager';
 import { createDefaultStage, StageDirector } from '../systems/StageDirector';
+import { VibrationManager } from '../systems/VibrationManager';
 
 type CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -34,6 +35,7 @@ export class GameScene extends Phaser.Scene {
   private powerUps!: PowerUpDropManager;
   private score!: ScoreManager;
   private stage!: StageDirector;
+  private vibration = new VibrationManager();
   private audio = getSharedAudioManager();
   private startedAtMs: number | null = null;
   private hud!: Phaser.GameObjects.Text;
@@ -217,6 +219,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.audio.play('damage');
+    this.vibration.damage(this.player.lives, PLAYER_MAX_LIVES);
     this.score.registerDamage();
     if (this.player.isDead()) {
       this.finish('gameover');
@@ -227,6 +230,7 @@ export class GameScene extends Phaser.Scene {
     const type = item.getData('type') as PowerUpType;
     item.destroy();
     this.audio.play('pickup');
+    this.vibration.powerUp();
 
     if (type === 'shot') {
       this.player.upgradeShot(PLAYER_MAX_SHOT_LEVEL);
