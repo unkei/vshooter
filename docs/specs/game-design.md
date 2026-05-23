@@ -396,7 +396,9 @@ visual center, that frame may use a small runtime draw offset inside the fixed
 frame box instead of widening the crop. Regression expectation: no boss
 animation frame should show slivers from adjacent boss sprites at either edge. In
 the curated v2 sheet, boss frames should not require runtime draw offsets because
-the source cells already include the needed transparent padding.
+the source cells already include the needed transparent padding. Boss cells in
+the curated sheet should also align the rendered body center in the runtime
+frame, so stronger flame frames do not make the ship appear to step sideways.
 Enemy animation crop boxes should be rechecked against the source sheet when
 changed so their visible centers remain consistent across all frames for each
 enemy type.
