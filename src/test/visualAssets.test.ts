@@ -85,7 +85,7 @@ describe('generated visual assets', () => {
         flipY: true,
         crops: [
           { x: 20, y: 20, width: 285, height: 420 },
-          { x: 325, y: 20, width: 285, height: 420 },
+          { x: 330, y: 20, width: 285, height: 420 },
           { x: 630, y: 20, width: 285, height: 420 },
           { x: 925, y: 20, width: 285, height: 420 },
         ],
