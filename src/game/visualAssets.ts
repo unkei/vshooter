@@ -95,7 +95,7 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     flipY: true,
     crops: [
       { x: 30, y: 265, width: 285, height: 420 },
-      { x: 335, y: 265, width: 285, height: 420 },
+      { x: 340, y: 265, width: 285, height: 420, drawOffsetX: 5 },
       { x: 625, y: 265, width: 285, height: 420, drawOffsetX: 10 },
       { x: 915, y: 265, width: 285, height: 420, drawOffsetX: 5 },
     ],

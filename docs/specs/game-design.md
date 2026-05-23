@@ -390,9 +390,11 @@ runtime frame. The boss crop should include enough source-sheet lower area to
 preserve engine flames after vertical flipping, so display-time upper flames are
 not clipped. If a safe crop avoids neighboring sprites but shifts a frame's
 visual center, that frame may use a small runtime draw offset inside the fixed
-frame box instead of widening the crop. Enemy animation crop boxes should be
-rechecked against the source sheet when changed so their visible centers remain
-consistent across all frames for each enemy type.
+frame box instead of widening the crop. Regression expectation: no boss
+animation frame should show slivers from adjacent boss sprites at either edge.
+Enemy animation crop boxes should be rechecked against the source sheet when
+changed so their visible centers remain consistent across all frames for each
+enemy type.
 When generated boss frames differ too much in silhouette or scale, use only the
 matching frames that preserve a stable tall boss body, even if that means a
 shorter two-frame boss animation.

@@ -85,7 +85,7 @@ describe('generated visual assets', () => {
         flipY: true,
         crops: [
           { x: 30, y: 265, width: 285, height: 420 },
-          { x: 335, y: 265, width: 285, height: 420 },
+          { x: 340, y: 265, width: 285, height: 420, drawOffsetX: 5 },
           { x: 625, y: 265, width: 285, height: 420, drawOffsetX: 10 },
           { x: 915, y: 265, width: 285, height: 420, drawOffsetX: 5 },
         ],
@@ -107,7 +107,7 @@ describe('generated visual assets', () => {
       { width: 285, height: 420 },
       { width: 285, height: 420 },
     ]);
-    expect(boss?.crops.map((crop) => crop.drawOffsetX ?? 0)).toEqual([0, 0, 10, 5]);
+    expect(boss?.crops.map((crop) => crop.drawOffsetX ?? 0)).toEqual([0, 5, 10, 5]);
   });
 
   it('queues only the source sprite sheet image for Phaser preload', () => {
