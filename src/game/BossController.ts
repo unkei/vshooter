@@ -185,7 +185,7 @@ export class BossController {
     this.hitFlashOverlay.setVisible(false);
     this.lockVisualState();
     this.scene.physics.add.existing(this.sprite);
-    this.sprite.body.setSize(88, 116);
+    this.sprite.body.setSize(124, 168);
     configureBossBody(this.sprite.body);
     syncArcadeBody(this.sprite);
   }

@@ -376,13 +376,17 @@ under stable texture keys. Player, enemy, and boss sprites may loop subtle
 idle/thruster animation frames. The animation must not change gameplay collision
 bodies, boss opacity, boss scale, or bullet readability. The boss runtime
 spritesheet should preserve the source art's tall aspect ratio instead of
-stretching it into the previous wide generated-placeholder shape. Enemy-side
-sprites that face the wrong vertical direction in the generated source sheet
-should be flipped while generating the runtime spritesheets, not by changing
-gameplay movement.
+stretching it into the previous wide generated-placeholder shape, and should
+display the boss closer to the source sheet's large craft size than the earlier
+small placeholder-sized runtime frame. Enemy-side sprites that face the wrong
+vertical direction in the generated source sheet should be flipped while
+generating the runtime spritesheets, not by changing gameplay movement.
 Regression expectation: player, regular enemy, heavy enemy, and boss animation
 frames should keep their visible body centered in the same runtime frame box, so
-idle/thruster animation does not make the craft appear to jump or slide.
+idle/thruster animation does not make the craft appear to jump or slide. Boss
+animation frames should use equal source crop dimensions and a larger tall
+runtime frame, so thruster-frame differences do not cause horizontal sliding or
+aspect-ratio changes.
 When generated boss frames differ too much in silhouette or scale, use only the
 matching frames that preserve a stable tall boss body, even if that means a
 shorter two-frame boss animation.

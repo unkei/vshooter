@@ -88,13 +88,13 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
   },
   {
     key: BOSS_TEXTURE_KEY,
-    frameWidth: 104,
-    frameHeight: 142,
+    frameWidth: 146,
+    frameHeight: 200,
     frameRate: 4,
     flipY: true,
     crops: [
-      { x: 35, y: 265, width: 285, height: 390 },
-      { x: 350, y: 265, width: 285, height: 390 },
+      { x: 39, y: 250, width: 300, height: 410 },
+      { x: 335, y: 250, width: 300, height: 410 },
     ],
   },
 ];

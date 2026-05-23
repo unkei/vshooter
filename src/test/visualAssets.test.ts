@@ -79,15 +79,28 @@ describe('generated visual assets', () => {
       },
       {
         key: BOSS_TEXTURE_KEY,
-        frameWidth: 104,
-        frameHeight: 142,
+        frameWidth: 146,
+        frameHeight: 200,
         frameRate: 4,
         flipY: true,
         crops: [
-          { x: 35, y: 265, width: 285, height: 390 },
-          { x: 350, y: 265, width: 285, height: 390 },
+          { x: 39, y: 250, width: 300, height: 410 },
+          { x: 335, y: 250, width: 300, height: 410 },
         ],
       },
+    ]);
+  });
+
+  it('keeps boss frames large, tall, and matched to equal source crop boxes', () => {
+    const boss = CHARACTER_SPRITES.find((sprite) => sprite.key === BOSS_TEXTURE_KEY);
+
+    expect(boss).toBeDefined();
+    expect(boss?.frameWidth).toBeGreaterThanOrEqual(140);
+    expect(boss?.frameHeight).toBeGreaterThanOrEqual(190);
+    expect((boss?.frameWidth ?? 0) / (boss?.frameHeight ?? 1)).toBeCloseTo(300 / 410, 2);
+    expect(boss?.crops.map(({ width, height }) => ({ width, height }))).toEqual([
+      { width: 300, height: 410 },
+      { width: 300, height: 410 },
     ]);
   });
 
