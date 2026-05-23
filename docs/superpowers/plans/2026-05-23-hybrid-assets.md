@@ -18,7 +18,7 @@
 - Modify: `src/scenes/GameScene.ts`
 - Modify: `src/scenes/ClearBonusScene.ts`
 - Modify: `src/test/visualAssets.test.ts`
-- Create: `public/assets/sprites/*.png`
+- Create: `public/assets/sprites/source/pixel-space-shooter-sheet.png`
 
 - [x] Add the hybrid external asset direction to the game design spec.
 - [x] Add a stable external visual asset manifest.
@@ -26,8 +26,10 @@
 - [x] Keep generated character textures as per-key fallback.
 - [x] Add initial placeholder assets under `public/assets/visual/`.
 - [x] Verify with unit tests, build, and browser smoke check.
-- [x] Replace placeholder SVG assets with generated PNG spritesheets under `public/assets/sprites/`.
-- [x] Add subtle looping animation playback for loaded character spritesheets.
+- [x] Replace placeholder SVG assets with one transparent generated source sheet under `public/assets/sprites/source/`.
+- [x] Generate character spritesheets dynamically at startup from source-sheet crop metadata.
+- [x] Flip enemy-side source frames vertically during runtime spritesheet generation.
+- [x] Add subtle looping animation playback for runtime character spritesheets.
 
 ### Task 2: External Audio Follow-Up
 

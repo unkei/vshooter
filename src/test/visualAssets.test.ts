@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   BOSS_TEXTURE_KEY,
+  CHARACTER_SPRITE_SHEET,
+  CHARACTER_SPRITES,
   ENEMY_TEXTURE_KEYS,
-  EXTERNAL_VISUAL_ASSETS,
   CHARACTER_ANIMATION_KEYS,
   PLAYER_TEXTURE_KEY,
   createCharacterAnimations,
@@ -21,77 +22,90 @@ describe('generated visual assets', () => {
     expect(BOSS_TEXTURE_KEY).toBe('vshooter.boss.carrier');
   });
 
-  it('defines a stable placeholder manifest for external character assets', () => {
-    expect(EXTERNAL_VISUAL_ASSETS).toEqual([
+  it('defines one source sheet and dynamic crop metadata for character assets', () => {
+    expect(CHARACTER_SPRITE_SHEET).toEqual({
+      key: 'vshooter.source.pixelSpaceShooterSheet',
+      path: 'assets/sprites/source/pixel-space-shooter-sheet.png',
+    });
+    expect(CHARACTER_SPRITES).toEqual([
       {
         key: PLAYER_TEXTURE_KEY,
-        path: 'assets/sprites/player-ship.png',
         frameWidth: 48,
         frameHeight: 54,
-        frames: 4,
+        frameRate: 6,
+        flipY: false,
+        crops: [
+          { x: 40, y: 680, width: 100, height: 165 },
+          { x: 195, y: 680, width: 100, height: 165 },
+          { x: 340, y: 680, width: 100, height: 165 },
+          { x: 480, y: 680, width: 100, height: 165 },
+        ],
       },
       {
         key: ENEMY_TEXTURE_KEYS.straight,
-        path: 'assets/sprites/enemy-straight.png',
         frameWidth: 36,
         frameHeight: 40,
-        frames: 3,
+        frameRate: 5,
+        flipY: true,
+        crops: [
+          { x: 40, y: 105, width: 95, height: 120 },
+          { x: 170, y: 105, width: 95, height: 120 },
+          { x: 295, y: 105, width: 95, height: 120 },
+        ],
       },
       {
         key: ENEMY_TEXTURE_KEYS.sway,
-        path: 'assets/sprites/enemy-sway.png',
         frameWidth: 40,
         frameHeight: 40,
-        frames: 3,
+        frameRate: 5,
+        flipY: true,
+        crops: [
+          { x: 425, y: 120, width: 125, height: 105 },
+          { x: 555, y: 120, width: 125, height: 105 },
+          { x: 685, y: 120, width: 125, height: 105 },
+        ],
       },
       {
         key: ENEMY_TEXTURE_KEYS.heavy,
-        path: 'assets/sprites/enemy-heavy.png',
         frameWidth: 50,
         frameHeight: 50,
-        frames: 3,
+        frameRate: 4,
+        flipY: true,
+        crops: [
+          { x: 820, y: 55, width: 115, height: 190 },
+          { x: 960, y: 55, width: 115, height: 190 },
+          { x: 1105, y: 55, width: 115, height: 190 },
+        ],
       },
       {
         key: BOSS_TEXTURE_KEY,
-        path: 'assets/sprites/boss-carrier.png',
         frameWidth: 152,
         frameHeight: 84,
-        frames: 4,
+        frameRate: 4,
+        flipY: true,
+        crops: [
+          { x: 35, y: 265, width: 285, height: 390 },
+          { x: 350, y: 265, width: 285, height: 390 },
+          { x: 665, y: 265, width: 285, height: 390 },
+          { x: 965, y: 265, width: 285, height: 390 },
+        ],
       },
     ]);
   });
 
-  it('queues each external character asset for Phaser preload', () => {
-    const loaded: Array<{
-      key: string;
-      path: string;
-      config: { frameWidth: number; frameHeight: number; endFrame: number };
-    }> = [];
+  it('queues only the source sprite sheet image for Phaser preload', () => {
+    const loaded: Array<{ key: string; path: string }> = [];
     const scene = {
       load: {
-        spritesheet: (
-          key: string,
-          path: string,
-          config: { frameWidth: number; frameHeight: number; endFrame: number },
-        ) => {
-          loaded.push({ key, path, config });
+        image: (key: string, path: string) => {
+          loaded.push({ key, path });
         },
       },
     };
 
     preloadExternalVisualAssets(scene as Phaser.Scene);
 
-    expect(loaded).toEqual(
-      EXTERNAL_VISUAL_ASSETS.map((asset) => ({
-        key: asset.key,
-        path: asset.path,
-        config: {
-          frameWidth: asset.frameWidth,
-          frameHeight: asset.frameHeight,
-          endFrame: asset.frames - 1,
-        },
-      })),
-    );
+    expect(loaded).toEqual([CHARACTER_SPRITE_SHEET]);
   });
 
   it('keeps fallback generation scoped to missing character textures', () => {

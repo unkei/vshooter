@@ -11,10 +11,16 @@ export const BOSS_TEXTURE_KEY = 'vshooter.boss.carrier';
 
 type ExternalVisualAsset = {
   key: string;
-  path: string;
   frameWidth: number;
   frameHeight: number;
-  frames: number;
+  frameRate: number;
+  flipY: boolean;
+  crops: Array<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>;
 };
 
 const CHARACTER_TEXTURE_KEYS = [
@@ -25,41 +31,73 @@ const CHARACTER_TEXTURE_KEYS = [
   BOSS_TEXTURE_KEY,
 ];
 
-export const EXTERNAL_VISUAL_ASSETS: ExternalVisualAsset[] = [
+export const CHARACTER_SPRITE_SHEET = {
+  key: 'vshooter.source.pixelSpaceShooterSheet',
+  path: 'assets/sprites/source/pixel-space-shooter-sheet.png',
+};
+
+export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
   {
     key: PLAYER_TEXTURE_KEY,
-    path: 'assets/sprites/player-ship.png',
     frameWidth: 48,
     frameHeight: 54,
-    frames: 4,
+    frameRate: 6,
+    flipY: false,
+    crops: [
+      { x: 40, y: 680, width: 100, height: 165 },
+      { x: 195, y: 680, width: 100, height: 165 },
+      { x: 340, y: 680, width: 100, height: 165 },
+      { x: 480, y: 680, width: 100, height: 165 },
+    ],
   },
   {
     key: ENEMY_TEXTURE_KEYS.straight,
-    path: 'assets/sprites/enemy-straight.png',
     frameWidth: 36,
     frameHeight: 40,
-    frames: 3,
+    frameRate: 5,
+    flipY: true,
+    crops: [
+      { x: 40, y: 105, width: 95, height: 120 },
+      { x: 170, y: 105, width: 95, height: 120 },
+      { x: 295, y: 105, width: 95, height: 120 },
+    ],
   },
   {
     key: ENEMY_TEXTURE_KEYS.sway,
-    path: 'assets/sprites/enemy-sway.png',
     frameWidth: 40,
     frameHeight: 40,
-    frames: 3,
+    frameRate: 5,
+    flipY: true,
+    crops: [
+      { x: 425, y: 120, width: 125, height: 105 },
+      { x: 555, y: 120, width: 125, height: 105 },
+      { x: 685, y: 120, width: 125, height: 105 },
+    ],
   },
   {
     key: ENEMY_TEXTURE_KEYS.heavy,
-    path: 'assets/sprites/enemy-heavy.png',
     frameWidth: 50,
     frameHeight: 50,
-    frames: 3,
+    frameRate: 4,
+    flipY: true,
+    crops: [
+      { x: 820, y: 55, width: 115, height: 190 },
+      { x: 960, y: 55, width: 115, height: 190 },
+      { x: 1105, y: 55, width: 115, height: 190 },
+    ],
   },
   {
     key: BOSS_TEXTURE_KEY,
-    path: 'assets/sprites/boss-carrier.png',
     frameWidth: 152,
     frameHeight: 84,
-    frames: 4,
+    frameRate: 4,
+    flipY: true,
+    crops: [
+      { x: 35, y: 265, width: 285, height: 390 },
+      { x: 350, y: 265, width: 285, height: 390 },
+      { x: 665, y: 265, width: 285, height: 390 },
+      { x: 965, y: 265, width: 285, height: 390 },
+    ],
   },
 ];
 
@@ -74,13 +112,7 @@ export const CHARACTER_ANIMATION_KEYS = {
 };
 
 export function preloadExternalVisualAssets(scene: Phaser.Scene): void {
-  for (const asset of EXTERNAL_VISUAL_ASSETS) {
-    scene.load.spritesheet(asset.key, asset.path, {
-      frameWidth: asset.frameWidth,
-      frameHeight: asset.frameHeight,
-      endFrame: asset.frames - 1,
-    });
-  }
+  scene.load.image(CHARACTER_SPRITE_SHEET.key, CHARACTER_SPRITE_SHEET.path);
 }
 
 export function getMissingCharacterTextureKeys(
@@ -90,6 +122,8 @@ export function getMissingCharacterTextureKeys(
 }
 
 export function ensureGameTextures(scene: Phaser.Scene): void {
+  createExternalCharacterTextures(scene);
+
   for (const key of getMissingCharacterTextureKeys((textureKey) =>
     scene.textures.exists(textureKey),
   )) {
@@ -101,33 +135,98 @@ export function createCharacterAnimations(scene: Phaser.Scene): void {
   createLoopingAnimation(scene, {
     animationKey: CHARACTER_ANIMATION_KEYS.player,
     textureKey: PLAYER_TEXTURE_KEY,
-    frames: 4,
     frameRate: 6,
   });
   createLoopingAnimation(scene, {
     animationKey: CHARACTER_ANIMATION_KEYS.enemy.straight,
     textureKey: ENEMY_TEXTURE_KEYS.straight,
-    frames: 3,
     frameRate: 5,
   });
   createLoopingAnimation(scene, {
     animationKey: CHARACTER_ANIMATION_KEYS.enemy.sway,
     textureKey: ENEMY_TEXTURE_KEYS.sway,
-    frames: 3,
     frameRate: 5,
   });
   createLoopingAnimation(scene, {
     animationKey: CHARACTER_ANIMATION_KEYS.enemy.heavy,
     textureKey: ENEMY_TEXTURE_KEYS.heavy,
-    frames: 3,
     frameRate: 4,
   });
   createLoopingAnimation(scene, {
     animationKey: CHARACTER_ANIMATION_KEYS.boss,
     textureKey: BOSS_TEXTURE_KEY,
-    frames: 4,
     frameRate: 4,
   });
+}
+
+function createExternalCharacterTextures(scene: Phaser.Scene): void {
+  if (
+    typeof document === 'undefined' ||
+    !scene.textures.exists(CHARACTER_SPRITE_SHEET.key)
+  ) {
+    return;
+  }
+
+  const sourceImage = scene.textures
+    .get(CHARACTER_SPRITE_SHEET.key)
+    .getSourceImage();
+  if (!(sourceImage instanceof HTMLImageElement || sourceImage instanceof HTMLCanvasElement)) {
+    return;
+  }
+
+  for (const sprite of CHARACTER_SPRITES) {
+    if (scene.textures.exists(sprite.key)) {
+      continue;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = sprite.frameWidth * sprite.crops.length;
+    canvas.height = sprite.frameHeight;
+    const context = canvas.getContext('2d');
+    if (context === null) {
+      continue;
+    }
+    context.imageSmoothingEnabled = false;
+
+    for (const [index, crop] of sprite.crops.entries()) {
+      const frameX = index * sprite.frameWidth;
+      if (sprite.flipY) {
+        context.save();
+        context.translate(frameX, sprite.frameHeight);
+        context.scale(1, -1);
+        context.drawImage(
+          sourceImage,
+          crop.x,
+          crop.y,
+          crop.width,
+          crop.height,
+          0,
+          0,
+          sprite.frameWidth,
+          sprite.frameHeight,
+        );
+        context.restore();
+      } else {
+        context.drawImage(
+          sourceImage,
+          crop.x,
+          crop.y,
+          crop.width,
+          crop.height,
+          frameX,
+          0,
+          sprite.frameWidth,
+          sprite.frameHeight,
+        );
+      }
+    }
+
+    scene.textures.addSpriteSheet(sprite.key, canvas as unknown as HTMLImageElement, {
+      frameWidth: sprite.frameWidth,
+      frameHeight: sprite.frameHeight,
+      endFrame: sprite.crops.length - 1,
+    });
+  }
 }
 
 export function playCharacterAnimation(
@@ -144,14 +243,15 @@ function createLoopingAnimation(
   config: {
     animationKey: string;
     textureKey: string;
-    frames: number;
     frameRate: number;
   },
 ): void {
+  const sprite = CHARACTER_SPRITES.find((item) => item.key === config.textureKey);
+  const frameCount = sprite?.crops.length ?? 1;
   if (
     scene.anims.exists(config.animationKey) ||
     !scene.textures.exists(config.textureKey) ||
-    scene.textures.get(config.textureKey).frameTotal < config.frames + 1
+    scene.textures.get(config.textureKey).frameTotal < frameCount + 1
   ) {
     return;
   }
@@ -160,7 +260,7 @@ function createLoopingAnimation(
     key: config.animationKey,
     frames: scene.anims.generateFrameNumbers(config.textureKey, {
       start: 0,
-      end: config.frames - 1,
+      end: frameCount - 1,
     }),
     frameRate: config.frameRate,
     repeat: -1,

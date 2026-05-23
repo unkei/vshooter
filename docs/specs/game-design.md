@@ -369,10 +369,14 @@ External visual assets should be introduced in two steps:
 2. Replace the placeholders with purpose-made assets after load behavior and
    scene integration are working.
 
-Purpose-made character art should prefer compact PNG spritesheets over isolated
-single-frame files when practical. Player, enemy, and boss sprites may loop
-subtle idle/thruster animation frames. The animation must not change gameplay
-collision bodies, boss opacity, boss scale, or bullet readability.
+Purpose-made character art should prefer one transparent source PNG sheet plus
+crop metadata over many pre-cut files. At game startup, the visual asset system
+may cut character-specific spritesheets from that source sheet and register them
+under stable texture keys. Player, enemy, and boss sprites may loop subtle
+idle/thruster animation frames. The animation must not change gameplay collision
+bodies, boss opacity, boss scale, or bullet readability. Enemy-side sprites that
+face the wrong vertical direction in the generated source sheet should be flipped
+while generating the runtime spritesheets, not by changing gameplay movement.
 
 If an external character asset is missing or fails to load, the game should fall
 back to the generated game-like texture for that character. The game should
