@@ -14,7 +14,7 @@ import { EnemyManager } from '../game/EnemyManager';
 import { PlayerController } from '../game/PlayerController';
 import { ProjectileManager } from '../game/ProjectileManager';
 import type { PowerUpType } from '../game/types';
-import { ensureGameTextures } from '../game/visualAssets';
+import { ensureGameTextures, preloadExternalVisualAssets } from '../game/visualAssets';
 import { getSharedAudioManager } from '../systems/AudioManager';
 import { KeyboardReleaseGate } from '../systems/InputGate';
 import { normalizeInput, type RawInputState } from '../systems/InputManager';
@@ -46,6 +46,10 @@ export class GameScene extends Phaser.Scene {
 
   constructor() {
     super('GameScene');
+  }
+
+  preload(): void {
+    preloadExternalVisualAssets(this);
   }
 
   create(): void {

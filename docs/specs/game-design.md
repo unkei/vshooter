@@ -17,8 +17,10 @@ The game is a general vertical scrolling shooter with:
 - Casual life-based difficulty with dense bullet patterns.
 - Item-based power-ups.
 - One boss at the end of the stage.
-- Neon/vector-style visuals without external art assets as a hard requirement.
-- Procedural BGM and sound effects generated with Web Audio API.
+- Hybrid asset visuals: key craft art may use external assets, while bullets,
+  background effects, explosions, and UI feedback may remain code-generated.
+- Hybrid audio: BGM and key sound effects may use external assets, while Web
+  Audio generated sounds remain available as fallback.
 - Combo-based scoring and local high score persistence.
 
 ## Technical Direction
@@ -197,8 +199,8 @@ The exact decay timing can be tuned during implementation.
 
 ### `AudioManager`
 
-Use Web Audio API to generate sounds in code instead of requiring external audio
-files for the first version.
+Use Web Audio API to generate sounds in code as the fallback path. External BGM
+and key sound effects may be added after the asset pipeline exists.
 
 Initial sounds:
 
@@ -212,6 +214,11 @@ Initial sounds:
 
 Audio should be started only after user interaction to satisfy browser autoplay
 restrictions.
+
+External audio must preserve the same browser unlock expectations as generated
+audio. If external BGM or sound effects are unavailable, fail to load, or cannot
+start under browser autoplay rules, generated Web Audio playback should continue
+to provide the playable fallback.
 
 iOS Safari requires Web Audio unlock to happen inside the same user gesture that
 starts the game. The title pointer/keyboard start path should start or resume the
@@ -351,10 +358,20 @@ Current tuning target:
 
 ## Visual Direction
 
-Use a neon/vector arcade style. Characters should use generated game-like
-textures instead of raw placeholder primitives: a player ship, distinct regular
-enemy craft, a heavier enemy craft, and a large boss craft. The first version
-should not depend on hand-authored external sprite assets.
+Use a neon/vector arcade style. Character visuals may be loaded from external
+assets for the player ship, distinct regular enemy craft, a heavier enemy craft,
+and a large boss craft. Bullets, background effects, explosions, hit flashes, and
+UI feedback may remain code-generated so readability and tuning stay easy.
+
+External visual assets should be introduced in two steps:
+
+1. Add a small placeholder asset pipeline with stable texture keys and paths.
+2. Replace the placeholders with purpose-made assets after load behavior and
+   scene integration are working.
+
+If an external character asset is missing or fails to load, the game should fall
+back to the generated game-like texture for that character. The game should
+remain playable without downloaded or hand-authored art files.
 
 Visibility matters more than decoration:
 

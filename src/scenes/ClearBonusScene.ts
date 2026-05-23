@@ -1,6 +1,10 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../game/constants';
-import { PLAYER_TEXTURE_KEY, ensureGameTextures } from '../game/visualAssets';
+import {
+  PLAYER_TEXTURE_KEY,
+  ensureGameTextures,
+  preloadExternalVisualAssets,
+} from '../game/visualAssets';
 import { getSharedAudioManager } from '../systems/AudioManager';
 import { buildClearBonusLines } from './clearBonusDisplay';
 
@@ -27,6 +31,10 @@ export class ClearBonusScene extends Phaser.Scene {
 
   init(data: ClearBonusSceneData): void {
     this.dataFromRun = data;
+  }
+
+  preload(): void {
+    preloadExternalVisualAssets(this);
   }
 
   create(): void {

@@ -9,16 +9,82 @@ export const ENEMY_TEXTURE_KEYS: Record<EnemyType, string> = {
 };
 export const BOSS_TEXTURE_KEY = 'vshooter.boss.carrier';
 
+type ExternalVisualAsset = {
+  key: string;
+  path: string;
+};
+
+const CHARACTER_TEXTURE_KEYS = [
+  PLAYER_TEXTURE_KEY,
+  ENEMY_TEXTURE_KEYS.straight,
+  ENEMY_TEXTURE_KEYS.sway,
+  ENEMY_TEXTURE_KEYS.heavy,
+  BOSS_TEXTURE_KEY,
+];
+
+export const EXTERNAL_VISUAL_ASSETS: ExternalVisualAsset[] = [
+  {
+    key: PLAYER_TEXTURE_KEY,
+    path: 'assets/visual/player-ship.svg',
+  },
+  {
+    key: ENEMY_TEXTURE_KEYS.straight,
+    path: 'assets/visual/enemy-straight.svg',
+  },
+  {
+    key: ENEMY_TEXTURE_KEYS.sway,
+    path: 'assets/visual/enemy-sway.svg',
+  },
+  {
+    key: ENEMY_TEXTURE_KEYS.heavy,
+    path: 'assets/visual/enemy-heavy.svg',
+  },
+  {
+    key: BOSS_TEXTURE_KEY,
+    path: 'assets/visual/boss-carrier.svg',
+  },
+];
+
+export function preloadExternalVisualAssets(scene: Phaser.Scene): void {
+  for (const asset of EXTERNAL_VISUAL_ASSETS) {
+    scene.load.image(asset.key, asset.path);
+  }
+}
+
+export function getMissingCharacterTextureKeys(
+  textureExists: (key: string) => boolean,
+): string[] {
+  return CHARACTER_TEXTURE_KEYS.filter((key) => !textureExists(key));
+}
+
 export function ensureGameTextures(scene: Phaser.Scene): void {
-  if (scene.textures.exists(PLAYER_TEXTURE_KEY)) {
+  for (const key of getMissingCharacterTextureKeys((textureKey) =>
+    scene.textures.exists(textureKey),
+  )) {
+    createGeneratedTexture(scene, key);
+  }
+}
+
+function createGeneratedTexture(scene: Phaser.Scene, key: string): void {
+  if (key === PLAYER_TEXTURE_KEY) {
+    createPlayerTexture(scene);
     return;
   }
-
-  createPlayerTexture(scene);
-  createStraightEnemyTexture(scene);
-  createSwayEnemyTexture(scene);
-  createHeavyEnemyTexture(scene);
-  createBossTexture(scene);
+  if (key === ENEMY_TEXTURE_KEYS.straight) {
+    createStraightEnemyTexture(scene);
+    return;
+  }
+  if (key === ENEMY_TEXTURE_KEYS.sway) {
+    createSwayEnemyTexture(scene);
+    return;
+  }
+  if (key === ENEMY_TEXTURE_KEYS.heavy) {
+    createHeavyEnemyTexture(scene);
+    return;
+  }
+  if (key === BOSS_TEXTURE_KEY) {
+    createBossTexture(scene);
+  }
 }
 
 function createPlayerTexture(scene: Phaser.Scene): void {
