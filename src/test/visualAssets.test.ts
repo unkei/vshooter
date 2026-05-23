@@ -35,9 +35,9 @@ describe('generated visual assets', () => {
         frameRate: 6,
         flipY: false,
         crops: [
-          { x: 30, y: 680, width: 120, height: 165 },
-          { x: 185, y: 680, width: 120, height: 165 },
-          { x: 325, y: 680, width: 120, height: 165 },
+          { x: 40, y: 680, width: 120, height: 165 },
+          { x: 195, y: 680, width: 120, height: 165 },
+          { x: 330, y: 680, width: 120, height: 165 },
           { x: 465, y: 680, width: 120, height: 165 },
         ],
       },
@@ -79,12 +79,13 @@ describe('generated visual assets', () => {
       },
       {
         key: BOSS_TEXTURE_KEY,
-        frameWidth: 152,
-        frameHeight: 84,
+        frameWidth: 104,
+        frameHeight: 142,
         frameRate: 4,
         flipY: true,
         crops: [
-          { x: 35, y: 260, width: 285, height: 390 },
+          { x: 35, y: 265, width: 285, height: 390 },
+          { x: 350, y: 265, width: 285, height: 390 },
         ],
       },
     ]);
@@ -122,7 +123,7 @@ describe('generated visual assets', () => {
       [ENEMY_TEXTURE_KEYS.straight, { frameTotal: 4 }],
       [ENEMY_TEXTURE_KEYS.sway, { frameTotal: 1 }],
       [ENEMY_TEXTURE_KEYS.heavy, { frameTotal: 4 }],
-      [BOSS_TEXTURE_KEY, { frameTotal: 2 }],
+      [BOSS_TEXTURE_KEY, { frameTotal: 4 }],
     ]);
     const scene = {
       textures: {
@@ -162,7 +163,7 @@ describe('generated visual assets', () => {
       {
         key: CHARACTER_ANIMATION_KEYS.boss,
         textureKey: BOSS_TEXTURE_KEY,
-        end: 0,
+        end: 1,
       },
     ]);
   });

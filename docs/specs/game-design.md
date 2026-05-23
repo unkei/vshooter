@@ -374,14 +374,18 @@ crop metadata over many pre-cut files. At game startup, the visual asset system
 may cut character-specific spritesheets from that source sheet and register them
 under stable texture keys. Player, enemy, and boss sprites may loop subtle
 idle/thruster animation frames. The animation must not change gameplay collision
-bodies, boss opacity, boss scale, or bullet readability. Enemy-side sprites that
-face the wrong vertical direction in the generated source sheet should be flipped
-while generating the runtime spritesheets, not by changing gameplay movement.
+bodies, boss opacity, boss scale, or bullet readability. The boss runtime
+spritesheet should preserve the source art's tall aspect ratio instead of
+stretching it into the previous wide generated-placeholder shape. Enemy-side
+sprites that face the wrong vertical direction in the generated source sheet
+should be flipped while generating the runtime spritesheets, not by changing
+gameplay movement.
 Regression expectation: player, regular enemy, heavy enemy, and boss animation
 frames should keep their visible body centered in the same runtime frame box, so
 idle/thruster animation does not make the craft appear to jump or slide.
-When generated boss frames differ in silhouette or scale, prefer a stable single
-boss frame over a looping animation that makes the boss appear to morph.
+When generated boss frames differ too much in silhouette or scale, use only the
+matching frames that preserve a stable tall boss body, even if that means a
+shorter two-frame boss animation.
 
 If an external character asset is missing or fails to load, the game should fall
 back to the generated game-like texture for that character. The game should

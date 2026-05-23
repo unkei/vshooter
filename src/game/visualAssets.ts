@@ -44,9 +44,9 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 6,
     flipY: false,
     crops: [
-      { x: 30, y: 680, width: 120, height: 165 },
-      { x: 185, y: 680, width: 120, height: 165 },
-      { x: 325, y: 680, width: 120, height: 165 },
+      { x: 40, y: 680, width: 120, height: 165 },
+      { x: 195, y: 680, width: 120, height: 165 },
+      { x: 330, y: 680, width: 120, height: 165 },
       { x: 465, y: 680, width: 120, height: 165 },
     ],
   },
@@ -88,12 +88,13 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
   },
   {
     key: BOSS_TEXTURE_KEY,
-    frameWidth: 152,
-    frameHeight: 84,
+    frameWidth: 104,
+    frameHeight: 142,
     frameRate: 4,
     flipY: true,
     crops: [
-      { x: 35, y: 260, width: 285, height: 390 },
+      { x: 35, y: 265, width: 285, height: 390 },
+      { x: 350, y: 265, width: 285, height: 390 },
     ],
   },
 ];
