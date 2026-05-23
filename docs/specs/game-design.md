@@ -384,9 +384,12 @@ generating the runtime spritesheets, not by changing gameplay movement.
 Regression expectation: player, regular enemy, heavy enemy, and boss animation
 frames should keep their visible body centered in the same runtime frame box, so
 idle/thruster animation does not make the craft appear to jump or slide. Boss
-animation frames should use equal source crop dimensions and a larger tall
+animation frames should use all usable source-sheet boss patterns, equal source
+crop dimensions that do not include neighboring sprites, and a larger tall
 runtime frame, so thruster-frame differences do not cause horizontal sliding or
-aspect-ratio changes.
+aspect-ratio changes. Enemy animation crop boxes should be rechecked against the
+source sheet when changed so their visible centers remain consistent across all
+frames for each enemy type.
 When generated boss frames differ too much in silhouette or scale, use only the
 matching frames that preserve a stable tall boss body, even if that means a
 shorter two-frame boss animation.

@@ -48,9 +48,9 @@ describe('generated visual assets', () => {
         frameRate: 5,
         flipY: true,
         crops: [
-          { x: 40, y: 105, width: 95, height: 120 },
-          { x: 170, y: 105, width: 95, height: 120 },
-          { x: 295, y: 105, width: 95, height: 120 },
+          { x: 38, y: 105, width: 95, height: 120 },
+          { x: 167, y: 105, width: 95, height: 120 },
+          { x: 293, y: 105, width: 95, height: 120 },
         ],
       },
       {
@@ -72,9 +72,9 @@ describe('generated visual assets', () => {
         frameRate: 4,
         flipY: true,
         crops: [
-          { x: 820, y: 55, width: 115, height: 190 },
-          { x: 950, y: 55, width: 115, height: 190 },
-          { x: 1080, y: 55, width: 115, height: 190 },
+          { x: 822, y: 55, width: 115, height: 190 },
+          { x: 954, y: 55, width: 115, height: 190 },
+          { x: 1086, y: 55, width: 115, height: 190 },
         ],
       },
       {
@@ -84,23 +84,28 @@ describe('generated visual assets', () => {
         frameRate: 4,
         flipY: true,
         crops: [
-          { x: 39, y: 250, width: 300, height: 410 },
-          { x: 335, y: 250, width: 300, height: 410 },
+          { x: 30, y: 265, width: 285, height: 390 },
+          { x: 335, y: 265, width: 285, height: 390 },
+          { x: 635, y: 265, width: 285, height: 390 },
+          { x: 905, y: 265, width: 285, height: 390 },
         ],
       },
     ]);
   });
 
-  it('keeps boss frames large, tall, and matched to equal source crop boxes', () => {
+  it('keeps boss frames large, tall, matched, and scoped to full source patterns', () => {
     const boss = CHARACTER_SPRITES.find((sprite) => sprite.key === BOSS_TEXTURE_KEY);
 
     expect(boss).toBeDefined();
     expect(boss?.frameWidth).toBeGreaterThanOrEqual(140);
     expect(boss?.frameHeight).toBeGreaterThanOrEqual(190);
-    expect((boss?.frameWidth ?? 0) / (boss?.frameHeight ?? 1)).toBeCloseTo(300 / 410, 2);
+    expect((boss?.frameWidth ?? 0) / (boss?.frameHeight ?? 1)).toBeCloseTo(285 / 390, 2);
+    expect(boss?.crops).toHaveLength(4);
     expect(boss?.crops.map(({ width, height }) => ({ width, height }))).toEqual([
-      { width: 300, height: 410 },
-      { width: 300, height: 410 },
+      { width: 285, height: 390 },
+      { width: 285, height: 390 },
+      { width: 285, height: 390 },
+      { width: 285, height: 390 },
     ]);
   });
 
@@ -136,7 +141,7 @@ describe('generated visual assets', () => {
       [ENEMY_TEXTURE_KEYS.straight, { frameTotal: 4 }],
       [ENEMY_TEXTURE_KEYS.sway, { frameTotal: 1 }],
       [ENEMY_TEXTURE_KEYS.heavy, { frameTotal: 4 }],
-      [BOSS_TEXTURE_KEY, { frameTotal: 4 }],
+      [BOSS_TEXTURE_KEY, { frameTotal: 5 }],
     ]);
     const scene = {
       textures: {
@@ -176,7 +181,7 @@ describe('generated visual assets', () => {
       {
         key: CHARACTER_ANIMATION_KEYS.boss,
         textureKey: BOSS_TEXTURE_KEY,
-        end: 1,
+        end: 3,
       },
     ]);
   });

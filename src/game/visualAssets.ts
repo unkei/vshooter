@@ -57,9 +57,9 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 5,
     flipY: true,
     crops: [
-      { x: 40, y: 105, width: 95, height: 120 },
-      { x: 170, y: 105, width: 95, height: 120 },
-      { x: 295, y: 105, width: 95, height: 120 },
+      { x: 38, y: 105, width: 95, height: 120 },
+      { x: 167, y: 105, width: 95, height: 120 },
+      { x: 293, y: 105, width: 95, height: 120 },
     ],
   },
   {
@@ -81,9 +81,9 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 4,
     flipY: true,
     crops: [
-      { x: 820, y: 55, width: 115, height: 190 },
-      { x: 950, y: 55, width: 115, height: 190 },
-      { x: 1080, y: 55, width: 115, height: 190 },
+      { x: 822, y: 55, width: 115, height: 190 },
+      { x: 954, y: 55, width: 115, height: 190 },
+      { x: 1086, y: 55, width: 115, height: 190 },
     ],
   },
   {
@@ -93,8 +93,10 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 4,
     flipY: true,
     crops: [
-      { x: 39, y: 250, width: 300, height: 410 },
-      { x: 335, y: 250, width: 300, height: 410 },
+      { x: 30, y: 265, width: 285, height: 390 },
+      { x: 335, y: 265, width: 285, height: 390 },
+      { x: 635, y: 265, width: 285, height: 390 },
+      { x: 905, y: 265, width: 285, height: 390 },
     ],
   },
 ];
