@@ -372,15 +372,18 @@ External visual assets should be introduced in two steps:
 Purpose-made character art should prefer one transparent source PNG sheet plus
 crop metadata over many pre-cut files. At game startup, the visual asset system
 may cut character-specific spritesheets from that source sheet and register them
-under stable texture keys. Player, enemy, and boss sprites may loop subtle
-idle/thruster animation frames. The animation must not change gameplay collision
-bodies, boss opacity, boss scale, or bullet readability. The boss runtime
-spritesheet should preserve the source art's tall aspect ratio instead of
-stretching it into the previous wide generated-placeholder shape, and should
-display the boss closer to the source sheet's large craft size than the earlier
-small placeholder-sized runtime frame. Enemy-side sprites that face the wrong
-vertical direction in the generated source sheet should be flipped while
-generating the runtime spritesheets, not by changing gameplay movement.
+under stable texture keys. The active source sheet should be a curated v2 sheet
+containing only the frames used by gameplay, arranged into transparent cells with
+stable spacing. This keeps runtime crop metadata simple and prevents slivers from
+neighboring generated sprites from leaking into animation frames. Player, enemy,
+and boss sprites may loop subtle idle/thruster animation frames. The animation
+must not change gameplay collision bodies, boss opacity, boss scale, or bullet
+readability. The boss runtime spritesheet should preserve the source art's tall
+aspect ratio instead of stretching it into the previous wide generated-placeholder
+shape, and should display the boss closer to the source sheet's large craft size
+than the earlier small placeholder-sized runtime frame. Enemy-side sprites that
+face the wrong vertical direction in the generated source sheet should be flipped
+while generating the runtime spritesheets, not by changing gameplay movement.
 Regression expectation: player, regular enemy, heavy enemy, and boss animation
 frames should keep their visible body centered in the same runtime frame box, so
 idle/thruster animation does not make the craft appear to jump or slide. Boss
@@ -391,7 +394,9 @@ preserve engine flames after vertical flipping, so display-time upper flames are
 not clipped. If a safe crop avoids neighboring sprites but shifts a frame's
 visual center, that frame may use a small runtime draw offset inside the fixed
 frame box instead of widening the crop. Regression expectation: no boss
-animation frame should show slivers from adjacent boss sprites at either edge.
+animation frame should show slivers from adjacent boss sprites at either edge. In
+the curated v2 sheet, boss frames should not require runtime draw offsets because
+the source cells already include the needed transparent padding.
 Enemy animation crop boxes should be rechecked against the source sheet when
 changed so their visible centers remain consistent across all frames for each
 enemy type.

@@ -34,7 +34,7 @@ const CHARACTER_TEXTURE_KEYS = [
 
 export const CHARACTER_SPRITE_SHEET = {
   key: 'vshooter.source.pixelSpaceShooterSheet',
-  path: 'assets/sprites/source/pixel-space-shooter-sheet.png',
+  path: 'assets/sprites/source/pixel-space-shooter-sheet-v2.png',
 };
 
 export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
@@ -45,10 +45,10 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 6,
     flipY: false,
     crops: [
-      { x: 40, y: 680, width: 120, height: 165 },
-      { x: 195, y: 680, width: 120, height: 165 },
-      { x: 330, y: 680, width: 120, height: 165 },
-      { x: 465, y: 680, width: 120, height: 165 },
+      { x: 20, y: 480, width: 120, height: 165 },
+      { x: 160, y: 480, width: 120, height: 165 },
+      { x: 300, y: 480, width: 120, height: 165 },
+      { x: 440, y: 480, width: 120, height: 165 },
     ],
   },
   {
@@ -58,9 +58,9 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 5,
     flipY: true,
     crops: [
-      { x: 38, y: 105, width: 95, height: 120 },
-      { x: 167, y: 105, width: 95, height: 120 },
-      { x: 293, y: 105, width: 95, height: 120 },
+      { x: 620, y: 480, width: 95, height: 120 },
+      { x: 735, y: 480, width: 95, height: 120 },
+      { x: 850, y: 480, width: 95, height: 120 },
     ],
   },
   {
@@ -70,9 +70,9 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 5,
     flipY: true,
     crops: [
-      { x: 425, y: 120, width: 125, height: 105 },
-      { x: 555, y: 120, width: 125, height: 105 },
-      { x: 660, y: 120, width: 125, height: 105 },
+      { x: 620, y: 625, width: 125, height: 105 },
+      { x: 765, y: 625, width: 125, height: 105 },
+      { x: 910, y: 625, width: 125, height: 105 },
     ],
   },
   {
@@ -82,9 +82,9 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 4,
     flipY: true,
     crops: [
-      { x: 822, y: 55, width: 115, height: 190 },
-      { x: 954, y: 55, width: 115, height: 190 },
-      { x: 1086, y: 55, width: 115, height: 190 },
+      { x: 20, y: 680, width: 115, height: 190 },
+      { x: 155, y: 680, width: 115, height: 190 },
+      { x: 290, y: 680, width: 115, height: 190 },
     ],
   },
   {
@@ -94,10 +94,10 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 4,
     flipY: true,
     crops: [
-      { x: 30, y: 265, width: 285, height: 420 },
-      { x: 340, y: 265, width: 285, height: 420, drawOffsetX: 5 },
-      { x: 625, y: 265, width: 285, height: 420, drawOffsetX: 10 },
-      { x: 915, y: 265, width: 285, height: 420, drawOffsetX: 5 },
+      { x: 20, y: 20, width: 285, height: 420 },
+      { x: 325, y: 20, width: 285, height: 420 },
+      { x: 630, y: 20, width: 285, height: 420 },
+      { x: 925, y: 20, width: 285, height: 420 },
     ],
   },
 ];

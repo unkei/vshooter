@@ -25,7 +25,7 @@ describe('generated visual assets', () => {
   it('defines one source sheet and dynamic crop metadata for character assets', () => {
     expect(CHARACTER_SPRITE_SHEET).toEqual({
       key: 'vshooter.source.pixelSpaceShooterSheet',
-      path: 'assets/sprites/source/pixel-space-shooter-sheet.png',
+      path: 'assets/sprites/source/pixel-space-shooter-sheet-v2.png',
     });
     expect(CHARACTER_SPRITES).toEqual([
       {
@@ -35,10 +35,10 @@ describe('generated visual assets', () => {
         frameRate: 6,
         flipY: false,
         crops: [
-          { x: 40, y: 680, width: 120, height: 165 },
-          { x: 195, y: 680, width: 120, height: 165 },
-          { x: 330, y: 680, width: 120, height: 165 },
-          { x: 465, y: 680, width: 120, height: 165 },
+          { x: 20, y: 480, width: 120, height: 165 },
+          { x: 160, y: 480, width: 120, height: 165 },
+          { x: 300, y: 480, width: 120, height: 165 },
+          { x: 440, y: 480, width: 120, height: 165 },
         ],
       },
       {
@@ -48,9 +48,9 @@ describe('generated visual assets', () => {
         frameRate: 5,
         flipY: true,
         crops: [
-          { x: 38, y: 105, width: 95, height: 120 },
-          { x: 167, y: 105, width: 95, height: 120 },
-          { x: 293, y: 105, width: 95, height: 120 },
+          { x: 620, y: 480, width: 95, height: 120 },
+          { x: 735, y: 480, width: 95, height: 120 },
+          { x: 850, y: 480, width: 95, height: 120 },
         ],
       },
       {
@@ -60,9 +60,9 @@ describe('generated visual assets', () => {
         frameRate: 5,
         flipY: true,
         crops: [
-          { x: 425, y: 120, width: 125, height: 105 },
-          { x: 555, y: 120, width: 125, height: 105 },
-          { x: 660, y: 120, width: 125, height: 105 },
+          { x: 620, y: 625, width: 125, height: 105 },
+          { x: 765, y: 625, width: 125, height: 105 },
+          { x: 910, y: 625, width: 125, height: 105 },
         ],
       },
       {
@@ -72,9 +72,9 @@ describe('generated visual assets', () => {
         frameRate: 4,
         flipY: true,
         crops: [
-          { x: 822, y: 55, width: 115, height: 190 },
-          { x: 954, y: 55, width: 115, height: 190 },
-          { x: 1086, y: 55, width: 115, height: 190 },
+          { x: 20, y: 680, width: 115, height: 190 },
+          { x: 155, y: 680, width: 115, height: 190 },
+          { x: 290, y: 680, width: 115, height: 190 },
         ],
       },
       {
@@ -84,10 +84,10 @@ describe('generated visual assets', () => {
         frameRate: 4,
         flipY: true,
         crops: [
-          { x: 30, y: 265, width: 285, height: 420 },
-          { x: 340, y: 265, width: 285, height: 420, drawOffsetX: 5 },
-          { x: 625, y: 265, width: 285, height: 420, drawOffsetX: 10 },
-          { x: 915, y: 265, width: 285, height: 420, drawOffsetX: 5 },
+          { x: 20, y: 20, width: 285, height: 420 },
+          { x: 325, y: 20, width: 285, height: 420 },
+          { x: 630, y: 20, width: 285, height: 420 },
+          { x: 925, y: 20, width: 285, height: 420 },
         ],
       },
     ]);
@@ -107,7 +107,7 @@ describe('generated visual assets', () => {
       { width: 285, height: 420 },
       { width: 285, height: 420 },
     ]);
-    expect(boss?.crops.map((crop) => crop.drawOffsetX ?? 0)).toEqual([0, 5, 10, 5]);
+    expect(boss?.crops.map((crop) => crop.drawOffsetX ?? 0)).toEqual([0, 0, 0, 0]);
   });
 
   it('queues only the source sprite sheet image for Phaser preload', () => {
