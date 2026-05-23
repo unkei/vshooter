@@ -20,6 +20,7 @@ type ExternalVisualAsset = {
     y: number;
     width: number;
     height: number;
+    drawOffsetX?: number;
   }>;
 };
 
@@ -95,8 +96,8 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     crops: [
       { x: 30, y: 265, width: 285, height: 420 },
       { x: 335, y: 265, width: 285, height: 420 },
-      { x: 635, y: 265, width: 285, height: 420 },
-      { x: 905, y: 265, width: 285, height: 420 },
+      { x: 625, y: 265, width: 285, height: 420, drawOffsetX: 10 },
+      { x: 915, y: 265, width: 285, height: 420, drawOffsetX: 5 },
     ],
   },
 ];
@@ -190,9 +191,13 @@ function createExternalCharacterTextures(scene: Phaser.Scene): void {
 
     for (const [index, crop] of sprite.crops.entries()) {
       const frameX = index * sprite.frameWidth;
+      const drawOffsetX = crop.drawOffsetX ?? 0;
+      context.save();
+      context.beginPath();
+      context.rect(frameX, 0, sprite.frameWidth, sprite.frameHeight);
+      context.clip();
       if (sprite.flipY) {
-        context.save();
-        context.translate(frameX, sprite.frameHeight);
+        context.translate(frameX + drawOffsetX, sprite.frameHeight);
         context.scale(1, -1);
         context.drawImage(
           sourceImage,
@@ -205,7 +210,6 @@ function createExternalCharacterTextures(scene: Phaser.Scene): void {
           sprite.frameWidth,
           sprite.frameHeight,
         );
-        context.restore();
       } else {
         context.drawImage(
           sourceImage,
@@ -213,12 +217,13 @@ function createExternalCharacterTextures(scene: Phaser.Scene): void {
           crop.y,
           crop.width,
           crop.height,
-          frameX,
+          frameX + drawOffsetX,
           0,
           sprite.frameWidth,
           sprite.frameHeight,
         );
       }
+      context.restore();
     }
 
     scene.textures.addSpriteSheet(sprite.key, canvas as unknown as HTMLImageElement, {
