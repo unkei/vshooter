@@ -241,6 +241,25 @@ Repeated sounds should be restrained:
   single-note drone. It should start with the same unlocked audio context and use
   multiple generated layers such as bass, lead, and harmony.
 
+### `VibrationManager`
+
+Use the browser Vibration API and Gamepad Haptics API for tactile feedback when
+the active device and browser support them. Vibration is optional feedback:
+unsupported environments must continue silently without errors or gameplay
+changes.
+
+Initial vibration events:
+
+- Player damage: vibrate only when damage is accepted after invincibility checks.
+  The pattern should become stronger as remaining life decreases, so low-life
+  damage feels more urgent than high-life damage.
+- Power-up pickup: use a short double-click style pattern with a small pause
+  between pulses.
+
+Regression expectation: desktop browsers or devices without `navigator.vibrate`
+or gamepad haptics continue to play normally; invincible hits do not vibrate;
+power-up feedback is short and distinct from damage feedback.
+
 ### `StageDirector`
 
 Responsibilities:
