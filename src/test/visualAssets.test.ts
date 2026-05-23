@@ -80,14 +80,14 @@ describe('generated visual assets', () => {
       {
         key: BOSS_TEXTURE_KEY,
         frameWidth: 146,
-        frameHeight: 200,
+        frameHeight: 215,
         frameRate: 4,
         flipY: true,
         crops: [
-          { x: 30, y: 265, width: 285, height: 390 },
-          { x: 335, y: 265, width: 285, height: 390 },
-          { x: 635, y: 265, width: 285, height: 390 },
-          { x: 905, y: 265, width: 285, height: 390 },
+          { x: 30, y: 265, width: 285, height: 420 },
+          { x: 335, y: 265, width: 285, height: 420 },
+          { x: 635, y: 265, width: 285, height: 420 },
+          { x: 905, y: 265, width: 285, height: 420 },
         ],
       },
     ]);
@@ -98,14 +98,14 @@ describe('generated visual assets', () => {
 
     expect(boss).toBeDefined();
     expect(boss?.frameWidth).toBeGreaterThanOrEqual(140);
-    expect(boss?.frameHeight).toBeGreaterThanOrEqual(190);
-    expect((boss?.frameWidth ?? 0) / (boss?.frameHeight ?? 1)).toBeCloseTo(285 / 390, 2);
+    expect(boss?.frameHeight).toBeGreaterThanOrEqual(210);
+    expect((boss?.frameWidth ?? 0) / (boss?.frameHeight ?? 1)).toBeCloseTo(285 / 420, 2);
     expect(boss?.crops).toHaveLength(4);
     expect(boss?.crops.map(({ width, height }) => ({ width, height }))).toEqual([
-      { width: 285, height: 390 },
-      { width: 285, height: 390 },
-      { width: 285, height: 390 },
-      { width: 285, height: 390 },
+      { width: 285, height: 420 },
+      { width: 285, height: 420 },
+      { width: 285, height: 420 },
+      { width: 285, height: 420 },
     ]);
   });
 
