@@ -44,10 +44,10 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     frameRate: 6,
     flipY: false,
     crops: [
-      { x: 40, y: 680, width: 100, height: 165 },
-      { x: 195, y: 680, width: 100, height: 165 },
-      { x: 330, y: 680, width: 100, height: 165 },
-      { x: 470, y: 680, width: 100, height: 165 },
+      { x: 30, y: 680, width: 120, height: 165 },
+      { x: 185, y: 680, width: 120, height: 165 },
+      { x: 325, y: 680, width: 120, height: 165 },
+      { x: 465, y: 680, width: 120, height: 165 },
     ],
   },
   {
@@ -94,9 +94,6 @@ export const CHARACTER_SPRITES: ExternalVisualAsset[] = [
     flipY: true,
     crops: [
       { x: 35, y: 260, width: 285, height: 390 },
-      { x: 350, y: 265, width: 285, height: 390 },
-      { x: 665, y: 265, width: 285, height: 390 },
-      { x: 870, y: 265, width: 285, height: 390 },
     ],
   },
 ];
