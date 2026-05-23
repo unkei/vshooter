@@ -377,6 +377,9 @@ idle/thruster animation frames. The animation must not change gameplay collision
 bodies, boss opacity, boss scale, or bullet readability. Enemy-side sprites that
 face the wrong vertical direction in the generated source sheet should be flipped
 while generating the runtime spritesheets, not by changing gameplay movement.
+Regression expectation: player, regular enemy, heavy enemy, and boss animation
+frames should keep their visible body centered in the same runtime frame box, so
+idle/thruster animation does not make the craft appear to jump or slide.
 
 If an external character asset is missing or fails to load, the game should fall
 back to the generated game-like texture for that character. The game should
