@@ -14,7 +14,11 @@ import { EnemyManager } from '../game/EnemyManager';
 import { PlayerController } from '../game/PlayerController';
 import { ProjectileManager } from '../game/ProjectileManager';
 import type { PowerUpType } from '../game/types';
-import { ensureGameTextures, preloadExternalVisualAssets } from '../game/visualAssets';
+import {
+  createCharacterAnimations,
+  ensureGameTextures,
+  preloadExternalVisualAssets,
+} from '../game/visualAssets';
 import { getSharedAudioManager } from '../systems/AudioManager';
 import { KeyboardReleaseGate } from '../systems/InputGate';
 import { normalizeInput, type RawInputState } from '../systems/InputManager';
@@ -62,6 +66,7 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(0x050710);
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
     ensureGameTextures(this);
+    createCharacterAnimations(this);
     this.addStarfield();
 
     this.cursors = this.input.keyboard!.createCursorKeys();

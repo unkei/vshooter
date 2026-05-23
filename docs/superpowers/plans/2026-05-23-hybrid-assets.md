@@ -18,14 +18,16 @@
 - Modify: `src/scenes/GameScene.ts`
 - Modify: `src/scenes/ClearBonusScene.ts`
 - Modify: `src/test/visualAssets.test.ts`
-- Create: `public/assets/visual/*.svg`
+- Create: `public/assets/sprites/*.png`
 
 - [x] Add the hybrid external asset direction to the game design spec.
 - [x] Add a stable external visual asset manifest.
 - [x] Queue the manifest from Phaser `preload()` methods.
 - [x] Keep generated character textures as per-key fallback.
-- [x] Add placeholder SVG assets under `public/assets/visual/`.
+- [x] Add initial placeholder assets under `public/assets/visual/`.
 - [x] Verify with unit tests, build, and browser smoke check.
+- [x] Replace placeholder SVG assets with generated PNG spritesheets under `public/assets/sprites/`.
+- [x] Add subtle looping animation playback for loaded character spritesheets.
 
 ### Task 2: External Audio Follow-Up
 

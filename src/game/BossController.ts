@@ -14,16 +14,20 @@ import {
 } from './bossState';
 import { syncArcadeBody } from './physics';
 import type { ProjectileManager } from './ProjectileManager';
-import { BOSS_TEXTURE_KEY } from './visualAssets';
+import {
+  BOSS_TEXTURE_KEY,
+  CHARACTER_ANIMATION_KEYS,
+  playCharacterAnimation,
+} from './visualAssets';
 
-type BossSprite = Phaser.GameObjects.Image & {
+type BossSprite = Phaser.GameObjects.Sprite & {
   body: Phaser.Physics.Arcade.Body;
 };
 
 export class BossController {
   sprite: BossSprite | null = null;
-  private hitFlashOverlay: Phaser.GameObjects.Image | null = null;
-  private defeatBody: Phaser.GameObjects.Image | null = null;
+  private hitFlashOverlay: Phaser.GameObjects.Sprite | null = null;
+  private defeatBody: Phaser.GameObjects.Sprite | null = null;
   private hp = 0;
   private readonly maxHp = BOSS_MAX_HP;
   private nextFireAtMs = 0;
@@ -163,13 +167,14 @@ export class BossController {
     this.hitFlashOverlay?.destroy();
     this.defeatBody?.destroy();
     this.defeatBody = null;
-    this.sprite = this.scene.add.image(
+    this.sprite = this.scene.add.sprite(
       GAME_WIDTH / 2,
       120,
       BOSS_TEXTURE_KEY,
     ) as BossSprite;
+    playCharacterAnimation(this.sprite, CHARACTER_ANIMATION_KEYS.boss);
     this.sprite.setDepth(20);
-    this.hitFlashOverlay = this.scene.add.image(
+    this.hitFlashOverlay = this.scene.add.sprite(
       this.sprite.x,
       this.sprite.y,
       BOSS_TEXTURE_KEY,
@@ -249,7 +254,8 @@ export class BossController {
     this.sprite.destroy();
     this.sprite = null;
 
-    this.defeatBody = this.scene.add.image(x, y, BOSS_TEXTURE_KEY);
+    this.defeatBody = this.scene.add.sprite(x, y, BOSS_TEXTURE_KEY);
+    playCharacterAnimation(this.defeatBody, CHARACTER_ANIMATION_KEYS.boss);
     this.defeatBody.setDepth(BOSS_DEFEAT_SPRITE_DEPTH);
     this.defeatBody.setVisible(true);
     this.defeatBody.setAlpha(1);

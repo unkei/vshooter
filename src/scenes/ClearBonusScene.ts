@@ -1,8 +1,11 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../game/constants';
 import {
+  CHARACTER_ANIMATION_KEYS,
   PLAYER_TEXTURE_KEY,
+  createCharacterAnimations,
   ensureGameTextures,
+  playCharacterAnimation,
   preloadExternalVisualAssets,
 } from '../game/visualAssets';
 import { getSharedAudioManager } from '../systems/AudioManager';
@@ -42,6 +45,7 @@ export class ClearBonusScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(0x050710);
     void getSharedAudioManager().start('clear');
     ensureGameTextures(this);
+    createCharacterAnimations(this);
     this.addStarfield();
 
     this.add
@@ -91,8 +95,9 @@ export class ClearBonusScene extends Phaser.Scene {
     });
 
     const player = this.add
-      .image(GAME_WIDTH / 2, GAME_HEIGHT - 86, PLAYER_TEXTURE_KEY)
+      .sprite(GAME_WIDTH / 2, GAME_HEIGHT - 86, PLAYER_TEXTURE_KEY)
       .setDepth(20);
+    playCharacterAnimation(player, CHARACTER_ANIMATION_KEYS.player);
     const warp = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 60, 16, 110, 0x6ffcff, 0.24);
     warp.setDepth(10);
 

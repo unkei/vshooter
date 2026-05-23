@@ -12,6 +12,9 @@ export const BOSS_TEXTURE_KEY = 'vshooter.boss.carrier';
 type ExternalVisualAsset = {
   key: string;
   path: string;
+  frameWidth: number;
+  frameHeight: number;
+  frames: number;
 };
 
 const CHARACTER_TEXTURE_KEYS = [
@@ -25,29 +28,58 @@ const CHARACTER_TEXTURE_KEYS = [
 export const EXTERNAL_VISUAL_ASSETS: ExternalVisualAsset[] = [
   {
     key: PLAYER_TEXTURE_KEY,
-    path: 'assets/visual/player-ship.svg',
+    path: 'assets/sprites/player-ship.png',
+    frameWidth: 48,
+    frameHeight: 54,
+    frames: 4,
   },
   {
     key: ENEMY_TEXTURE_KEYS.straight,
-    path: 'assets/visual/enemy-straight.svg',
+    path: 'assets/sprites/enemy-straight.png',
+    frameWidth: 36,
+    frameHeight: 40,
+    frames: 3,
   },
   {
     key: ENEMY_TEXTURE_KEYS.sway,
-    path: 'assets/visual/enemy-sway.svg',
+    path: 'assets/sprites/enemy-sway.png',
+    frameWidth: 40,
+    frameHeight: 40,
+    frames: 3,
   },
   {
     key: ENEMY_TEXTURE_KEYS.heavy,
-    path: 'assets/visual/enemy-heavy.svg',
+    path: 'assets/sprites/enemy-heavy.png',
+    frameWidth: 50,
+    frameHeight: 50,
+    frames: 3,
   },
   {
     key: BOSS_TEXTURE_KEY,
-    path: 'assets/visual/boss-carrier.svg',
+    path: 'assets/sprites/boss-carrier.png',
+    frameWidth: 152,
+    frameHeight: 84,
+    frames: 4,
   },
 ];
 
+export const CHARACTER_ANIMATION_KEYS = {
+  player: 'vshooter.anim.player.idle',
+  enemy: {
+    straight: 'vshooter.anim.enemy.straight',
+    sway: 'vshooter.anim.enemy.sway',
+    heavy: 'vshooter.anim.enemy.heavy',
+  },
+  boss: 'vshooter.anim.boss.idle',
+};
+
 export function preloadExternalVisualAssets(scene: Phaser.Scene): void {
   for (const asset of EXTERNAL_VISUAL_ASSETS) {
-    scene.load.image(asset.key, asset.path);
+    scene.load.spritesheet(asset.key, asset.path, {
+      frameWidth: asset.frameWidth,
+      frameHeight: asset.frameHeight,
+      endFrame: asset.frames - 1,
+    });
   }
 }
 
@@ -63,6 +95,76 @@ export function ensureGameTextures(scene: Phaser.Scene): void {
   )) {
     createGeneratedTexture(scene, key);
   }
+}
+
+export function createCharacterAnimations(scene: Phaser.Scene): void {
+  createLoopingAnimation(scene, {
+    animationKey: CHARACTER_ANIMATION_KEYS.player,
+    textureKey: PLAYER_TEXTURE_KEY,
+    frames: 4,
+    frameRate: 6,
+  });
+  createLoopingAnimation(scene, {
+    animationKey: CHARACTER_ANIMATION_KEYS.enemy.straight,
+    textureKey: ENEMY_TEXTURE_KEYS.straight,
+    frames: 3,
+    frameRate: 5,
+  });
+  createLoopingAnimation(scene, {
+    animationKey: CHARACTER_ANIMATION_KEYS.enemy.sway,
+    textureKey: ENEMY_TEXTURE_KEYS.sway,
+    frames: 3,
+    frameRate: 5,
+  });
+  createLoopingAnimation(scene, {
+    animationKey: CHARACTER_ANIMATION_KEYS.enemy.heavy,
+    textureKey: ENEMY_TEXTURE_KEYS.heavy,
+    frames: 3,
+    frameRate: 4,
+  });
+  createLoopingAnimation(scene, {
+    animationKey: CHARACTER_ANIMATION_KEYS.boss,
+    textureKey: BOSS_TEXTURE_KEY,
+    frames: 4,
+    frameRate: 4,
+  });
+}
+
+export function playCharacterAnimation(
+  sprite: Phaser.GameObjects.Sprite,
+  animationKey: string,
+): void {
+  if (sprite.scene.anims.exists(animationKey)) {
+    sprite.play(animationKey, true);
+  }
+}
+
+function createLoopingAnimation(
+  scene: Phaser.Scene,
+  config: {
+    animationKey: string;
+    textureKey: string;
+    frames: number;
+    frameRate: number;
+  },
+): void {
+  if (
+    scene.anims.exists(config.animationKey) ||
+    !scene.textures.exists(config.textureKey) ||
+    scene.textures.get(config.textureKey).frameTotal < config.frames + 1
+  ) {
+    return;
+  }
+
+  scene.anims.create({
+    key: config.animationKey,
+    frames: scene.anims.generateFrameNumbers(config.textureKey, {
+      start: 0,
+      end: config.frames - 1,
+    }),
+    frameRate: config.frameRate,
+    repeat: -1,
+  });
 }
 
 function createGeneratedTexture(scene: Phaser.Scene, key: string): void {

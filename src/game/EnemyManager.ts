@@ -9,9 +9,13 @@ import {
 import { configureManualArcadeBody, syncArcadeBody } from './physics';
 import type { EnemyType, PowerUpType } from './types';
 import type { ProjectileManager } from './ProjectileManager';
-import { ENEMY_TEXTURE_KEYS } from './visualAssets';
+import {
+  CHARACTER_ANIMATION_KEYS,
+  ENEMY_TEXTURE_KEYS,
+  playCharacterAnimation,
+} from './visualAssets';
 
-type EnemySprite = Phaser.GameObjects.Image & {
+type EnemySprite = Phaser.GameObjects.Sprite & {
   body: Phaser.Physics.Arcade.Body;
 };
 
@@ -116,7 +120,8 @@ export class EnemyManager {
     };
     const reducedPressure = options.pressure === 'reduced';
     const size = type === 'heavy' ? 34 : 24;
-    const enemy = this.scene.add.image(x, y, ENEMY_TEXTURE_KEYS[type]) as EnemySprite;
+    const enemy = this.scene.add.sprite(x, y, ENEMY_TEXTURE_KEYS[type]) as EnemySprite;
+    playCharacterAnimation(enemy, CHARACTER_ANIMATION_KEYS.enemy[type]);
     this.scene.physics.add.existing(enemy);
     enemy.body.setSize(size, size);
     configureManualArcadeBody(enemy.body);
