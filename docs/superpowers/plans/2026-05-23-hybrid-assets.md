@@ -38,6 +38,25 @@
 - Modify: `src/systems/AudioManager.ts`
 - Test: `src/test/AudioManager.test.ts`
 
-- [ ] Add a small audio manifest for BGM and key sound effects.
-- [ ] Keep Web Audio generated playback as fallback when external audio cannot start.
-- [ ] Preserve the existing user-gesture unlock behavior on iOS Safari.
+- [x] Add a small audio manifest for BGM and key sound effects.
+- [x] Keep Web Audio generated playback as fallback when external audio cannot start.
+- [x] Preserve the existing user-gesture unlock behavior on iOS Safari.
+- [x] Stop external BGM owned by previous scene adapters so game over retry does
+      not layer multiple gameplay loops.
+
+### Task 3: Audio Mix and Settings Polish
+
+**Files:**
+- Modify: `docs/specs/game-design.md`
+- Modify: `src/systems/AudioManager.ts`
+- Modify: `src/scenes/TitleScene.ts`
+- Modify: `src/scenes/ResultScene.ts`
+- Test: `src/test/AudioManager.test.ts`
+
+- [ ] Spawn a context-scoped subagent for the audio slice before code edits.
+- [ ] Add master/BGM/SFX volume controls in the shared audio manager.
+- [ ] Persist the selected audio volume or mute state in local storage.
+- [ ] Expose a minimal title/result-screen control for mute or volume without
+      complicating gameplay input.
+- [ ] Verify generated fallback audio and external Phaser audio both respect the
+      same volume settings.
