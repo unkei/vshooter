@@ -568,6 +568,12 @@ hard-coding scene logic. Regression expectation: stage 1 points to stage 2,
 stage 2 has no next stage, stage 1 boss rush is disabled, stage 2 boss rush is
 enabled, and stage 2 can start from the score earned in stage 1.
 
+Starting a new run from the title screen or retrying after game over must always
+begin at stage 1. This reset should be explicit in scene transition data instead
+of relying on prior scene state or default initialization. Regression
+expectation: after reaching stage 2 and then retrying from game over, the next
+gameplay scene shows `STAGE 1` with a fresh run score.
+
 Stage 2 boss design should add a boss rush attack. The boss occasionally moves
 downward toward the player area at a moderately fast speed, attacks, then returns
 to its normal position. This should be tested as a pressure spike, not a
@@ -585,6 +591,12 @@ accepted after invincibility checks. Regression expectation: ignored invincible
 hits do not spawn damage smoke, while accepted hits produce a brief visible smoke
 burst.
 
+The gameplay HUD should reserve the top edge of the screen for one compact row
+containing stage, life, shot level, score, and combo. The boss health gauge must
+sit below that row and must not overlap score or life information. Regression
+expectation: boss encounters keep the HUD as one row at the top, and the boss
+life gauge remains visually separated below it.
+
 The title screen should look more like part of the same game world as the
 character art. The title lettering and font treatment should become more
 substantial and visually polished.
@@ -593,6 +605,12 @@ The first title polish pass may remain code-generated, but should use layered
 arcade-style title text with a darker depth layer, a bright main layer, and a
 simple neon frame or wing-like accent. Regression expectation: title input,
 audio mute toggling, high score display, and start behavior remain unchanged.
+
+Large screen headings should share one arcade heading treatment. Title lettering,
+the clear bonus `STAGE CLEAR`, and the final clear `STAGE CLEAR` should use the
+same font family and core stroke treatment, while still allowing scene-specific
+color accents. Regression expectation: heading style is defined in one shared
+place and reused by title, clear bonus, and result scenes.
 
 Player bullets, enemy bullets, and power-up items should receive stronger visual
 assets or code-generated effects. They must remain highly readable at gameplay

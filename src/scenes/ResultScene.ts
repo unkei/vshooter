@@ -7,9 +7,11 @@ import {
 import { FreshPressGate } from '../systems/InputGate';
 import {
   CLEAR_RESULT_RETURN_DELAY_MS,
+  newRunGameSceneData,
   resultPromptText,
   resultReturnsToTitleAutomatically,
 } from './resultFlow';
+import { arcadeHeadingTextStyle, UI_FONT_FAMILY } from './screenTextStyles';
 
 export type ResultSceneData = {
   status: 'clear' | 'gameover';
@@ -52,11 +54,7 @@ export class ResultScene extends Phaser.Scene {
     const color = this.dataFromRun.status === 'clear' ? '#6ffcff' : '#ff4fd8';
 
     this.add
-      .text(GAME_WIDTH / 2, 180, title, {
-        fontFamily: 'Arial Black, sans-serif',
-        fontSize: '42px',
-        color,
-      })
+      .text(GAME_WIDTH / 2, 180, title, arcadeHeadingTextStyle(color))
       .setOrigin(0.5);
 
     this.add
@@ -69,6 +67,7 @@ export class ResultScene extends Phaser.Scene {
           `HIGH SCORE ${this.dataFromRun.highScore}`,
         ],
         {
+          fontFamily: UI_FONT_FAMILY,
           fontSize: '22px',
           color: '#ffffff',
           align: 'center',
@@ -83,6 +82,7 @@ export class ResultScene extends Phaser.Scene {
         500,
         resultPromptText(this.dataFromRun.status),
         {
+          fontFamily: UI_FONT_FAMILY,
           fontSize: '18px',
           color: '#fff06a',
         },
@@ -91,6 +91,7 @@ export class ResultScene extends Phaser.Scene {
 
     const audioStatus = this.add
       .text(GAME_WIDTH / 2, 540, this.audioStatusText(audio), {
+        fontFamily: UI_FONT_FAMILY,
         fontSize: '15px',
         color: '#9fffe0',
       })
@@ -130,7 +131,7 @@ export class ResultScene extends Phaser.Scene {
   private retry(): void {
     this.input.keyboard?.resetKeys();
     void getSharedAudioManager().start();
-    this.scene.start('GameScene');
+    this.scene.start('GameScene', newRunGameSceneData());
   }
 
   private returnToTitle(): void {

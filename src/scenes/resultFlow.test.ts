@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CLEAR_RESULT_RETURN_DELAY_MS,
+  newRunGameSceneData,
   resultPromptText,
   resultReturnsToTitleAutomatically,
 } from './resultFlow';
@@ -18,5 +19,13 @@ describe('result flow', () => {
   it('keeps the original retry prompt text on clear and game-over results', () => {
     expect(resultPromptText('clear')).toBe('Enter / Click / Gamepad Start: Retry');
     expect(resultPromptText('gameover')).toBe('Enter / Click / Gamepad Start: Retry');
+  });
+
+  it('starts retries and title runs explicitly from stage 1 with a fresh score', () => {
+    expect(newRunGameSceneData()).toEqual({
+      stageNumber: 1,
+      initialScore: 0,
+      initialMaxCombo: 0,
+    });
   });
 });

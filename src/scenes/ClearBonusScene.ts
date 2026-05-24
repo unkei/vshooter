@@ -15,6 +15,7 @@ import {
 } from '../systems/AudioManager';
 import type { StageNumber } from '../systems/StageDirector';
 import { buildClearBonusLines } from './clearBonusDisplay';
+import { arcadeHeadingTextStyle } from './screenTextStyles';
 
 export type ClearBonusSceneData = {
   score: number;
@@ -59,13 +60,7 @@ export class ClearBonusScene extends Phaser.Scene {
     this.addStarfield();
 
     this.add
-      .text(GAME_WIDTH / 2, 130, 'STAGE CLEAR', {
-        fontFamily: 'Arial Black, sans-serif',
-        fontSize: '42px',
-        color: '#6ffcff',
-        stroke: '#061219',
-        strokeThickness: 7,
-      })
+      .text(GAME_WIDTH / 2, 130, 'STAGE CLEAR', arcadeHeadingTextStyle('#6ffcff'))
       .setOrigin(0.5);
 
     const bonusCounter = {

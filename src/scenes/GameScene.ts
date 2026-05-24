@@ -36,6 +36,7 @@ import {
   type StageNumber,
 } from '../systems/StageDirector';
 import { VibrationManager } from '../systems/VibrationManager';
+import { buildGameplayHudLine } from './gameHud';
 
 type CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -121,11 +122,10 @@ export class GameScene extends Phaser.Scene {
 
     this.hud = this.add.text(12, 12, '', {
       fontFamily: 'Arial Black, Arial, sans-serif',
-      fontSize: '15px',
+      fontSize: '14px',
       color: '#ffffff',
       stroke: '#000000',
       strokeThickness: 4,
-      lineSpacing: 4,
     }).setDepth(70);
 
     this.physics.add.overlap(
@@ -457,16 +457,16 @@ export class GameScene extends Phaser.Scene {
 
   private updateHud(): void {
     const snapshot = this.score.snapshot();
-    const lifeMarkers = this.formatLifeMarkers(this.player.lives);
-    this.hud.setText([
-      `STAGE ${this.stageDefinition.stageNumber}  LIFE ${lifeMarkers}`,
-      `SHOT ${this.player.shotLevel}  SCORE ${snapshot.score}  COMBO ${snapshot.combo}`,
-    ]);
-  }
-
-  private formatLifeMarkers(lives: number): string {
-    const filled = Math.max(0, Math.min(PLAYER_MAX_LIVES, lives));
-    return `[${'I'.repeat(filled)}${'.'.repeat(PLAYER_MAX_LIVES - filled)}]`;
+    this.hud.setText(
+      buildGameplayHudLine({
+        stageNumber: this.stageDefinition.stageNumber,
+        lives: this.player.lives,
+        maxLives: PLAYER_MAX_LIVES,
+        shotLevel: this.player.shotLevel,
+        score: snapshot.score,
+        combo: snapshot.combo,
+      }),
+    );
   }
 
   private emitDamageSmoke(x: number, y: number): void {

@@ -4,6 +4,8 @@ import {
   createPhaserExternalAudioPlayback,
   getSharedAudioManager,
 } from '../systems/AudioManager';
+import { newRunGameSceneData } from './resultFlow';
+import { UI_FONT_FAMILY, titleLayerTextStyle } from './screenTextStyles';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -21,6 +23,7 @@ export class TitleScene extends Phaser.Scene {
 
     this.add
       .text(GAME_WIDTH / 2, 280, 'Keyboard / Pointer / Gamepad', {
+        fontFamily: UI_FONT_FAMILY,
         fontSize: '18px',
         color: '#ffffff',
       })
@@ -29,6 +32,7 @@ export class TitleScene extends Phaser.Scene {
     const highScore = Number(localStorage.getItem('vshooter.highScore') ?? 0);
     this.add
       .text(GAME_WIDTH / 2, 330, `HIGH SCORE ${highScore}`, {
+        fontFamily: UI_FONT_FAMILY,
         fontSize: '20px',
         color: '#fff06a',
       })
@@ -36,6 +40,7 @@ export class TitleScene extends Phaser.Scene {
 
     this.add
       .text(GAME_WIDTH / 2, 430, 'Press Enter / Click / Gamepad Start', {
+        fontFamily: UI_FONT_FAMILY,
         fontSize: '18px',
         color: '#ff4fd8',
       })
@@ -43,6 +48,7 @@ export class TitleScene extends Phaser.Scene {
 
     const audioStatus = this.add
       .text(GAME_WIDTH / 2, 475, this.audioStatusText(audio), {
+        fontFamily: UI_FONT_FAMILY,
         fontSize: '15px',
         color: '#9fffe0',
       })
@@ -65,7 +71,7 @@ export class TitleScene extends Phaser.Scene {
 
   private startGame(): void {
     void getSharedAudioManager().start('gameplay');
-    this.scene.start('GameScene');
+    this.scene.start('GameScene', newRunGameSceneData());
   }
 
   private audioStatusText(audio: ReturnType<typeof getSharedAudioManager>): string {
@@ -97,38 +103,20 @@ export class TitleScene extends Phaser.Scene {
     this.strokeTitleFrame(frame, centerX, titleY);
 
     this.add
-      .text(centerX + 5, titleY + 8, 'VSHOOTER', {
-        fontFamily: 'Arial Black, Impact, sans-serif',
-        fontSize: '56px',
-        color: '#10253a',
-        stroke: '#07111f',
-        strokeThickness: 8,
-      })
+      .text(centerX + 5, titleY + 8, 'VSHOOTER', titleLayerTextStyle('shadow'))
       .setOrigin(0.5);
 
     this.add
-      .text(centerX + 2, titleY + 3, 'VSHOOTER', {
-        fontFamily: 'Arial Black, Impact, sans-serif',
-        fontSize: '56px',
-        color: '#1675a8',
-        stroke: '#00152b',
-        strokeThickness: 6,
-      })
+      .text(centerX + 2, titleY + 3, 'VSHOOTER', titleLayerTextStyle('depth'))
       .setOrigin(0.5);
 
     this.add
-      .text(centerX, titleY, 'VSHOOTER', {
-        fontFamily: 'Arial Black, Impact, sans-serif',
-        fontSize: '56px',
-        color: '#f8ffff',
-        stroke: '#35f4ff',
-        strokeThickness: 3,
-      })
+      .text(centerX, titleY, 'VSHOOTER', titleLayerTextStyle('top'))
       .setOrigin(0.5);
 
     this.add
       .text(centerX, titleY + 48, 'NEON SKY DEFENSE', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: UI_FONT_FAMILY,
         fontSize: '14px',
         color: '#fff06a',
         stroke: '#32124f',
