@@ -63,6 +63,8 @@ export class ClearBonusScene extends Phaser.Scene {
         fontFamily: 'Arial Black, sans-serif',
         fontSize: '42px',
         color: '#6ffcff',
+        stroke: '#061219',
+        strokeThickness: 7,
       })
       .setOrigin(0.5);
 
@@ -72,10 +74,13 @@ export class ClearBonusScene extends Phaser.Scene {
     };
     const bonusText = this.add
       .text(GAME_WIDTH / 2, 255, buildClearBonusLines(this.dataFromRun, 0, 0), {
+        fontFamily: 'Arial Black, Arial, sans-serif',
         fontSize: '22px',
         color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 5,
         align: 'center',
-        lineSpacing: 12,
+        lineSpacing: 16,
       })
       .setOrigin(0.5);
     this.tweens.add({
@@ -108,16 +113,68 @@ export class ClearBonusScene extends Phaser.Scene {
       .sprite(GAME_WIDTH / 2, GAME_HEIGHT - 86, PLAYER_TEXTURE_KEY)
       .setDepth(20);
     playCharacterAnimation(player, CHARACTER_ANIMATION_KEYS.player);
-    const warp = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 60, 16, 110, 0x6ffcff, 0.24);
-    warp.setDepth(10);
+    const warpRails = [
+      this.add.rectangle(
+        GAME_WIDTH / 2 - 22,
+        GAME_HEIGHT - 60,
+        5,
+        118,
+        0x6ffcff,
+        0.28,
+      ),
+      this.add.rectangle(
+        GAME_WIDTH / 2 + 22,
+        GAME_HEIGHT - 60,
+        5,
+        118,
+        0x6ffcff,
+        0.28,
+      ),
+      this.add.rectangle(
+        GAME_WIDTH / 2,
+        GAME_HEIGHT - 60,
+        10,
+        118,
+        0xffffff,
+        0.18,
+      ),
+    ];
+    const warpRings = [0, 1, 2].map((index) =>
+      this.add
+        .ellipse(
+          GAME_WIDTH / 2,
+          GAME_HEIGHT - 112 + index * 42,
+          72 - index * 12,
+          20,
+          0x6ffcff,
+          0.1,
+        )
+        .setStrokeStyle(3, index === 1 ? 0xffffff : 0x6ffcff, 0.78),
+    );
+    const warpVisuals = [...warpRails, ...warpRings];
+    for (const visual of warpVisuals) {
+      visual.setDepth(10);
+    }
 
     this.tweens.add({
-      targets: warp,
+      targets: warpRails,
       height: GAME_HEIGHT,
       y: GAME_HEIGHT / 2,
-      alpha: 0.55,
+      alpha: 0.5,
+      scaleX: 1.25,
       duration: 900,
       ease: 'Sine.easeInOut',
+    });
+    this.tweens.add({
+      targets: warpRings,
+      scaleX: 1.85,
+      scaleY: 1.45,
+      y: '-=34',
+      alpha: 0.72,
+      duration: 900,
+      ease: 'Sine.easeInOut',
+      yoyo: true,
+      repeat: 1,
     });
     this.tweens.add({
       targets: player,

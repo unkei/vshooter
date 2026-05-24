@@ -120,9 +120,13 @@ export class GameScene extends Phaser.Scene {
     this.stage = new StageDirector(this.stageDefinition.events);
 
     this.hud = this.add.text(12, 12, '', {
-      fontSize: '16px',
+      fontFamily: 'Arial Black, Arial, sans-serif',
+      fontSize: '15px',
       color: '#ffffff',
-    });
+      stroke: '#000000',
+      strokeThickness: 4,
+      lineSpacing: 4,
+    }).setDepth(70);
 
     this.physics.add.overlap(
       this.projectiles.playerBullets,
@@ -280,6 +284,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    this.emitDamageSmoke(this.player.sprite.x, this.player.sprite.y);
     this.audio.play('damage');
     this.vibration.damage(this.player.lives, PLAYER_MAX_LIVES);
     this.score.registerDamage();
@@ -452,9 +457,43 @@ export class GameScene extends Phaser.Scene {
 
   private updateHud(): void {
     const snapshot = this.score.snapshot();
-    this.hud.setText(
-      `LIFE ${this.player.lives}  SHOT ${this.player.shotLevel}  SCORE ${snapshot.score}  COMBO ${snapshot.combo}`,
-    );
+    const lifeMarkers = this.formatLifeMarkers(this.player.lives);
+    this.hud.setText([
+      `STAGE ${this.stageDefinition.stageNumber}  LIFE ${lifeMarkers}`,
+      `SHOT ${this.player.shotLevel}  SCORE ${snapshot.score}  COMBO ${snapshot.combo}`,
+    ]);
+  }
+
+  private formatLifeMarkers(lives: number): string {
+    const filled = Math.max(0, Math.min(PLAYER_MAX_LIVES, lives));
+    return `[${'I'.repeat(filled)}${'.'.repeat(PLAYER_MAX_LIVES - filled)}]`;
+  }
+
+  private emitDamageSmoke(x: number, y: number): void {
+    const smokeColors = [0xd8d2d8, 0xff9fb4, 0x8d8796];
+    for (let i = 0; i < 6; i += 1) {
+      const angle = (Math.PI * 2 * i) / 6 + Phaser.Math.FloatBetween(-0.2, 0.2);
+      const distance = Phaser.Math.Between(8, 18);
+      const smoke = this.add
+        .circle(
+          x + Math.cos(angle) * distance,
+          y + Math.sin(angle) * distance,
+          Phaser.Math.Between(4, 8),
+          smokeColors[i % smokeColors.length],
+          0.72,
+        )
+        .setDepth(45);
+      this.tweens.add({
+        targets: smoke,
+        x: smoke.x + Math.cos(angle) * Phaser.Math.Between(18, 34),
+        y: smoke.y + Math.sin(angle) * Phaser.Math.Between(18, 34) + 8,
+        alpha: 0,
+        scale: 1.8,
+        duration: 450,
+        ease: 'Sine.easeOut',
+        onComplete: () => smoke.destroy(),
+      });
+    }
   }
 
   private finish(status: 'clear' | 'gameover'): void {

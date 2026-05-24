@@ -579,6 +579,12 @@ Life state is currently too hard to read. Improve the HUD life display, and add
 damage smoke when the player takes accepted damage. Low-life state should be
 readable without requiring the player to parse small text during dense action.
 
+The first gameplay visual feedback pass should replace plain life text with
+clear life markers in the HUD and spawn a short smoke effect only when damage is
+accepted after invincibility checks. Regression expectation: ignored invincible
+hits do not spawn damage smoke, while accepted hits produce a brief visible smoke
+burst.
+
 The title screen should look more like part of the same game world as the
 character art. The title lettering and font treatment should become more
 substantial and visually polished.
@@ -587,10 +593,21 @@ Player bullets, enemy bullets, and power-up items should receive stronger visual
 assets or code-generated effects. They must remain highly readable at gameplay
 speed and must not blend into the background or each other.
 
+The first bullet and item readability pass may stay code-generated, but bullets
+should get stronger core/outline treatment without changing collision radius or
+speed. Power-up items should be readable by both color and a short type label so
+item type remains clear if colors blend on a display. Regression expectation:
+bullet collision radius and speed constants remain unchanged, and each power-up
+type has a distinct label.
+
 The clear warp-out should show a stronger warp route, gate, or path effect before
 the player ship leaves. Clear bonus counting should use a more readable and
 polished font treatment so the player understands how the bonus enters the final
 score.
+
+The first clear bonus presentation pass should keep the score math unchanged,
+but use stronger text styling and a more visible warp route or gate effect than a
+single simple rectangle.
 
 ### Score Direction
 
