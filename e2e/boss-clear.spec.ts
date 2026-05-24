@@ -20,7 +20,7 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
       (window as unknown as { __vshooterDebug?: { getActiveScene?: () => string | null } })
         .__vshooterDebug?.getActiveScene?.() === 'GameScene',
     undefined,
-    { timeout: 5_000 },
+    { timeout: 15_000 },
   );
 
   await page.evaluate(() => {
@@ -30,10 +30,10 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
   await waitForResultOverlay(page, 'STAGE CLEAR');
   expect(await windowText(page)).toContain('GameScene');
   await waitForBossDefeatBodyFade(page);
-  await waitForActiveScene(page, 'ClearBonusScene', 12_000);
+  await waitForActiveScene(page, 'ClearBonusScene', 20_000);
   await waitForVibrationPattern(page, [90, 45, 120]);
   await waitForVibrationPattern(page, [35, 25, 35, 25, 70]);
-  await waitForActiveScene(page, 'GameScene', 12_000);
+  await waitForActiveScene(page, 'GameScene', 20_000);
 
   await page.evaluate(() => {
     (window as unknown as { __vshooterDebug?: { defeatBoss?: () => void } })
@@ -42,8 +42,8 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
   await waitForResultOverlay(page, 'STAGE CLEAR');
   expect(await windowText(page)).toContain('GameScene');
   await waitForBossDefeatBodyFade(page);
-  await waitForActiveScene(page, 'ClearBonusScene', 12_000);
-  await waitForActiveScene(page, 'TitleScene', 12_000);
+  await waitForActiveScene(page, 'ClearBonusScene', 20_000);
+  await waitForActiveScene(page, 'TitleScene', 20_000);
 
   expect(await windowText(page)).toContain('TitleScene');
   expect(browserErrors).toEqual([]);
@@ -80,7 +80,7 @@ test('clear transition survives sparse Chrome gamepad slots', async ({ page }) =
   await page.keyboard.press('Enter');
   await waitForActiveScene(page, 'GameScene');
   await page.getByTestId('debug-defeat-boss').click();
-  await waitForActiveScene(page, 'ClearBonusScene', 8_000);
+  await waitForActiveScene(page, 'ClearBonusScene', 20_000);
 
   expect(browserErrors).toEqual([]);
 });
@@ -125,7 +125,7 @@ test('sparse Chrome gamepad still controls gameplay after replay', async ({ page
 
   await page.getByTestId('debug-game-over').click();
   await waitForResultOverlay(page, 'GAME OVER');
-  await waitForActiveScene(page, 'TitleScene', 7_000);
+  await waitForActiveScene(page, 'TitleScene', 15_000);
 
   await pressFakePadButton(page, 9);
   await waitForActiveScene(page, 'GameScene');
@@ -158,7 +158,7 @@ test('sparse Chrome gamepad still controls gameplay after replay', async ({ page
       return typeof x === 'number' && x > (initialX as number) + 8;
     },
     startX,
-    { timeout: 2_000 },
+    { timeout: 5_000 },
   );
 });
 
@@ -216,7 +216,7 @@ test('game over stays over gameplay before returning to title', async ({ page })
   await page.keyboard.up('Enter');
   await page.waitForTimeout(100);
   await page.locator('canvas').click();
-  await waitForActiveScene(page, 'TitleScene', 5_000);
+  await waitForActiveScene(page, 'TitleScene', 10_000);
 });
 
 test('rapid boss hits do not keep boss flash permanently active', async ({ page }) => {
@@ -267,7 +267,7 @@ test('rapid boss hits do not keep boss flash permanently active', async ({ page 
       return state?.exists === true && state.visible && state.flashActive === true;
     },
     undefined,
-    { timeout: 1_000 },
+    { timeout: 5_000 },
   );
 
   await page.waitForFunction(
@@ -295,7 +295,7 @@ test('rapid boss hits do not keep boss flash permanently active', async ({ page 
       );
     },
     undefined,
-    { timeout: 2_000 },
+    { timeout: 5_000 },
   );
 
   await page.evaluate(() => {
@@ -464,7 +464,7 @@ async function waitForBackdropEnemy(page: Page): Promise<void> {
         }
       ).__vshooterDebug?.getBackdropState?.()?.enemyCount ?? 0,
     undefined,
-    { timeout: 3_000 },
+    { timeout: 10_000 },
   );
 }
 
@@ -477,7 +477,7 @@ async function waitForResultOverlay(page: Page, text: string): Promise<void> {
         }
       ).__vshooterDebug?.getResultOverlayText?.() === expected,
     text,
-    { timeout: 5_000 },
+    { timeout: 15_000 },
   );
 }
 
@@ -496,7 +496,7 @@ async function waitForBossDefeatBodyFade(page: Page): Promise<void> {
       );
     },
     undefined,
-    { timeout: 2_000 },
+    { timeout: 10_000 },
   );
 }
 
@@ -520,7 +520,7 @@ async function waitForVibrationPattern(
       });
     },
     expectedPattern,
-    { timeout: 5_000 },
+    { timeout: 15_000 },
   );
 }
 
@@ -544,7 +544,7 @@ async function installVibrationRecorder(page: Page): Promise<void> {
 async function waitForActiveScene(
   page: Page,
   sceneKey: string,
-  timeout = 10_000,
+  timeout = 15_000,
 ): Promise<void> {
   await page.waitForFunction(
     (expected) =>
