@@ -17,15 +17,7 @@ export class TitleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(0x050710);
     this.addStarfield();
 
-    this.add
-      .text(GAME_WIDTH / 2, 180, 'VSHOOTER', {
-        fontFamily: 'Arial Black, sans-serif',
-        fontSize: '52px',
-        color: '#6ffcff',
-        stroke: '#ffffff',
-        strokeThickness: 2,
-      })
-      .setOrigin(0.5);
+    this.addTitleLockup();
 
     this.add
       .text(GAME_WIDTH / 2, 280, 'Keyboard / Pointer / Gamepad', {
@@ -90,5 +82,83 @@ export class TitleScene extends Phaser.Scene {
         Phaser.Math.FloatBetween(0.25, 0.85),
       );
     }
+  }
+
+  private addTitleLockup(): void {
+    const centerX = GAME_WIDTH / 2;
+    const titleY = 176;
+    const frame = this.add.graphics();
+
+    frame.lineStyle(10, 0x1a4b6d, 0.28);
+    this.strokeTitleFrame(frame, centerX, titleY);
+    frame.lineStyle(4, 0x19d8ff, 0.85);
+    this.strokeTitleFrame(frame, centerX, titleY);
+    frame.lineStyle(1, 0xffffff, 0.95);
+    this.strokeTitleFrame(frame, centerX, titleY);
+
+    this.add
+      .text(centerX + 5, titleY + 8, 'VSHOOTER', {
+        fontFamily: 'Arial Black, Impact, sans-serif',
+        fontSize: '56px',
+        color: '#10253a',
+        stroke: '#07111f',
+        strokeThickness: 8,
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(centerX + 2, titleY + 3, 'VSHOOTER', {
+        fontFamily: 'Arial Black, Impact, sans-serif',
+        fontSize: '56px',
+        color: '#1675a8',
+        stroke: '#00152b',
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(centerX, titleY, 'VSHOOTER', {
+        fontFamily: 'Arial Black, Impact, sans-serif',
+        fontSize: '56px',
+        color: '#f8ffff',
+        stroke: '#35f4ff',
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(centerX, titleY + 48, 'NEON SKY DEFENSE', {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        color: '#fff06a',
+        stroke: '#32124f',
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5);
+  }
+
+  private strokeTitleFrame(
+    frame: Phaser.GameObjects.Graphics,
+    centerX: number,
+    centerY: number,
+  ): void {
+    frame.beginPath();
+    frame.moveTo(centerX - 182, centerY - 20);
+    frame.lineTo(centerX - 130, centerY - 48);
+    frame.lineTo(centerX - 96, centerY - 48);
+    frame.moveTo(centerX - 188, centerY + 15);
+    frame.lineTo(centerX - 124, centerY + 46);
+    frame.lineTo(centerX - 76, centerY + 46);
+    frame.moveTo(centerX + 182, centerY - 20);
+    frame.lineTo(centerX + 130, centerY - 48);
+    frame.lineTo(centerX + 96, centerY - 48);
+    frame.moveTo(centerX + 188, centerY + 15);
+    frame.lineTo(centerX + 124, centerY + 46);
+    frame.lineTo(centerX + 76, centerY + 46);
+    frame.moveTo(centerX - 210, centerY);
+    frame.lineTo(centerX - 154, centerY);
+    frame.moveTo(centerX + 210, centerY);
+    frame.lineTo(centerX + 154, centerY);
+    frame.strokePath();
   }
 }

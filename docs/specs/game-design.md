@@ -589,6 +589,11 @@ The title screen should look more like part of the same game world as the
 character art. The title lettering and font treatment should become more
 substantial and visually polished.
 
+The first title polish pass may remain code-generated, but should use layered
+arcade-style title text with a darker depth layer, a bright main layer, and a
+simple neon frame or wing-like accent. Regression expectation: title input,
+audio mute toggling, high score display, and start behavior remain unchanged.
+
 Player bullets, enemy bullets, and power-up items should receive stronger visual
 assets or code-generated effects. They must remain highly readable at gameplay
 speed and must not blend into the background or each other.
