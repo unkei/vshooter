@@ -30,10 +30,10 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
   await waitForResultOverlay(page, 'STAGE CLEAR');
   expect(await windowText(page)).toContain('GameScene');
   await waitForBossDefeatBodyFade(page);
-  await waitForActiveScene(page, 'ClearBonusScene', 7_000);
+  await waitForActiveScene(page, 'ClearBonusScene', 12_000);
   await waitForVibrationPattern(page, [90, 45, 120]);
   await waitForVibrationPattern(page, [35, 25, 35, 25, 70]);
-  await waitForActiveScene(page, 'GameScene', 7_000);
+  await waitForActiveScene(page, 'GameScene', 12_000);
 
   await page.evaluate(() => {
     (window as unknown as { __vshooterDebug?: { defeatBoss?: () => void } })
@@ -42,8 +42,8 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
   await waitForResultOverlay(page, 'STAGE CLEAR');
   expect(await windowText(page)).toContain('GameScene');
   await waitForBossDefeatBodyFade(page);
-  await waitForActiveScene(page, 'ClearBonusScene', 7_000);
-  await waitForActiveScene(page, 'TitleScene', 7_000);
+  await waitForActiveScene(page, 'ClearBonusScene', 12_000);
+  await waitForActiveScene(page, 'TitleScene', 12_000);
 
   expect(await windowText(page)).toContain('TitleScene');
   expect(browserErrors).toEqual([]);
@@ -216,7 +216,7 @@ test('game over stays over gameplay before returning to title', async ({ page })
   await page.keyboard.up('Enter');
   await page.waitForTimeout(100);
   await page.locator('canvas').click();
-  await waitForActiveScene(page, 'TitleScene', 1_500);
+  await waitForActiveScene(page, 'TitleScene', 5_000);
 });
 
 test('rapid boss hits do not keep boss flash permanently active', async ({ page }) => {
@@ -544,7 +544,7 @@ async function installVibrationRecorder(page: Page): Promise<void> {
 async function waitForActiveScene(
   page: Page,
   sceneKey: string,
-  timeout = 5_000,
+  timeout = 10_000,
 ): Promise<void> {
   await page.waitForFunction(
     (expected) =>

@@ -6,11 +6,6 @@ import {
   PLAYER_MAX_SHOT_LEVEL,
 } from '../game/constants';
 import { BossController } from '../game/BossController';
-import {
-  BOSS_DEFEAT_CLEAR_DELAY_MS,
-  BOSS_ENTRANCE_TRAVEL_MS,
-  BOSS_PRE_WARNING_GRACE_MS,
-} from '../game/bossState';
 import { EnemyManager } from '../game/EnemyManager';
 import { PlayerController } from '../game/PlayerController';
 import { ProjectileManager } from '../game/ProjectileManager';
@@ -19,6 +14,7 @@ import type { PowerUpType } from '../game/types';
 import {
   createCharacterAnimations,
   ensureGameTextures,
+  PLAYER_TEXTURE_KEY,
   preloadExternalVisualAssets,
 } from '../game/visualAssets';
 import {
@@ -32,12 +28,16 @@ import { PowerUpDropManager } from '../systems/PowerUpManager';
 import { ScoreManager } from '../systems/ScoreManager';
 import {
   createStageDefinition,
+  StageDefinition,
+  StageNumber,
   StageDirector,
-  type StageDefinition,
-  type StageNumber,
 } from '../systems/StageDirector';
 import { VibrationManager } from '../systems/VibrationManager';
-import { buildGameplayHudLine } from './gameHud';
+import {
+  BOSS_DEFEAT_CLEAR_DELAY_MS,
+  BOSS_ENTRANCE_TRAVEL_MS,
+  BOSS_PRE_WARNING_GRACE_MS,
+} from '../game/bossState';
 import {
   gameplayResultOverlayConfig,
   type GameplayResultStatus,
@@ -47,6 +47,7 @@ import {
   STAGE_INTRO_WARP_DURATION_MS,
   stageIntroStartY,
 } from './stageIntro';
+import { buildGameplayHudLine } from './gameHud';
 
 type CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -201,87 +202,93 @@ export class GameScene extends Phaser.Scene {
       this.startedAtMs = timeMs;
     }
 
-    const input = normalizeInput(this.readInput());
-    const canFirePlayerShot = !this.bossEntrancePending;
-    if (this.player.update(input, timeMs, deltaMs)) {
-      if (canFirePlayerShot) {
-        this.projectiles.firePlayerShot(
-          this.player.sprite.x,
-          this.player.sprite.y,
-          this.player.shotLevel,
-        );
-        this.audio.play('shot');
+    const elapsedMs = timeMs - this.startedAtMs!;
+    const events = this.stage.update(elapsedMs);
+    for (const event of events) {
+      if (event.type === 'wave') {
+        this.enemies.spawnWave(event.enemyType, event.count, {
+          pressure: event.pressure,
+          drops: event.drops,
+        });
       }
     }
 
-    const elapsedMs = timeMs - this.startedAtMs;
-    for (const event of this.stage.update(elapsedMs)) {
-      this.enemies.spawnWave(event.enemyType, event.count, {
-        pressure: event.pressure,
-        drops: event.drops,
-      });
-    }
-
-    this.enemies.update(timeMs, deltaMs, this.player.sprite.x, this.player.sprite.y);
-    if (this.stage.consumeBossReady(this.enemies.activeCount())) {
+    const eventReady = this.stage.consumeBossReady(this.enemies.activeCount());
+    if (eventReady) {
       this.startBossEntrance();
     }
 
+    const rawInput = this.getRawInput();
+    const input = normalizeInput({
+      ...rawInput,
+      keyboard: this.keyboardGate.filter(
+        rawInput.keyboard ?? {
+          left: false,
+          right: false,
+          up: false,
+          down: false,
+          shoot: false,
+          confirm: false,
+        },
+      ),
+    });
+
+    const fired = this.player.update(input, timeMs, deltaMs);
+    if (fired) {
+      this.projectiles.firePlayerShot(
+        this.player.sprite.x,
+        this.player.sprite.y,
+        this.player.shotLevel,
+      );
+    }
+
+    this.enemies.update(
+      timeMs,
+      deltaMs,
+      this.player.sprite.x,
+      this.player.sprite.y,
+    );
     this.boss.update(timeMs, deltaMs);
-    this.powerUps.update(timeMs, deltaMs);
     this.projectiles.update();
-    this.checkBossHits();
+    this.powerUps.update(timeMs, deltaMs);
     this.updateHud();
   }
 
-  private readInput(): RawInputState {
-    const pointer = this.input.activePointer;
+  private getRawInput(): RawInputState {
     const pad = this.input.gamepad?.pad1;
-    const axisX = pad?.axes[0]?.getValue() ?? 0;
-    const axisY = pad?.axes[1]?.getValue() ?? 0;
-    const pointerSource = pointer.wasTouch ? 'touch' : 'mouse';
-    const pointerId = pointer.id;
+    const isTouch = this.input.activePointer.isDown && this.input.activePointer.id === this.activeTouchPointerId;
 
-    if (pointer.isDown && pointerSource === 'touch') {
-      if (
-        this.activeTouchPointerId !== pointerId ||
-        this.touchOrigin === null
-      ) {
-        this.activeTouchPointerId = pointerId;
-        this.touchOrigin = { x: pointer.x, y: pointer.y };
-      }
-    } else {
+    if (this.input.activePointer.isDown && this.activeTouchPointerId === null) {
+      this.activeTouchPointerId = this.input.activePointer.id;
+      this.touchOrigin = { x: this.input.activePointer.x, y: this.input.activePointer.y };
+    } else if (!this.input.activePointer.isDown && this.activeTouchPointerId !== null) {
       this.activeTouchPointerId = null;
       this.touchOrigin = null;
     }
 
-    const keyboard = this.keyboardGate.filter({
-      left: this.cursors.left.isDown || this.keys.A.isDown,
-      right: this.cursors.right.isDown || this.keys.D.isDown,
-      up: this.cursors.up.isDown || this.keys.W.isDown,
-      down: this.cursors.down.isDown || this.keys.S.isDown,
-      shoot: this.keys.SPACE.isDown,
-      confirm: this.keys.ENTER.isDown,
-    });
-
     return {
-      keyboard,
+      keyboard: {
+        left: this.cursors.left.isDown || this.keys.A.isDown,
+        right: this.cursors.right.isDown || this.keys.D.isDown,
+        up: this.cursors.up.isDown || this.keys.W.isDown,
+        down: this.cursors.down.isDown || this.keys.S.isDown,
+        shoot: this.cursors.space.isDown || this.keys.SPACE.isDown,
+        confirm: this.keys.ENTER.isDown,
+      },
       pointer: {
-        active: pointer.isDown,
-        x: pointer.x,
-        y: pointer.y,
-        shoot: pointer.isDown,
-        source: pointerSource,
-        mode: pointerSource === 'touch' ? 'virtualStick' : 'direct',
+        active: isTouch,
+        x: this.input.activePointer.x,
+        y: this.input.activePointer.y,
+        shoot: isTouch,
         originX: this.touchOrigin?.x,
         originY: this.touchOrigin?.y,
       },
       gamepad: {
-        axisX,
-        axisY,
+        axisX: pad?.axes[0].getValue() ?? 0,
+        axisY: pad?.axes[1].getValue() ?? 0,
         shoot: Boolean(
           pad?.buttons[0]?.pressed ||
-            pad?.buttons[5]?.pressed ||
+            pad?.buttons[6]?.pressed ||
             pad?.buttons[7]?.pressed,
         ),
         confirm: Boolean(pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed),
@@ -349,7 +356,10 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private checkBossHits(): void {
+  private onBossHit(
+    _player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _boss: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  ): void {
     if (!this.boss.isAttackable() || this.boss.sprite === null) {
       return;
     }
@@ -425,7 +435,10 @@ export class GameScene extends Phaser.Scene {
     return this.boss.debugVisualState();
   }
 
-  debugPlayerState(): { x: number; y: number; visible: boolean } {
+  debugPlayerState(): { x: number; y: number; visible: boolean } | null {
+    if (!this.player?.sprite) {
+      return null;
+    }
     return {
       x: this.player.sprite.x,
       y: this.player.sprite.y,
@@ -438,14 +451,11 @@ export class GameScene extends Phaser.Scene {
     enemyCount: number;
     firstEnemyY: number | null;
     enemyBulletCount: number;
-  } {
+  } | null {
     const firstEnemy = this.enemies.enemies.getChildren()[0] as
-      | Phaser.GameObjects.GameObject
+      | Phaser.GameObjects.Sprite
       | undefined;
-    const firstEnemyY =
-      firstEnemy !== undefined && 'y' in firstEnemy
-        ? Number((firstEnemy as { y: number }).y)
-        : null;
+    const firstEnemyY = firstEnemy !== undefined ? firstEnemy.y : null;
 
     return {
       playerVisible: this.player.sprite.visible,
@@ -612,7 +622,6 @@ export class GameScene extends Phaser.Scene {
     this.gameOverKeyboardGate = new FreshPressGate();
     this.gameOverPointerGate = new FreshPressGate();
     this.gameOverGamepadGate = new FreshPressGate();
-    this.armGameOverImmediateReturn();
     this.gameOverReturnTimer = this.time.delayedCall(overlay.nextDelayMs, () =>
       this.returnToTitleFromGameOver(),
     );
@@ -633,7 +642,7 @@ export class GameScene extends Phaser.Scene {
   private hidePlayerForGameOver(): void {
     this.player.sprite.setVisible(false);
     const body = this.player.sprite.body as Phaser.Physics.Arcade.Body | null;
-    if (body !== null) {
+    if (body) {
       body.enable = false;
     }
   }
@@ -701,18 +710,6 @@ export class GameScene extends Phaser.Scene {
     ) {
       this.returnToTitleFromGameOver();
     }
-  }
-
-  private armGameOverImmediateReturn(): void {
-    this.time.delayedCall(0, () => {
-      if (this.resultOverlayStatus !== 'gameover') {
-        return;
-      }
-      this.input.once('pointerdown', () => this.returnToTitleFromGameOver());
-      this.input.keyboard?.once('keydown-ENTER', () =>
-        this.returnToTitleFromGameOver(),
-      );
-    });
   }
 
   private returnToTitleFromGameOver(): void {
