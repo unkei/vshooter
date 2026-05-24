@@ -162,6 +162,35 @@ test('sparse Chrome gamepad still controls gameplay after replay', async ({ page
   );
 });
 
+test('stage start warps the player in before combat movement', async ({ page }) => {
+  await page.goto('/?debug=1');
+  await expect(page.getByTestId('debug-game-over')).toBeVisible();
+
+  await page.keyboard.press('Enter');
+  await waitForActiveScene(page, 'GameScene');
+
+  const introY = await page.evaluate(() => {
+    return (
+      window as unknown as {
+        __vshooterDebug?: { getPlayerState?: () => { x: number; y: number } | null };
+      }
+    ).__vshooterDebug?.getPlayerState?.()?.y ?? null;
+  });
+  expect(introY).not.toBeNull();
+
+  await page.waitForTimeout(1300);
+  const combatY = await page.evaluate(() => {
+    return (
+      window as unknown as {
+        __vshooterDebug?: { getPlayerState?: () => { x: number; y: number } | null };
+      }
+    ).__vshooterDebug?.getPlayerState?.()?.y ?? null;
+  });
+
+  expect(combatY).not.toBeNull();
+  expect(introY!).toBeGreaterThan(combatY! + 40);
+});
+
 test('game over stays over gameplay before returning to title', async ({ page }) => {
   await page.goto('/?debug=1');
   await expect(page.getByTestId('debug-game-over')).toBeVisible();
@@ -185,7 +214,9 @@ test('game over stays over gameplay before returning to title', async ({ page })
   expect(backdropAfter!.firstEnemyY!).toBeGreaterThan(backdropBefore!.firstEnemyY!);
 
   await page.keyboard.up('Enter');
-  await waitForActiveScene(page, 'TitleScene', 7_000);
+  await page.waitForTimeout(100);
+  await page.locator('canvas').click();
+  await waitForActiveScene(page, 'TitleScene', 1_500);
 });
 
 test('rapid boss hits do not keep boss flash permanently active', async ({ page }) => {

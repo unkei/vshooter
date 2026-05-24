@@ -16,6 +16,10 @@ describe('gameplay result overlay', () => {
     });
   });
 
+  it('does not add secondary return text to the game over overlay', () => {
+    expect(gameplayResultOverlayConfig('gameover').subtext).toBeNull();
+  });
+
   it('uses a longer readable stage clear overlay before bonus presentation', () => {
     expect(STAGE_CLEAR_OVERLAY_DELAY_MS).toBeGreaterThanOrEqual(2_500);
     expect(gameplayResultOverlayConfig('clear')).toMatchObject({

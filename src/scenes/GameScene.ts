@@ -14,6 +14,7 @@ import {
 import { EnemyManager } from '../game/EnemyManager';
 import { PlayerController } from '../game/PlayerController';
 import { ProjectileManager } from '../game/ProjectileManager';
+import { syncArcadeBody } from '../game/physics';
 import type { PowerUpType } from '../game/types';
 import {
   createCharacterAnimations,
@@ -25,7 +26,7 @@ import {
   getSharedAudioManager,
   preloadExternalAudioAssets,
 } from '../systems/AudioManager';
-import { KeyboardReleaseGate } from '../systems/InputGate';
+import { FreshPressGate, KeyboardReleaseGate } from '../systems/InputGate';
 import { normalizeInput, type RawInputState } from '../systems/InputManager';
 import { PowerUpDropManager } from '../systems/PowerUpManager';
 import { ScoreManager } from '../systems/ScoreManager';
@@ -41,7 +42,11 @@ import {
   gameplayResultOverlayConfig,
   type GameplayResultStatus,
 } from './gameplayResultOverlay';
-import { arcadeHeadingTextStyle, UI_FONT_FAMILY } from './screenTextStyles';
+import { arcadeHeadingTextStyle } from './screenTextStyles';
+import {
+  STAGE_INTRO_WARP_DURATION_MS,
+  stageIntroStartY,
+} from './stageIntro';
 
 type CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -75,6 +80,11 @@ export class GameScene extends Phaser.Scene {
   private dataFromRun: GameSceneData = {};
   private resultOverlayText: string | null = null;
   private resultOverlayStatus: GameplayResultStatus | null = null;
+  private stageIntroPending = false;
+  private gameOverReturnTimer: Phaser.Time.TimerEvent | null = null;
+  private gameOverKeyboardGate = new FreshPressGate();
+  private gameOverPointerGate = new FreshPressGate();
+  private gameOverGamepadGate = new FreshPressGate();
 
   constructor() {
     super('GameScene');
@@ -99,6 +109,11 @@ export class GameScene extends Phaser.Scene {
     this.touchOrigin = null;
     this.resultOverlayText = null;
     this.resultOverlayStatus = null;
+    this.stageIntroPending = false;
+    this.gameOverReturnTimer = null;
+    this.gameOverKeyboardGate = new FreshPressGate();
+    this.gameOverPointerGate = new FreshPressGate();
+    this.gameOverGamepadGate = new FreshPressGate();
     this.input.keyboard?.resetKeys();
     this.keyboardGate = new KeyboardReleaseGate();
     this.cameras.main.setBackgroundColor(0x050710);
@@ -117,6 +132,7 @@ export class GameScene extends Phaser.Scene {
     void this.audio.start();
     this.projectiles = new ProjectileManager(this);
     this.player = new PlayerController(this);
+    this.startStageIntro();
     this.enemies = new EnemyManager(this, this.projectiles);
     this.boss = new BossController(this, this.projectiles, {
       rushAttack: this.stageDefinition.boss.rushAttack,
@@ -170,10 +186,15 @@ export class GameScene extends Phaser.Scene {
     if (this.finished) {
       if (this.resultOverlayStatus === 'gameover') {
         this.updateGameOverBackdrop(timeMs, deltaMs);
+        this.handleGameOverReturnInput();
       }
       return;
     }
     if (this.clearPending) {
+      return;
+    }
+    if (this.stageIntroPending) {
+      this.updateHud();
       return;
     }
     if (this.startedAtMs === null) {
@@ -588,11 +609,13 @@ export class GameScene extends Phaser.Scene {
 
     this.hidePlayerForGameOver();
     this.score.finishRun();
-    this.time.delayedCall(overlay.nextDelayMs, () => {
-      getSharedAudioManager().stop();
-      this.input.keyboard?.resetKeys();
-      this.scene.start('TitleScene');
-    });
+    this.gameOverKeyboardGate = new FreshPressGate();
+    this.gameOverPointerGate = new FreshPressGate();
+    this.gameOverGamepadGate = new FreshPressGate();
+    this.armGameOverImmediateReturn();
+    this.gameOverReturnTimer = this.time.delayedCall(overlay.nextDelayMs, () =>
+      this.returnToTitleFromGameOver(),
+    );
   }
 
   private showResultOverlay(text: string, color: string): void {
@@ -605,17 +628,6 @@ export class GameScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 16, text, arcadeHeadingTextStyle(color, '46px'))
       .setOrigin(0.5)
       .setDepth(86);
-    this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40, 'RETURNING TO TITLE', {
-        fontFamily: UI_FONT_FAMILY,
-        fontSize: '16px',
-        color: '#fff06a',
-        stroke: '#000000',
-        strokeThickness: 4,
-      })
-      .setOrigin(0.5)
-      .setDepth(86)
-      .setVisible(text === 'GAME OVER');
   }
 
   private hidePlayerForGameOver(): void {
@@ -632,6 +644,83 @@ export class GameScene extends Phaser.Scene {
     this.powerUps.update(timeMs, deltaMs);
     this.projectiles.update();
     this.updateHud();
+  }
+
+  private startStageIntro(): void {
+    this.stageIntroPending = true;
+    const targetY = this.player.sprite.y;
+    this.player.sprite.y = stageIntroStartY(targetY);
+    this.player.sprite.setAlpha(0.35);
+    this.player.sprite.setScale(0.72, 1.25);
+    syncArcadeBody(this.player.sprite);
+
+    const warp = this.add
+      .ellipse(this.player.sprite.x, targetY + 18, 72, 18, 0x6ffcff, 0.14)
+      .setStrokeStyle(3, 0xffffff, 0.65)
+      .setDepth(18);
+    this.tweens.add({
+      targets: warp,
+      alpha: 0,
+      scaleX: 1.85,
+      scaleY: 1.5,
+      duration: STAGE_INTRO_WARP_DURATION_MS,
+      ease: 'Sine.easeOut',
+      onComplete: () => warp.destroy(),
+    });
+    this.tweens.add({
+      targets: this.player.sprite,
+      y: targetY,
+      alpha: 1,
+      scaleX: 1,
+      scaleY: 1,
+      duration: STAGE_INTRO_WARP_DURATION_MS,
+      ease: 'Cubic.easeOut',
+      onUpdate: () => syncArcadeBody(this.player.sprite),
+      onComplete: () => {
+        this.player.sprite.y = targetY;
+        this.player.sprite.setAlpha(1);
+        this.player.sprite.setScale(1);
+        syncArcadeBody(this.player.sprite);
+        this.stageIntroPending = false;
+      },
+    });
+  }
+
+  private handleGameOverReturnInput(): void {
+    const pad = this.input.gamepad?.pad1;
+    const keyboardConfirm = this.keys.ENTER.isDown;
+    const pointerConfirm = this.input.activePointer.isDown;
+    const gamepadConfirm = Boolean(
+      pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed,
+    );
+
+    if (
+      this.gameOverKeyboardGate.accepts(keyboardConfirm) ||
+      this.gameOverPointerGate.accepts(pointerConfirm) ||
+      this.gameOverGamepadGate.accepts(gamepadConfirm)
+    ) {
+      this.returnToTitleFromGameOver();
+    }
+  }
+
+  private armGameOverImmediateReturn(): void {
+    this.time.delayedCall(0, () => {
+      if (this.resultOverlayStatus !== 'gameover') {
+        return;
+      }
+      this.input.once('pointerdown', () => this.returnToTitleFromGameOver());
+      this.input.keyboard?.once('keydown-ENTER', () =>
+        this.returnToTitleFromGameOver(),
+      );
+    });
+  }
+
+  private returnToTitleFromGameOver(): void {
+    this.gameOverReturnTimer?.remove(false);
+    this.gameOverReturnTimer = null;
+    getSharedAudioManager().stop();
+    this.input.keyboard?.resetKeys();
+    this.scene.start('TitleScene');
   }
 
   private addStarfield(): void {

@@ -599,6 +599,12 @@ of relying on prior scene state or default initialization. Regression
 expectation: after reaching stage 2 and then retrying from game over, the next
 gameplay scene shows `STAGE 1` with a fresh run score.
 
+Each stage should begin with a short player warp-in. The player ship starts just
+below the bottom of the play area, moves upward into its normal combat position,
+and decelerates into place before combat input, shooting, and the stage timeline
+begin. Regression expectation: stage timing starts after the intro finishes, and
+player movement or shots cannot occur during the warp-in.
+
 Stage 2 boss design should add a boss rush attack. The boss occasionally moves
 downward toward the player area at a moderately fast speed, attacks, then returns
 to its normal position. This should be tested as a pressure spike, not a
@@ -641,10 +647,13 @@ and reused by title, gameplay overlays, clear bonus, and result scenes.
 of immediately replacing the game view with a separate result screen. The player
 ship should disappear, while the remaining enemies, boss, bullets, and background
 continue moving behind the overlay. The overlay should return to the title screen
-automatically after roughly 5 seconds. Regression expectation: triggering game
-over keeps `GameScene` active while the `GAME OVER` overlay is visible, hides the
-player ship, keeps non-player gameplay visuals moving, then reaches `TitleScene`
-without requiring input.
+automatically after roughly 5 seconds. The overlay should not show secondary
+`RETURNING TO TITLE` text; pressing Enter, clicking, tapping, or pressing a
+gamepad confirm button while the overlay is visible should return to title
+immediately. Regression expectation: triggering game over keeps `GameScene`
+active while the `GAME OVER` overlay is visible, hides the player ship, keeps
+non-player gameplay visuals moving, accepts a fresh confirm input for immediate
+title return, and otherwise reaches `TitleScene` without requiring input.
 
 Player bullets, enemy bullets, and power-up items should receive stronger visual
 assets or code-generated effects. They must remain highly readable at gameplay
