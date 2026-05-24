@@ -181,6 +181,20 @@ export class GameScene extends Phaser.Scene {
       (_player, item) =>
         this.onPowerUp(item as Phaser.Types.Physics.Arcade.GameObjectWithBody),
     );
+
+    this.physics.add.overlap(
+      this.projectiles.playerBullets,
+      this.boss.group,
+      (bullet) =>
+        this.onBossBulletHit(
+          bullet as Phaser.Types.Physics.Arcade.GameObjectWithBody,
+        ),
+    );
+    this.physics.add.overlap(
+      this.player.sprite,
+      this.boss.group,
+      () => this.onPlayerBossHit(),
+    );
   }
 
   update(timeMs: number, deltaMs: number): void {
@@ -356,29 +370,40 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private onBossHit(
-    _player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-    _boss: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  private onBossBulletHit(
+    bullet: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ): void {
-    if (!this.boss.isAttackable() || this.boss.sprite === null) {
+    if (!this.boss.isAttackable()) {
       return;
     }
 
-    this.physics.overlap(
-      this.projectiles.playerBullets,
-      this.boss.sprite,
-      (bullet) => {
-        bullet.destroy();
-        if (this.boss.damage(3)) {
-          this.audio.play('explosion');
-          this.vibration.bossDefeat();
-          this.projectiles.clearPlayerBullets();
-          this.projectiles.clearEnemyBullets();
-          this.score.addBossDefeat(2500);
-          this.scheduleStageClear();
-        }
-      },
-    );
+    bullet.destroy();
+    if (this.boss.damage(3)) {
+      this.audio.play('explosion');
+      this.vibration.bossDefeat();
+      this.projectiles.clearPlayerBullets();
+      this.projectiles.clearEnemyBullets();
+      this.score.addBossDefeat(2500);
+      this.scheduleStageClear();
+    }
+  }
+
+  private onPlayerBossHit(): void {
+    if (this.finished || !this.boss.isAttackable()) {
+      return;
+    }
+
+    if (!this.player.damage(this.time.now)) {
+      return;
+    }
+
+    this.emitDamageSmoke(this.player.sprite.x, this.player.sprite.y);
+    this.audio.play('damage');
+    this.vibration.damage(this.player.lives, PLAYER_MAX_LIVES);
+    this.score.registerDamage();
+    if (this.player.isDead()) {
+      this.finish('gameover');
+    }
   }
 
   debugDefeatBoss(): void {

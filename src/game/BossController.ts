@@ -36,6 +36,7 @@ export type BossControllerOptions = {
 };
 
 export class BossController {
+  readonly group: Phaser.Physics.Arcade.Group;
   sprite: BossSprite | null = null;
   private hitFlashOverlay: Phaser.GameObjects.Sprite | null = null;
   private defeatBody: Phaser.GameObjects.Sprite | null = null;
@@ -59,6 +60,7 @@ export class BossController {
   ) {
     this.rushAttackEnabled =
       options.rushAttack ?? BOSS_RUSH_ATTACK_ENABLED_BY_DEFAULT;
+    this.group = this.scene.physics.add.group();
   }
 
   spawn(): void {
@@ -262,6 +264,7 @@ export class BossController {
     this.hitFlashOverlay.setVisible(false);
     this.lockVisualState();
     this.scene.physics.add.existing(this.sprite);
+    this.group.add(this.sprite);
     this.sprite.body.setSize(124, 168);
     configureBossBody(this.sprite.body);
     syncArcadeBody(this.sprite);
@@ -383,6 +386,7 @@ export class BossController {
     }
 
     const { x, y, angle, scaleX, scaleY } = this.sprite;
+    this.group.remove(this.sprite);
     disableBossBody(this.sprite.body);
     this.sprite.destroy();
     this.sprite = null;
