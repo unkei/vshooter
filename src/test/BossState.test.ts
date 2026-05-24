@@ -17,6 +17,10 @@ import {
   BOSS_MAX_HP,
   BOSS_PRE_WARNING_GRACE_MS,
   BOSS_PRESERVES_BASE_SPRITE_DURING_HIT_FLASH,
+  BOSS_RUSH_ATTACK_ENABLED_BY_DEFAULT,
+  BOSS_RUSH_DURATION_MS,
+  BOSS_RUSH_INTERVAL_MS,
+  BOSS_RUSH_TARGET_Y,
   BOSS_USES_CAMERA_FLASH,
   createBossDefeatBursts,
   configureBossBody,
@@ -129,6 +133,14 @@ describe('isRenderableBossSprite', () => {
   it('does not use screen flashes or boss alpha fades for boss events', () => {
     expect(BOSS_USES_CAMERA_FLASH).toBe(false);
     expect(BOSS_DEFEAT_FADES_SPRITE).toBe(false);
+  });
+
+  it('defines the stage 2 boss rush as an opt-in pressure spike', () => {
+    expect(BOSS_RUSH_ATTACK_ENABLED_BY_DEFAULT).toBe(false);
+    expect(BOSS_RUSH_INTERVAL_MS).toBe(5200);
+    expect(BOSS_RUSH_DURATION_MS).toBe(1200);
+    expect(BOSS_RUSH_TARGET_Y).toBe(260);
+    expect(BOSS_RUSH_TARGET_Y).toBeGreaterThan(BOSS_ENTRY_TARGET_Y);
   });
 
   it('creates several boss defeat bursts around the boss center', () => {

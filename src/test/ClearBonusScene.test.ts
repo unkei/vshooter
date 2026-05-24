@@ -10,9 +10,24 @@ describe('ClearBonusSceneData', () => {
       comboBonus: 250,
       maxCombo: 5,
       highScore: 5000,
+      nextStageNumber: 2,
     };
 
     expect(data.score).toBeGreaterThan(data.clearBonus + data.comboBonus);
+    expect(data.nextStageNumber).toBe(2);
+  });
+
+  it('can mark a clear bonus scene as the final clear result', () => {
+    const data: ClearBonusSceneData = {
+      score: 7000,
+      clearBonus: 1000,
+      comboBonus: 500,
+      maxCombo: 10,
+      highScore: 7000,
+      nextStageNumber: null,
+    };
+
+    expect(data.nextStageNumber).toBeNull();
   });
 
   it('formats clear bonus lines with animated bonus values and a stable total', () => {

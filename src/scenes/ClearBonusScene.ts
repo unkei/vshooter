@@ -13,6 +13,7 @@ import {
   getSharedAudioManager,
   preloadExternalAudioAssets,
 } from '../systems/AudioManager';
+import type { StageNumber } from '../systems/StageDirector';
 import { buildClearBonusLines } from './clearBonusDisplay';
 
 export type ClearBonusSceneData = {
@@ -21,6 +22,7 @@ export type ClearBonusSceneData = {
   comboBonus: number;
   maxCombo: number;
   highScore: number;
+  nextStageNumber?: StageNumber | null;
 };
 
 export class ClearBonusScene extends Phaser.Scene {
@@ -30,6 +32,7 @@ export class ClearBonusScene extends Phaser.Scene {
     comboBonus: 0,
     maxCombo: 0,
     highScore: 0,
+    nextStageNumber: null,
   };
 
   constructor() {
@@ -127,6 +130,18 @@ export class ClearBonusScene extends Phaser.Scene {
     });
 
     this.time.delayedCall(2600, () => {
+      if (
+        this.dataFromRun.nextStageNumber !== null &&
+        this.dataFromRun.nextStageNumber !== undefined
+      ) {
+        this.scene.start('GameScene', {
+          stageNumber: this.dataFromRun.nextStageNumber,
+          initialScore: this.dataFromRun.score,
+          initialMaxCombo: this.dataFromRun.maxCombo,
+        });
+        return;
+      }
+
       this.scene.start('ResultScene', {
         status: 'clear',
         score: this.dataFromRun.score,

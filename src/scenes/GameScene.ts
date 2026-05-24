@@ -29,10 +29,21 @@ import { KeyboardReleaseGate } from '../systems/InputGate';
 import { normalizeInput, type RawInputState } from '../systems/InputManager';
 import { PowerUpDropManager } from '../systems/PowerUpManager';
 import { ScoreManager } from '../systems/ScoreManager';
-import { createDefaultStage, StageDirector } from '../systems/StageDirector';
+import {
+  createStageDefinition,
+  StageDirector,
+  type StageDefinition,
+  type StageNumber,
+} from '../systems/StageDirector';
 import { VibrationManager } from '../systems/VibrationManager';
 
 type CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
+
+export type GameSceneData = {
+  stageNumber?: StageNumber;
+  initialScore?: number;
+  initialMaxCombo?: number;
+};
 
 export class GameScene extends Phaser.Scene {
   private cursors!: CursorKeys;
@@ -44,6 +55,7 @@ export class GameScene extends Phaser.Scene {
   private powerUps!: PowerUpDropManager;
   private score!: ScoreManager;
   private stage!: StageDirector;
+  private stageDefinition: StageDefinition = createStageDefinition(1);
   private vibration = new VibrationManager();
   private audio = getSharedAudioManager();
   private startedAtMs: number | null = null;
@@ -54,6 +66,7 @@ export class GameScene extends Phaser.Scene {
   private keyboardGate!: KeyboardReleaseGate;
   private activeTouchPointerId: number | null = null;
   private touchOrigin: { x: number; y: number } | null = null;
+  private dataFromRun: GameSceneData = {};
 
   constructor() {
     super('GameScene');
@@ -62,6 +75,11 @@ export class GameScene extends Phaser.Scene {
   preload(): void {
     preloadExternalVisualAssets(this);
     preloadExternalAudioAssets(this);
+  }
+
+  init(data: GameSceneData = {}): void {
+    this.dataFromRun = data;
+    this.stageDefinition = createStageDefinition(data.stageNumber ?? 1);
   }
 
   create(): void {
@@ -90,10 +108,16 @@ export class GameScene extends Phaser.Scene {
     this.projectiles = new ProjectileManager(this);
     this.player = new PlayerController(this);
     this.enemies = new EnemyManager(this, this.projectiles);
-    this.boss = new BossController(this, this.projectiles);
+    this.boss = new BossController(this, this.projectiles, {
+      rushAttack: this.stageDefinition.boss.rushAttack,
+    });
     this.powerUps = new PowerUpDropManager(this);
-    this.score = new ScoreManager({ comboTimeoutMs: 1800 });
-    this.stage = new StageDirector(createDefaultStage());
+    this.score = new ScoreManager({
+      comboTimeoutMs: 1800,
+      initialScore: this.dataFromRun.initialScore,
+      initialMaxCombo: this.dataFromRun.initialMaxCombo,
+    });
+    this.stage = new StageDirector(this.stageDefinition.events);
 
     this.hud = this.add.text(12, 12, '', {
       fontSize: '16px',
@@ -443,14 +467,20 @@ export class GameScene extends Phaser.Scene {
     this.audio.stop();
     if (status === 'clear') {
       const bonuses = this.score.addStageClearBonuses();
-      this.score.finishRun();
       const snapshot = this.score.snapshot();
+      if (this.stageDefinition.nextStageNumber === null) {
+        this.score.finishRun();
+      }
       this.scene.start('ClearBonusScene', {
         score: snapshot.score,
         clearBonus: bonuses.clearBonus,
         comboBonus: bonuses.comboBonus,
         maxCombo: snapshot.maxCombo,
-        highScore: snapshot.highScore,
+        highScore:
+          this.stageDefinition.nextStageNumber === null
+            ? this.score.snapshot().highScore
+            : snapshot.highScore,
+        nextStageNumber: this.stageDefinition.nextStageNumber,
       });
       return;
     }

@@ -57,4 +57,25 @@ describe('ScoreManager', () => {
     });
     expect(score.snapshot().score).toBe(210 + STAGE_CLEAR_BASE_BONUS + 100);
   });
+
+  it('can continue a multi-stage run from an existing score and max combo', () => {
+    const score = new ScoreManager({
+      comboTimeoutMs: 2000,
+      initialScore: 4200,
+      initialMaxCombo: 7,
+    });
+
+    expect(score.snapshot()).toMatchObject({
+      score: 4200,
+      combo: 0,
+      maxCombo: 7,
+    });
+
+    score.addEnemyDefeat(100, 0);
+
+    expect(score.snapshot()).toMatchObject({
+      score: 4300,
+      maxCombo: 7,
+    });
+  });
 });

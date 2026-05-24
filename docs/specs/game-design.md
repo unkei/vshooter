@@ -558,6 +558,16 @@ Add stage 2 after stage 1 has a stable polish baseline. Stage 2 should inherit
 roughly the current stage 1 bullet pressure, while stage 1 becomes more
 approachable.
 
+The first stage 2 pass should make stage flow explicit: title/default play starts
+at stage 1, clearing stage 1 routes through the clear bonus screen into stage 2,
+and clearing stage 2 routes through the clear bonus screen into the final clear
+result. Score and max combo should carry from stage 1 into stage 2 so the
+two-stage route remains one continuous run. Stage definitions should declare
+their next stage and boss behavior so later stages can be added without
+hard-coding scene logic. Regression expectation: stage 1 points to stage 2,
+stage 2 has no next stage, stage 1 boss rush is disabled, stage 2 boss rush is
+enabled, and stage 2 can start from the score earned in stage 1.
+
 Stage 2 boss design should add a boss rush attack. The boss occasionally moves
 downward toward the player area at a moderately fast speed, attacks, then returns
 to its normal position. This should be tested as a pressure spike, not a

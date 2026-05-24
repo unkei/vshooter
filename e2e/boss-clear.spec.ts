@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
-test('debug boss defeat reaches stage clear without browser errors', async ({ page }) => {
+test('debug boss defeat reaches stage clear flow without browser errors', async ({ page }) => {
   const browserErrors: string[] = [];
   page.on('pageerror', (error) => browserErrors.push(error.message));
   page.on('console', (message) => {
@@ -22,6 +22,13 @@ test('debug boss defeat reaches stage clear without browser errors', async ({ pa
     undefined,
     { timeout: 5_000 },
   );
+
+  await page.evaluate(() => {
+    (window as unknown as { __vshooterDebug?: { defeatBoss?: () => void } })
+      .__vshooterDebug?.defeatBoss?.();
+  });
+  await waitForActiveScene(page, 'ClearBonusScene', 7_000);
+  await waitForActiveScene(page, 'GameScene', 7_000);
 
   await page.evaluate(() => {
     (window as unknown as { __vshooterDebug?: { defeatBoss?: () => void } })

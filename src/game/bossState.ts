@@ -21,6 +21,10 @@ export const BOSS_DEFEAT_CLEAR_DELAY_MS = 1800;
 export const BOSS_DEFEAT_SPRITE_DEPTH = 34;
 export const BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS = BOSS_DEFEAT_CLEAR_DELAY_MS;
 export const BOSS_DEFEAT_USES_DEDICATED_BODY = true;
+export const BOSS_RUSH_ATTACK_ENABLED_BY_DEFAULT = false;
+export const BOSS_RUSH_INTERVAL_MS = 5200;
+export const BOSS_RUSH_DURATION_MS = 1200;
+export const BOSS_RUSH_TARGET_Y = 260;
 
 export type BossDefeatBurst = {
   x: number;
