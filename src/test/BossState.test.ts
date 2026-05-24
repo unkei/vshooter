@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BOSS_DEFEAT_CLEAR_DELAY_MS,
   BOSS_DEFEAT_FADES_SPRITE,
+  BOSS_CLEAR_OVERLAY_FADES_DEFEAT_BODY,
   BOSS_DEFEAT_SPRITE_DEPTH,
   BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS,
   BOSS_DEFEAT_USES_DEDICATED_BODY,
@@ -133,6 +134,10 @@ describe('isRenderableBossSprite', () => {
   it('does not use screen flashes or boss alpha fades for boss events', () => {
     expect(BOSS_USES_CAMERA_FLASH).toBe(false);
     expect(BOSS_DEFEAT_FADES_SPRITE).toBe(false);
+  });
+
+  it('fades the remaining boss body only behind the stage clear overlay', () => {
+    expect(BOSS_CLEAR_OVERLAY_FADES_DEFEAT_BODY).toBe(true);
   });
 
   it('defines the stage 2 boss rush as an opt-in pressure spike', () => {

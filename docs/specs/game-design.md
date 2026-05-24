@@ -294,10 +294,14 @@ Initial vibration events:
   damage feels more urgent than high-life damage.
 - Power-up pickup: use a short double-click style pattern with a small pause
   between pulses.
+- Boss entrance: use a short warning pulse as the boss entrance sequence starts.
+- Boss defeat: use a stronger multi-pulse pattern as the defeat reaction starts.
+- Warp-out: use a rising multi-pulse pattern as the clear bonus warp route
+  activates.
 
 Regression expectation: desktop browsers or devices without `navigator.vibrate`
 or gamepad haptics continue to play normally; invincible hits do not vibrate;
-power-up feedback is short and distinct from damage feedback.
+power-up, boss, and warp feedback remain distinct from damage feedback.
 
 ### `StageDirector`
 
@@ -544,6 +548,10 @@ before it becomes attackable or starts firing. Regression expectation: enemy
 bullets are not cleared at the boss-ready moment, and boss bullets do not spawn
 before entrance travel completes.
 
+Boss entrance should trigger a short haptic pulse when the warning/entrance
+sequence starts. Regression expectation: supported vibration APIs receive the
+boss entrance pattern once per boss entrance sequence.
+
 Boss defeat should move away from the current zoom-and-tilt emphasis. The boss
 body should stay readable, explosions should last longer, and the defeat should
 feel like the boss is falling or breaking down before the clear bonus screen
@@ -555,6 +563,13 @@ scale-up and strong tilt should be avoided so the result reads as destruction an
 falling rather than a camera-like zoom. Regression expectation: the defeat body
 remains visible and opaque late in the sequence while explosion bursts are still
 appearing.
+
+Boss defeat should trigger a stronger haptic pulse when the defeat reaction
+starts. The normal defeat reaction should still avoid fading the boss body too
+early, but once the `STAGE CLEAR` overlay appears, the remaining boss defeat body
+should fade out behind the overlay. Regression expectation: boss defeat haptics
+fire once on defeat, the defeat body remains visible during the late explosion
+window, then fades during the stage-clear overlay.
 
 When the defeat reaction completes, `STAGE CLEAR` should appear as an overlay on
 top of the gameplay screen before the clear bonus presentation starts. Regression
@@ -650,6 +665,11 @@ score.
 The first clear bonus presentation pass should keep the score math unchanged,
 but use stronger text styling and a more visible warp route or gate effect than a
 single simple rectangle.
+
+Warp-out should also trigger haptic feedback when the warp route activates, so
+the stage transition feels physical on devices with vibration support. Regression
+expectation: the clear bonus warp scene requests the warp vibration pattern once
+when the warp animation starts.
 
 ### Score Direction
 

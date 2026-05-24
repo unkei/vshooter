@@ -13,6 +13,7 @@ import {
   getSharedAudioManager,
   preloadExternalAudioAssets,
 } from '../systems/AudioManager';
+import { VibrationManager } from '../systems/VibrationManager';
 import type { StageNumber } from '../systems/StageDirector';
 import { buildClearBonusLines } from './clearBonusDisplay';
 import { arcadeHeadingTextStyle } from './screenTextStyles';
@@ -27,6 +28,7 @@ export type ClearBonusSceneData = {
 };
 
 export class ClearBonusScene extends Phaser.Scene {
+  private vibration = new VibrationManager();
   private dataFromRun: ClearBonusSceneData = {
     score: 0,
     clearBonus: 0,
@@ -150,6 +152,7 @@ export class ClearBonusScene extends Phaser.Scene {
     for (const visual of warpVisuals) {
       visual.setDepth(10);
     }
+    this.vibration.warp();
 
     this.tweens.add({
       targets: warpRails,

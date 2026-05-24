@@ -8,11 +8,11 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
       browserErrors.push(message.text());
     }
   });
-
   await page.goto('/?debug=1');
 
   await expect(page.locator('canvas')).toHaveCount(1);
   await expect(page.getByTestId('debug-defeat-boss')).toBeVisible();
+  await installVibrationRecorder(page);
 
   await page.keyboard.press('Enter');
   await page.waitForFunction(
@@ -29,7 +29,10 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
   });
   await waitForResultOverlay(page, 'STAGE CLEAR');
   expect(await windowText(page)).toContain('GameScene');
+  await waitForBossDefeatBodyFade(page);
   await waitForActiveScene(page, 'ClearBonusScene', 7_000);
+  await waitForVibrationPattern(page, [90, 45, 120]);
+  await waitForVibrationPattern(page, [35, 25, 35, 25, 70]);
   await waitForActiveScene(page, 'GameScene', 7_000);
 
   await page.evaluate(() => {
@@ -38,6 +41,7 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
   });
   await waitForResultOverlay(page, 'STAGE CLEAR');
   expect(await windowText(page)).toContain('GameScene');
+  await waitForBossDefeatBodyFade(page);
   await waitForActiveScene(page, 'ClearBonusScene', 7_000);
   await waitForActiveScene(page, 'TitleScene', 7_000);
 
@@ -444,6 +448,66 @@ async function waitForResultOverlay(page: Page, text: string): Promise<void> {
     text,
     { timeout: 5_000 },
   );
+}
+
+async function waitForBossDefeatBodyFade(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const state = (
+        window as unknown as {
+          __vshooterDebug?: { getBossVisualState?: () => BossVisualState | null };
+        }
+      ).__vshooterDebug?.getBossVisualState?.();
+      return (
+        state?.defeatBodyVisible === true &&
+        state.alpha < 1 &&
+        state.alpha >= 0
+      );
+    },
+    undefined,
+    { timeout: 2_000 },
+  );
+}
+
+async function waitForVibrationPattern(
+  page: Page,
+  expectedPattern: number[],
+): Promise<void> {
+  await page.waitForFunction(
+    (expected) => {
+      const vibrations =
+        (window as unknown as { __vshooterVibrations?: Array<number | number[]> })
+          .__vshooterVibrations ?? [];
+      return vibrations.some((pattern) => {
+        if (!Array.isArray(pattern)) {
+          return false;
+        }
+        return (
+          pattern.length === (expected as number[]).length &&
+          pattern.every((value, index) => value === (expected as number[])[index])
+        );
+      });
+    },
+    expectedPattern,
+    { timeout: 5_000 },
+  );
+}
+
+async function installVibrationRecorder(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    Object.defineProperty(window, '__vshooterVibrations', {
+      configurable: true,
+      value: [],
+    });
+    Object.defineProperty(navigator, 'vibrate', {
+      configurable: true,
+      value: (pattern: number | number[]) => {
+        (window as unknown as { __vshooterVibrations: Array<number | number[]> })
+          .__vshooterVibrations.push(pattern);
+        return true;
+      },
+    });
+  });
 }
 
 async function waitForActiveScene(

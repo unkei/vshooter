@@ -222,6 +222,23 @@ export class BossController {
     };
   }
 
+  fadeDefeatBodyBehindClear(durationMs: number): void {
+    if (this.defeatBody === null) {
+      return;
+    }
+
+    this.scene.tweens.add({
+      targets: this.defeatBody,
+      alpha: 0,
+      duration: durationMs,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.defeatBody?.destroy();
+        this.defeatBody = null;
+      },
+    });
+  }
+
   private createSprite(): void {
     this.sprite?.destroy();
     this.hitFlashOverlay?.destroy();

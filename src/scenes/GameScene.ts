@@ -340,6 +340,7 @@ export class GameScene extends Phaser.Scene {
         bullet.destroy();
         if (this.boss.damage(3)) {
           this.audio.play('explosion');
+          this.vibration.bossDefeat();
           this.projectiles.clearPlayerBullets();
           this.projectiles.clearEnemyBullets();
           this.score.addBossDefeat(2500);
@@ -363,6 +364,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.boss.damage(Number.MAX_SAFE_INTEGER)) {
       this.audio.play('explosion');
+      this.vibration.bossDefeat();
       this.projectiles.clearPlayerBullets();
       this.projectiles.clearEnemyBullets();
       this.score.addBossDefeat(2500);
@@ -460,6 +462,7 @@ export class GameScene extends Phaser.Scene {
       }
 
       this.audio.play('boss');
+      this.vibration.bossEntrance();
       this.projectiles.clearEnemyBullets();
 
       const warning = this.add
@@ -556,6 +559,9 @@ export class GameScene extends Phaser.Scene {
       this.projectiles.clearEnemyBullets();
     }
     const overlay = gameplayResultOverlayConfig(status);
+    if (status === 'clear') {
+      this.boss.fadeDefeatBodyBehindClear(overlay.nextDelayMs);
+    }
     this.showResultOverlay(overlay.text, overlay.color);
 
     if (status === 'clear') {
