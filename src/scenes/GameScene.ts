@@ -8,7 +8,8 @@ import {
 import { BossController } from '../game/BossController';
 import {
   BOSS_DEFEAT_CLEAR_DELAY_MS,
-  BOSS_ENTRANCE_DELAY_MS,
+  BOSS_ENTRANCE_TRAVEL_MS,
+  BOSS_PRE_WARNING_GRACE_MS,
 } from '../game/bossState';
 import { EnemyManager } from '../game/EnemyManager';
 import { PlayerController } from '../game/PlayerController';
@@ -279,7 +280,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private checkBossHits(): void {
-    if (!this.boss.isActive() || this.boss.sprite === null) {
+    if (!this.boss.isAttackable() || this.boss.sprite === null) {
       return;
     }
 
@@ -375,45 +376,53 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.bossEntrancePending = true;
-    this.audio.play('boss');
     this.projectiles.clearPlayerBullets();
-    this.projectiles.clearEnemyBullets();
 
-    const warning = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36, 'WARNING', {
-        fontSize: '34px',
-        color: '#ff3768',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5)
-      .setDepth(60);
-    const subtext = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36 + 42, 'BOSS APPROACHING', {
-        fontSize: '16px',
-        color: '#ffffff',
-      })
-      .setOrigin(0.5)
-      .setDepth(60);
-
-    this.tweens.add({
-      targets: [warning, subtext],
-      alpha: 0.25,
-      duration: 160,
-      yoyo: true,
-      repeat: 5,
-      ease: 'Sine.easeInOut',
-    });
-
-    this.time.delayedCall(BOSS_ENTRANCE_DELAY_MS, () => {
-      warning.destroy();
-      subtext.destroy();
+    this.time.delayedCall(BOSS_PRE_WARNING_GRACE_MS, () => {
       if (this.finished || this.clearPending) {
         return;
       }
 
-      this.bossEntrancePending = false;
+      this.audio.play('boss');
+      this.projectiles.clearEnemyBullets();
+
+      const warning = this.add
+        .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36, 'WARNING', {
+          fontSize: '34px',
+          color: '#ff3768',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5)
+        .setDepth(60);
+      const subtext = this.add
+        .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36 + 42, 'BOSS APPROACHING', {
+          fontSize: '16px',
+          color: '#ffffff',
+        })
+        .setOrigin(0.5)
+        .setDepth(60);
+
+      this.tweens.add({
+        targets: [warning, subtext],
+        alpha: 0.25,
+        duration: 160,
+        yoyo: true,
+        repeat: 5,
+        ease: 'Sine.easeInOut',
+      });
+
       this.boss.spawn();
       this.cameras.main.shake(180, 0.006);
+
+      this.time.delayedCall(BOSS_ENTRANCE_TRAVEL_MS, () => {
+        warning.destroy();
+        subtext.destroy();
+        if (this.finished || this.clearPending) {
+          return;
+        }
+
+        this.bossEntrancePending = false;
+      });
     });
   }
 

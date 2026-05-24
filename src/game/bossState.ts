@@ -12,6 +12,10 @@ export const BOSS_LOCKS_VISUAL_STATE_ON_HIT = true;
 export const BOSS_PRESERVES_BASE_SPRITE_DURING_HIT_FLASH = true;
 export const BOSS_USES_CAMERA_FLASH = false;
 export const BOSS_DEFEAT_FADES_SPRITE = false;
+export const BOSS_PRE_WARNING_GRACE_MS = 650;
+export const BOSS_ENTRANCE_TRAVEL_MS = 900;
+export const BOSS_ENTRY_START_Y = -150;
+export const BOSS_ENTRY_TARGET_Y = 120;
 export const BOSS_ENTRANCE_DELAY_MS = 1700;
 export const BOSS_DEFEAT_CLEAR_DELAY_MS = 1800;
 export const BOSS_DEFEAT_SPRITE_DEPTH = 34;
@@ -59,12 +63,12 @@ export function shouldStartBossHitFlash(
 export function createBossDefeatBursts(x: number, y: number): BossDefeatBurst[] {
   return [
     { x, y, radius: 76, delayMs: 0 },
-    { x: x - 46, y: y - 16, radius: 38, delayMs: 120 },
-    { x: x + 48, y: y + 10, radius: 44, delayMs: 210 },
-    { x: x - 12, y: y + 28, radius: 52, delayMs: 330 },
-    { x: x + 8, y: y - 30, radius: 48, delayMs: 460 },
-    { x: x - 56, y: y + 18, radius: 34, delayMs: 610 },
-    { x: x + 58, y: y - 18, radius: 36, delayMs: 760 },
+    { x: x - 46, y: y - 16, radius: 38, delayMs: 190 },
+    { x: x + 48, y: y + 10, radius: 44, delayMs: 380 },
+    { x: x - 12, y: y + 28, radius: 52, delayMs: 610 },
+    { x: x + 8, y: y - 30, radius: 48, delayMs: 840 },
+    { x: x - 56, y: y + 18, radius: 34, delayMs: 1110 },
+    { x: x + 58, y: y - 18, radius: 36, delayMs: 1320 },
   ];
 }
 

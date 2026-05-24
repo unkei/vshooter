@@ -531,10 +531,26 @@ Boss entrance should be a staged sequence: warning cue, visible entrance motion,
 then attack start. The transition should feel intentional instead of abruptly
 replacing the final wave state.
 
+The first boss entrance polish pass should preserve a short residual-bullet
+pause after the final regular wave is cleared. Player bullets may still be
+cleared immediately so stale player shots cannot enter the boss phase, but enemy
+bullets should remain visible briefly before the warning cue clears them. The
+boss should then enter from above the play area and move into its target position
+before it becomes attackable or starts firing. Regression expectation: enemy
+bullets are not cleared at the boss-ready moment, and boss bullets do not spawn
+before entrance travel completes.
+
 Boss defeat should move away from the current zoom-and-tilt emphasis. The boss
 body should stay readable, explosions should last longer, and the defeat should
 feel like the boss is falling or breaking down before the clear bonus screen
 starts.
+
+The first boss defeat polish pass should keep the dedicated defeat body visible
+and opaque while it falls downward through a longer explosion sequence. Large
+scale-up and strong tilt should be avoided so the result reads as destruction and
+falling rather than a camera-like zoom. Regression expectation: the defeat body
+remains visible and opaque late in the sequence while explosion bursts are still
+appearing.
 
 ### Stage 2 Direction
 

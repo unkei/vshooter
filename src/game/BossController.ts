@@ -4,6 +4,9 @@ import {
   BOSS_HIT_FLASH_DURATION_MS,
   BOSS_HIT_FLASH_OVERLAY_ALPHA,
   BOSS_MAX_HP,
+  BOSS_ENTRANCE_TRAVEL_MS,
+  BOSS_ENTRY_START_Y,
+  BOSS_ENTRY_TARGET_Y,
   BOSS_DEFEAT_SPRITE_DEPTH,
   BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS,
   configureBossBody,
@@ -35,6 +38,7 @@ export class BossController {
   private defeatStarted = false;
   private hitFlashUntilMs = 0;
   private lastHitFlashStartedAtMs = -Infinity;
+  private entranceCompletesAtMs = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -50,7 +54,30 @@ export class BossController {
     this.defeatStarted = false;
     this.hitFlashUntilMs = 0;
     this.lastHitFlashStartedAtMs = -Infinity;
+    this.entranceCompletesAtMs = this.scene.time.now + BOSS_ENTRANCE_TRAVEL_MS;
+    this.nextFireAtMs = this.entranceCompletesAtMs;
     this.createSprite();
+    if (this.sprite !== null) {
+      this.scene.tweens.add({
+        targets: this.sprite,
+        y: BOSS_ENTRY_TARGET_Y,
+        duration: BOSS_ENTRANCE_TRAVEL_MS,
+        ease: 'Sine.easeOut',
+        onUpdate: () => {
+          if (this.sprite !== null) {
+            syncArcadeBody(this.sprite);
+            this.lockVisualState();
+          }
+        },
+        onComplete: () => {
+          if (this.sprite !== null) {
+            this.sprite.y = BOSS_ENTRY_TARGET_Y;
+            syncArcadeBody(this.sprite);
+            this.lockVisualState();
+          }
+        },
+      });
+    }
     this.healthBar = this.scene.add.graphics();
     this.healthBar.setDepth(30);
   }
@@ -72,8 +99,16 @@ export class BossController {
       return;
     }
 
-    this.sprite.y = 120 + Math.sin(timeMs / 1200) * 12;
-    this.sprite.x = GAME_WIDTH / 2 + Math.sin(timeMs / 900) * 120;
+    if (timeMs < this.entranceCompletesAtMs) {
+      syncArcadeBody(this.sprite);
+      this.lockVisualState();
+      this.drawHealthBar();
+      return;
+    }
+
+    const activeTimeMs = timeMs - this.entranceCompletesAtMs;
+    this.sprite.y = BOSS_ENTRY_TARGET_Y + Math.sin(activeTimeMs / 1200) * 12;
+    this.sprite.x = GAME_WIDTH / 2 + Math.sin(activeTimeMs / 900) * 120;
     syncArcadeBody(this.sprite);
     this.lockVisualState();
 
@@ -114,6 +149,10 @@ export class BossController {
 
   isActive(): boolean {
     return this.hp > 0 && !this.defeatStarted;
+  }
+
+  isAttackable(): boolean {
+    return this.isActive() && this.scene.time.now >= this.entranceCompletesAtMs;
   }
 
   debugVisualState(): {
@@ -169,7 +208,7 @@ export class BossController {
     this.defeatBody = null;
     this.sprite = this.scene.add.sprite(
       GAME_WIDTH / 2,
-      120,
+      BOSS_ENTRY_START_Y,
       BOSS_TEXTURE_KEY,
     ) as BossSprite;
     playCharacterAnimation(this.sprite, CHARACTER_ANIMATION_KEYS.boss);
@@ -265,11 +304,10 @@ export class BossController {
     this.defeatBody.setScale(scaleX, scaleY);
     this.scene.tweens.add({
       targets: this.defeatBody,
-      angle: 18,
-      scaleX: 1.35,
-      scaleY: 1.35,
+      y: y + 145,
+      angle: angle + 5,
       duration: BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS,
-      ease: 'Cubic.easeOut',
+      ease: 'Sine.easeIn',
       onComplete: () => {
         this.defeatBody?.destroy();
         this.defeatBody = null;
@@ -291,7 +329,7 @@ export class BossController {
       targets: ring,
       alpha: 0,
       radius,
-      duration: 520,
+      duration: 700,
       ease: 'Quad.easeOut',
       onComplete: () => ring.destroy(),
     });
