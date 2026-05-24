@@ -43,7 +43,8 @@ export class ResultScene extends Phaser.Scene {
     this.keyboardRetryGate = new FreshPressGate();
     this.pointerRetryGate = new FreshPressGate();
     this.gamepadRetryGate = new FreshPressGate();
-    getSharedAudioManager().setExternalPlayback(createPhaserExternalAudioPlayback(this));
+    const audio = getSharedAudioManager();
+    audio.setExternalPlayback(createPhaserExternalAudioPlayback(this));
     this.enterKey =
       this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER) ?? null;
     this.cameras.main.setBackgroundColor(0x050710);
@@ -88,6 +89,18 @@ export class ResultScene extends Phaser.Scene {
       )
       .setOrigin(0.5);
 
+    const audioStatus = this.add
+      .text(GAME_WIDTH / 2, 540, this.audioStatusText(audio), {
+        fontSize: '15px',
+        color: '#9fffe0',
+      })
+      .setOrigin(0.5);
+
+    this.input.keyboard?.on('keydown-M', () => {
+      audio.toggleMute();
+      audioStatus.setText(this.audioStatusText(audio));
+    });
+
     if (resultReturnsToTitleAutomatically(this.dataFromRun.status)) {
       this.time.delayedCall(CLEAR_RESULT_RETURN_DELAY_MS, () => this.returnToTitle());
     }
@@ -124,5 +137,9 @@ export class ResultScene extends Phaser.Scene {
     getSharedAudioManager().stop();
     this.input.keyboard?.resetKeys();
     this.scene.start('TitleScene');
+  }
+
+  private audioStatusText(audio: ReturnType<typeof getSharedAudioManager>): string {
+    return `M: Audio ${audio.getSettings().muted ? 'Muted' : 'On'}`;
   }
 }

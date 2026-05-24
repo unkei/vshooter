@@ -49,6 +49,17 @@ export class TitleScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    const audioStatus = this.add
+      .text(GAME_WIDTH / 2, 475, this.audioStatusText(audio), {
+        fontSize: '15px',
+        color: '#9fffe0',
+      })
+      .setOrigin(0.5);
+
+    this.input.keyboard?.on('keydown-M', () => {
+      audio.toggleMute();
+      audioStatus.setText(this.audioStatusText(audio));
+    });
     this.input.keyboard?.once('keydown-ENTER', () => this.startGame());
     this.input.once('pointerdown', () => this.startGame());
   }
@@ -63,6 +74,10 @@ export class TitleScene extends Phaser.Scene {
   private startGame(): void {
     void getSharedAudioManager().start('gameplay');
     this.scene.start('GameScene');
+  }
+
+  private audioStatusText(audio: ReturnType<typeof getSharedAudioManager>): string {
+    return `M: Audio ${audio.getSettings().muted ? 'Muted' : 'On'}`;
   }
 
   private addStarfield(): void {

@@ -260,6 +260,15 @@ Repeated sounds should be restrained:
   single-note drone. It should start with the same unlocked audio context and use
   multiple generated layers such as bass, lead, and harmony.
 
+Audio settings should be shared by generated Web Audio fallback and external
+Phaser audio. The shared audio manager owns master, BGM, SFX, and mute state,
+clamps volume values to the 0-1 range, and persists settings with
+`localStorage`. Title and result screens may expose a minimal mute toggle without
+adding gameplay input complexity; gameplay input must remain focused on movement
+and shooting. Regression expectation: changing mute or volume affects generated
+BGM layers, generated sound effects, external BGM, and external sound effects
+through the same effective-volume calculation.
+
 ### `VibrationManager`
 
 Use the browser Vibration API and Gamepad Haptics API for tactile feedback when
@@ -449,10 +458,10 @@ Rules:
 Persist at least:
 
 - High score.
+- Audio volume and mute state.
 
 May persist later:
 
-- Audio volume.
 - Last selected input preference.
 - Best clear time.
 
@@ -469,6 +478,7 @@ Recommended testable units:
 - Stage timeline data.
 - Power-up effects.
 - High score persistence wrapper.
+- Audio settings persistence and volume clamping.
 - Scripted movement helpers and Arcade body synchronization wrappers.
 
 Manual/browser checks:

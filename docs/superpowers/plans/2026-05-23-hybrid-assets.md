@@ -53,10 +53,10 @@
 - Modify: `src/scenes/ResultScene.ts`
 - Test: `src/test/AudioManager.test.ts`
 
-- [ ] Spawn a context-scoped subagent for the audio slice before code edits.
-- [ ] Add master/BGM/SFX volume controls in the shared audio manager.
-- [ ] Persist the selected audio volume or mute state in local storage.
-- [ ] Expose a minimal title/result-screen control for mute or volume without
+- [x] Spawn a context-scoped subagent for the audio slice before code edits.
+- [x] Add master/BGM/SFX volume controls in the shared audio manager.
+- [x] Persist the selected audio volume or mute state in local storage.
+- [x] Expose a minimal title/result-screen control for mute or volume without
       complicating gameplay input.
-- [ ] Verify generated fallback audio and external Phaser audio both respect the
+- [x] Verify generated fallback audio and external Phaser audio both respect the
       same volume settings.
