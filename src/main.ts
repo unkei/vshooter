@@ -110,6 +110,13 @@ if (typeof window !== 'undefined') {
       }
       return null;
     };
+    const getBackdropState = (): ReturnType<GameScene['debugBackdropState']> | null => {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        return scene.debugBackdropState();
+      }
+      return null;
+    };
 
     window.__vshooterDebug = {
       defeatBoss,
@@ -118,6 +125,7 @@ if (typeof window !== 'undefined') {
       damageBoss,
       getBossVisualState,
       getPlayerState,
+      getBackdropState,
       getResultOverlayText,
       getActiveScene: () => game.scene.getScenes(true)[0]?.scene.key ?? null,
     };

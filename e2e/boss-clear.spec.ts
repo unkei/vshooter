@@ -121,7 +121,7 @@ test('sparse Chrome gamepad still controls gameplay after replay', async ({ page
 
   await page.getByTestId('debug-game-over').click();
   await waitForResultOverlay(page, 'GAME OVER');
-  await waitForActiveScene(page, 'TitleScene', 12_000);
+  await waitForActiveScene(page, 'TitleScene', 7_000);
 
   await pressFakePadButton(page, 9);
   await waitForActiveScene(page, 'GameScene');
@@ -164,16 +164,24 @@ test('game over stays over gameplay before returning to title', async ({ page })
 
   await page.keyboard.press('Enter');
   await waitForActiveScene(page, 'GameScene');
+  await waitForBackdropEnemy(page);
 
   await page.keyboard.down('Enter');
+  const backdropBefore = await backdropState(page);
   await page.getByTestId('debug-game-over').click();
   await waitForResultOverlay(page, 'GAME OVER');
   await page.waitForTimeout(300);
   expect(await windowText(page)).toBe('GameScene');
   expect(await resultOverlayText(page)).toBe('GAME OVER');
+  const backdropAfter = await backdropState(page);
+  expect(backdropAfter?.playerVisible).toBe(false);
+  expect(backdropAfter?.enemyCount).toBeGreaterThan(0);
+  expect(backdropBefore?.firstEnemyY).not.toBeNull();
+  expect(backdropAfter?.firstEnemyY).not.toBeNull();
+  expect(backdropAfter!.firstEnemyY!).toBeGreaterThan(backdropBefore!.firstEnemyY!);
 
   await page.keyboard.up('Enter');
-  await waitForActiveScene(page, 'TitleScene', 12_000);
+  await waitForActiveScene(page, 'TitleScene', 7_000);
 });
 
 test('rapid boss hits do not keep boss flash permanently active', async ({ page }) => {
@@ -381,6 +389,47 @@ async function resultOverlayText(page: Page): Promise<string | null> {
           __vshooterDebug?: { getResultOverlayText?: () => string | null };
         }
       ).__vshooterDebug?.getResultOverlayText?.() ?? null,
+  );
+}
+
+async function backdropState(page: Page): Promise<{
+  playerVisible: boolean;
+  enemyCount: number;
+  firstEnemyY: number | null;
+  enemyBulletCount: number;
+} | null> {
+  return page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          __vshooterDebug?: {
+            getBackdropState?: () => {
+              playerVisible: boolean;
+              enemyCount: number;
+              firstEnemyY: number | null;
+              enemyBulletCount: number;
+            } | null;
+          };
+        }
+      ).__vshooterDebug?.getBackdropState?.() ?? null,
+  );
+}
+
+async function waitForBackdropEnemy(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () =>
+      (
+        window as unknown as {
+          __vshooterDebug?: {
+            getBackdropState?: () => {
+              enemyCount: number;
+              firstEnemyY: number | null;
+            } | null;
+          };
+        }
+      ).__vshooterDebug?.getBackdropState?.()?.enemyCount ?? 0,
+    undefined,
+    { timeout: 3_000 },
   );
 }
 

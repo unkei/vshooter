@@ -24,6 +24,13 @@ export type VShooterDebugHooks = {
   getPlayerState: () => {
     x: number;
     y: number;
+    visible: boolean;
+  } | null;
+  getBackdropState: () => {
+    playerVisible: boolean;
+    enemyCount: number;
+    firstEnemyY: number | null;
+    enemyBulletCount: number;
   } | null;
   getResultOverlayText: () => string | null;
   getActiveScene: () => string | null;

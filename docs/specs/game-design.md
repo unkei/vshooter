@@ -559,8 +559,8 @@ appearing.
 When the defeat reaction completes, `STAGE CLEAR` should appear as an overlay on
 top of the gameplay screen before the clear bonus presentation starts. Regression
 expectation: active scene remains `GameScene` while the stage-clear overlay is
-visible, and only transitions to the clear bonus flow after a short readable
-overlay delay.
+visible, and only transitions to the clear bonus flow after a longer readable
+overlay delay of roughly 3 seconds.
 
 ### Stage 2 Direction
 
@@ -623,11 +623,13 @@ accents. Regression expectation: heading style is defined in one shared place
 and reused by title, gameplay overlays, clear bonus, and result scenes.
 
 `GAME OVER` should also be presented as an overlay on the gameplay screen instead
-of immediately replacing the game view with a separate result screen. The overlay
-should hold long enough to read, then return to the title screen automatically
-after roughly 10 seconds. Regression expectation: triggering game over keeps
-`GameScene` active while the `GAME OVER` overlay is visible, then reaches
-`TitleScene` without requiring input.
+of immediately replacing the game view with a separate result screen. The player
+ship should disappear, while the remaining enemies, boss, bullets, and background
+continue moving behind the overlay. The overlay should return to the title screen
+automatically after roughly 5 seconds. Regression expectation: triggering game
+over keeps `GameScene` active while the `GAME OVER` overlay is visible, hides the
+player ship, keeps non-player gameplay visuals moving, then reaches `TitleScene`
+without requiring input.
 
 Player bullets, enemy bullets, and power-up items should receive stronger visual
 assets or code-generated effects. They must remain highly readable at gameplay

@@ -74,6 +74,7 @@ export class GameScene extends Phaser.Scene {
   private touchOrigin: { x: number; y: number } | null = null;
   private dataFromRun: GameSceneData = {};
   private resultOverlayText: string | null = null;
+  private resultOverlayStatus: GameplayResultStatus | null = null;
 
   constructor() {
     super('GameScene');
@@ -97,6 +98,7 @@ export class GameScene extends Phaser.Scene {
     this.activeTouchPointerId = null;
     this.touchOrigin = null;
     this.resultOverlayText = null;
+    this.resultOverlayStatus = null;
     this.input.keyboard?.resetKeys();
     this.keyboardGate = new KeyboardReleaseGate();
     this.cameras.main.setBackgroundColor(0x050710);
@@ -166,6 +168,9 @@ export class GameScene extends Phaser.Scene {
 
   update(timeMs: number, deltaMs: number): void {
     if (this.finished) {
+      if (this.resultOverlayStatus === 'gameover') {
+        this.updateGameOverBackdrop(timeMs, deltaMs);
+      }
       return;
     }
     if (this.clearPending) {
@@ -286,6 +291,10 @@ export class GameScene extends Phaser.Scene {
   private onPlayerHit(
     threat: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ): void {
+    if (this.finished) {
+      return;
+    }
+
     threat.destroy();
     if (!this.player.damage(this.time.now)) {
       return;
@@ -301,6 +310,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onPowerUp(item: Phaser.Types.Physics.Arcade.GameObjectWithBody): void {
+    if (this.finished) {
+      return;
+    }
+
     const type = item.getData('type') as PowerUpType;
     item.destroy();
     this.audio.play('pickup');
@@ -389,10 +402,33 @@ export class GameScene extends Phaser.Scene {
     return this.boss.debugVisualState();
   }
 
-  debugPlayerState(): { x: number; y: number } {
+  debugPlayerState(): { x: number; y: number; visible: boolean } {
     return {
       x: this.player.sprite.x,
       y: this.player.sprite.y,
+      visible: this.player.sprite.visible,
+    };
+  }
+
+  debugBackdropState(): {
+    playerVisible: boolean;
+    enemyCount: number;
+    firstEnemyY: number | null;
+    enemyBulletCount: number;
+  } {
+    const firstEnemy = this.enemies.enemies.getChildren()[0] as
+      | Phaser.GameObjects.GameObject
+      | undefined;
+    const firstEnemyY =
+      firstEnemy !== undefined && 'y' in firstEnemy
+        ? Number((firstEnemy as { y: number }).y)
+        : null;
+
+    return {
+      playerVisible: this.player.sprite.visible,
+      enemyCount: this.enemies.activeCount(),
+      firstEnemyY,
+      enemyBulletCount: this.projectiles.enemyBullets.getChildren().length,
     };
   }
 
@@ -516,7 +552,9 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard?.resetKeys();
     this.audio.stop();
     this.projectiles.clearPlayerBullets();
-    this.projectiles.clearEnemyBullets();
+    if (status === 'clear') {
+      this.projectiles.clearEnemyBullets();
+    }
     const overlay = gameplayResultOverlayConfig(status);
     this.showResultOverlay(overlay.text, overlay.color);
 
@@ -542,6 +580,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    this.hidePlayerForGameOver();
     this.score.finishRun();
     this.time.delayedCall(overlay.nextDelayMs, () => {
       getSharedAudioManager().stop();
@@ -552,6 +591,7 @@ export class GameScene extends Phaser.Scene {
 
   private showResultOverlay(text: string, color: string): void {
     this.resultOverlayText = text;
+    this.resultOverlayStatus = text === 'GAME OVER' ? 'gameover' : 'clear';
     this.add
       .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x02030a, 0.48)
       .setDepth(85);
@@ -570,6 +610,22 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(86)
       .setVisible(text === 'GAME OVER');
+  }
+
+  private hidePlayerForGameOver(): void {
+    this.player.sprite.setVisible(false);
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body | null;
+    if (body !== null) {
+      body.enable = false;
+    }
+  }
+
+  private updateGameOverBackdrop(timeMs: number, deltaMs: number): void {
+    this.enemies.update(timeMs, deltaMs, this.player.sprite.x, this.player.sprite.y);
+    this.boss.update(timeMs, deltaMs);
+    this.powerUps.update(timeMs, deltaMs);
+    this.projectiles.update();
+    this.updateHud();
   }
 
   private addStarfield(): void {
