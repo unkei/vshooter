@@ -57,13 +57,17 @@ Responsibilities:
 - Run the active stage.
 - Own Phaser groups and scene lifecycle.
 - Coordinate the gameplay managers.
-- Transition to `ResultScene` on clear or game over.
+- Show stage-clear and game-over result overlays on top of the current gameplay
+  screen before leaving gameplay.
+- Transition to the clear bonus flow after the stage-clear overlay, or back to
+  `TitleScene` after the game-over overlay.
 
 ### `ResultScene`
 
 Responsibilities:
 
-- Show clear or game-over result.
+- Show any remaining full-run summary result that is not already presented as a
+  gameplay overlay.
 - Show score, max combo, and high score.
 - Allow retry and return to title.
 - Retry must require a fresh confirm press after entering the result screen. Held
@@ -552,6 +556,12 @@ falling rather than a camera-like zoom. Regression expectation: the defeat body
 remains visible and opaque late in the sequence while explosion bursts are still
 appearing.
 
+When the defeat reaction completes, `STAGE CLEAR` should appear as an overlay on
+top of the gameplay screen before the clear bonus presentation starts. Regression
+expectation: active scene remains `GameScene` while the stage-clear overlay is
+visible, and only transitions to the clear bonus flow after a short readable
+overlay delay.
+
 ### Stage 2 Direction
 
 Add stage 2 after stage 1 has a stable polish baseline. Stage 2 should inherit
@@ -607,10 +617,17 @@ simple neon frame or wing-like accent. Regression expectation: title input,
 audio mute toggling, high score display, and start behavior remain unchanged.
 
 Large screen headings should share one arcade heading treatment. Title lettering,
-the clear bonus `STAGE CLEAR`, and the final clear `STAGE CLEAR` should use the
-same font family and core stroke treatment, while still allowing scene-specific
-color accents. Regression expectation: heading style is defined in one shared
-place and reused by title, clear bonus, and result scenes.
+the gameplay result overlays, and clear bonus headings should use the same font
+family and core stroke treatment, while still allowing scene-specific color
+accents. Regression expectation: heading style is defined in one shared place
+and reused by title, gameplay overlays, clear bonus, and result scenes.
+
+`GAME OVER` should also be presented as an overlay on the gameplay screen instead
+of immediately replacing the game view with a separate result screen. The overlay
+should hold long enough to read, then return to the title screen automatically
+after roughly 10 seconds. Regression expectation: triggering game over keeps
+`GameScene` active while the `GAME OVER` overlay is visible, then reaches
+`TitleScene` without requiring input.
 
 Player bullets, enemy bullets, and power-up items should receive stronger visual
 assets or code-generated effects. They must remain highly readable at gameplay

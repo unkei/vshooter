@@ -25,6 +25,7 @@ export type VShooterDebugHooks = {
     x: number;
     y: number;
   } | null;
+  getResultOverlayText: () => string | null;
   getActiveScene: () => string | null;
 };
 

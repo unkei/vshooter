@@ -12,7 +12,7 @@ describe('result flow', () => {
     expect(CLEAR_RESULT_RETURN_DELAY_MS).toBeGreaterThanOrEqual(2500);
   });
 
-  it('keeps game-over results on the retry screen', () => {
+  it('does not auto-return from legacy game-over result scenes', () => {
     expect(resultReturnsToTitleAutomatically('gameover')).toBe(false);
   });
 

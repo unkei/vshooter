@@ -27,6 +27,8 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
     (window as unknown as { __vshooterDebug?: { defeatBoss?: () => void } })
       .__vshooterDebug?.defeatBoss?.();
   });
+  await waitForResultOverlay(page, 'STAGE CLEAR');
+  expect(await windowText(page)).toContain('GameScene');
   await waitForActiveScene(page, 'ClearBonusScene', 7_000);
   await waitForActiveScene(page, 'GameScene', 7_000);
 
@@ -34,10 +36,12 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
     (window as unknown as { __vshooterDebug?: { defeatBoss?: () => void } })
       .__vshooterDebug?.defeatBoss?.();
   });
+  await waitForResultOverlay(page, 'STAGE CLEAR');
+  expect(await windowText(page)).toContain('GameScene');
   await waitForActiveScene(page, 'ClearBonusScene', 7_000);
-  await waitForActiveScene(page, 'ResultScene', 7_000);
+  await waitForActiveScene(page, 'TitleScene', 7_000);
 
-  expect(await windowText(page)).toContain('ResultScene');
+  expect(await windowText(page)).toContain('TitleScene');
   expect(browserErrors).toEqual([]);
 });
 
@@ -116,8 +120,8 @@ test('sparse Chrome gamepad still controls gameplay after replay', async ({ page
   await releaseFakePadButton(page, 9);
 
   await page.getByTestId('debug-game-over').click();
-  await waitForActiveScene(page, 'ResultScene');
-  await page.waitForTimeout(150);
+  await waitForResultOverlay(page, 'GAME OVER');
+  await waitForActiveScene(page, 'TitleScene', 12_000);
 
   await pressFakePadButton(page, 9);
   await waitForActiveScene(page, 'GameScene');
@@ -154,7 +158,7 @@ test('sparse Chrome gamepad still controls gameplay after replay', async ({ page
   );
 });
 
-test('result retry requires a fresh confirm press', async ({ page }) => {
+test('game over stays over gameplay before returning to title', async ({ page }) => {
   await page.goto('/?debug=1');
   await expect(page.getByTestId('debug-game-over')).toBeVisible();
 
@@ -163,15 +167,13 @@ test('result retry requires a fresh confirm press', async ({ page }) => {
 
   await page.keyboard.down('Enter');
   await page.getByTestId('debug-game-over').click();
-  await waitForActiveScene(page, 'ResultScene');
+  await waitForResultOverlay(page, 'GAME OVER');
   await page.waitForTimeout(300);
-  expect(await windowText(page)).toBe('ResultScene');
+  expect(await windowText(page)).toBe('GameScene');
+  expect(await resultOverlayText(page)).toBe('GAME OVER');
 
   await page.keyboard.up('Enter');
-  await page.waitForTimeout(100);
-  await page.keyboard.down('Enter');
-  await waitForActiveScene(page, 'GameScene');
-  await page.keyboard.up('Enter');
+  await waitForActiveScene(page, 'TitleScene', 12_000);
 });
 
 test('rapid boss hits do not keep boss flash permanently active', async ({ page }) => {
@@ -368,6 +370,30 @@ async function windowText(page: Page): Promise<string> {
     () =>
       (window as unknown as { __vshooterDebug?: { getActiveScene?: () => string | null } })
         .__vshooterDebug?.getActiveScene?.() ?? '',
+  );
+}
+
+async function resultOverlayText(page: Page): Promise<string | null> {
+  return page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          __vshooterDebug?: { getResultOverlayText?: () => string | null };
+        }
+      ).__vshooterDebug?.getResultOverlayText?.() ?? null,
+  );
+}
+
+async function waitForResultOverlay(page: Page, text: string): Promise<void> {
+  await page.waitForFunction(
+    (expected) =>
+      (
+        window as unknown as {
+          __vshooterDebug?: { getResultOverlayText?: () => string | null };
+        }
+      ).__vshooterDebug?.getResultOverlayText?.() === expected,
+    text,
+    { timeout: 5_000 },
   );
 }
 

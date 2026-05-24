@@ -37,6 +37,11 @@ import {
 } from '../systems/StageDirector';
 import { VibrationManager } from '../systems/VibrationManager';
 import { buildGameplayHudLine } from './gameHud';
+import {
+  gameplayResultOverlayConfig,
+  type GameplayResultStatus,
+} from './gameplayResultOverlay';
+import { arcadeHeadingTextStyle, UI_FONT_FAMILY } from './screenTextStyles';
 
 type CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -68,6 +73,7 @@ export class GameScene extends Phaser.Scene {
   private activeTouchPointerId: number | null = null;
   private touchOrigin: { x: number; y: number } | null = null;
   private dataFromRun: GameSceneData = {};
+  private resultOverlayText: string | null = null;
 
   constructor() {
     super('GameScene');
@@ -90,6 +96,7 @@ export class GameScene extends Phaser.Scene {
     this.startedAtMs = null;
     this.activeTouchPointerId = null;
     this.touchOrigin = null;
+    this.resultOverlayText = null;
     this.input.keyboard?.resetKeys();
     this.keyboardGate = new KeyboardReleaseGate();
     this.cameras.main.setBackgroundColor(0x050710);
@@ -389,6 +396,10 @@ export class GameScene extends Phaser.Scene {
     };
   }
 
+  debugResultOverlayText(): string | null {
+    return this.resultOverlayText;
+  }
+
   private scheduleStageClear(): void {
     if (this.clearPending) {
       return;
@@ -496,7 +507,7 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private finish(status: 'clear' | 'gameover'): void {
+  private finish(status: GameplayResultStatus): void {
     if (this.finished) {
       return;
     }
@@ -504,34 +515,61 @@ export class GameScene extends Phaser.Scene {
     this.finished = true;
     this.input.keyboard?.resetKeys();
     this.audio.stop();
+    this.projectiles.clearPlayerBullets();
+    this.projectiles.clearEnemyBullets();
+    const overlay = gameplayResultOverlayConfig(status);
+    this.showResultOverlay(overlay.text, overlay.color);
+
     if (status === 'clear') {
       const bonuses = this.score.addStageClearBonuses();
       const snapshot = this.score.snapshot();
       if (this.stageDefinition.nextStageNumber === null) {
         this.score.finishRun();
       }
-      this.scene.start('ClearBonusScene', {
-        score: snapshot.score,
-        clearBonus: bonuses.clearBonus,
-        comboBonus: bonuses.comboBonus,
-        maxCombo: snapshot.maxCombo,
-        highScore:
-          this.stageDefinition.nextStageNumber === null
-            ? this.score.snapshot().highScore
-            : snapshot.highScore,
-        nextStageNumber: this.stageDefinition.nextStageNumber,
+      this.time.delayedCall(overlay.nextDelayMs, () => {
+        this.scene.start('ClearBonusScene', {
+          score: snapshot.score,
+          clearBonus: bonuses.clearBonus,
+          comboBonus: bonuses.comboBonus,
+          maxCombo: snapshot.maxCombo,
+          highScore:
+            this.stageDefinition.nextStageNumber === null
+              ? this.score.snapshot().highScore
+              : snapshot.highScore,
+          nextStageNumber: this.stageDefinition.nextStageNumber,
+        });
       });
       return;
     }
 
     this.score.finishRun();
-    const snapshot = this.score.snapshot();
-    this.scene.start('ResultScene', {
-      status,
-      score: snapshot.score,
-      maxCombo: snapshot.maxCombo,
-      highScore: snapshot.highScore,
+    this.time.delayedCall(overlay.nextDelayMs, () => {
+      getSharedAudioManager().stop();
+      this.input.keyboard?.resetKeys();
+      this.scene.start('TitleScene');
     });
+  }
+
+  private showResultOverlay(text: string, color: string): void {
+    this.resultOverlayText = text;
+    this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x02030a, 0.48)
+      .setDepth(85);
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 16, text, arcadeHeadingTextStyle(color, '46px'))
+      .setOrigin(0.5)
+      .setDepth(86);
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40, 'RETURNING TO TITLE', {
+        fontFamily: UI_FONT_FAMILY,
+        fontSize: '16px',
+        color: '#fff06a',
+        stroke: '#000000',
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setDepth(86)
+      .setVisible(text === 'GAME OVER');
   }
 
   private addStarfield(): void {

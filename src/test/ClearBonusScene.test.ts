@@ -3,7 +3,7 @@ import type { ClearBonusSceneData } from '../scenes/ClearBonusScene';
 import { buildClearBonusLines } from '../scenes/clearBonusDisplay';
 
 describe('ClearBonusSceneData', () => {
-  it('carries score and bonus details before the final result scene', () => {
+  it('carries score and bonus details before the next route', () => {
     const data: ClearBonusSceneData = {
       score: 5000,
       clearBonus: 1000,
@@ -17,7 +17,7 @@ describe('ClearBonusSceneData', () => {
     expect(data.nextStageNumber).toBe(2);
   });
 
-  it('can mark a clear bonus scene as the final clear result', () => {
+  it('can mark a clear bonus scene as the final clear presentation', () => {
     const data: ClearBonusSceneData = {
       score: 7000,
       clearBonus: 1000,

@@ -101,6 +101,15 @@ if (typeof window !== 'undefined') {
       }
       return null;
     };
+    const getResultOverlayText = (): ReturnType<
+      GameScene['debugResultOverlayText']
+    > => {
+      const scene = game.scene.getScene('GameScene');
+      if (scene instanceof GameScene) {
+        return scene.debugResultOverlayText();
+      }
+      return null;
+    };
 
     window.__vshooterDebug = {
       defeatBoss,
@@ -109,6 +118,7 @@ if (typeof window !== 'undefined') {
       damageBoss,
       getBossVisualState,
       getPlayerState,
+      getResultOverlayText,
       getActiveScene: () => game.scene.getScenes(true)[0]?.scene.key ?? null,
     };
 

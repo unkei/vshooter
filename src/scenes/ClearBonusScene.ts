@@ -60,7 +60,7 @@ export class ClearBonusScene extends Phaser.Scene {
     this.addStarfield();
 
     this.add
-      .text(GAME_WIDTH / 2, 130, 'STAGE CLEAR', arcadeHeadingTextStyle('#6ffcff'))
+      .text(GAME_WIDTH / 2, 130, 'CLEAR BONUS', arcadeHeadingTextStyle('#6ffcff'))
       .setOrigin(0.5);
 
     const bonusCounter = {
@@ -194,12 +194,9 @@ export class ClearBonusScene extends Phaser.Scene {
         return;
       }
 
-      this.scene.start('ResultScene', {
-        status: 'clear',
-        score: this.dataFromRun.score,
-        maxCombo: this.dataFromRun.maxCombo,
-        highScore: this.dataFromRun.highScore,
-      });
+      getSharedAudioManager().stop();
+      this.input.keyboard?.resetKeys();
+      this.scene.start('TitleScene');
     });
   }
 
