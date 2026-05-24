@@ -15,6 +15,17 @@ export type StageEvent =
     drops?: StagePowerUpDrop[];
   };
 
+export type StageNumber = 1 | 2;
+
+export type StageDefinition = {
+  stageNumber: StageNumber;
+  events: StageEvent[];
+  nextStageNumber: StageNumber | null;
+  boss: {
+    rushAttack: boolean;
+  };
+};
+
 export class StageDirector {
   private nextEventIndex = 0;
   private bossStarted = false;
@@ -53,6 +64,32 @@ export class StageDirector {
 }
 
 export function createDefaultStage(): StageEvent[] {
+  return createStage1Events();
+}
+
+export function createStageDefinition(stageNumber: StageNumber): StageDefinition {
+  if (stageNumber === 2) {
+    return {
+      stageNumber,
+      events: createStage2Events(),
+      nextStageNumber: null,
+      boss: {
+        rushAttack: true,
+      },
+    };
+  }
+
+  return {
+    stageNumber,
+    events: createStage1Events(),
+    nextStageNumber: 2,
+    boss: {
+      rushAttack: false,
+    },
+  };
+}
+
+function createStage1Events(): StageEvent[] {
   return [
     { atMs: 0, type: 'wave', enemyType: 'straight', count: 4 },
     {
@@ -70,6 +107,7 @@ export function createDefaultStage(): StageEvent[] {
       count: 5,
       drops: [
         { enemyIndex: 1, type: 'life' },
+        { enemyIndex: 2, type: 'shot' },
         { enemyIndex: 3, type: 'score' },
       ],
     },
@@ -87,6 +125,47 @@ export function createDefaultStage(): StageEvent[] {
       count: 4,
       pressure: 'reduced',
       drops: [{ enemyIndex: 2, type: 'score' }],
+    },
+  ];
+}
+
+function createStage2Events(): StageEvent[] {
+  return [
+    { atMs: 0, type: 'wave', enemyType: 'straight', count: 5 },
+    {
+      atMs: 3600,
+      type: 'wave',
+      enemyType: 'sway',
+      count: 5,
+      drops: [{ enemyIndex: 2, type: 'shot' }],
+    },
+    {
+      atMs: 7600,
+      type: 'wave',
+      enemyType: 'sway',
+      count: 6,
+      drops: [{ enemyIndex: 3, type: 'life' }],
+    },
+    {
+      atMs: 11800,
+      type: 'wave',
+      enemyType: 'heavy',
+      count: 3,
+      drops: [{ enemyIndex: 1, type: 'score' }],
+    },
+    {
+      atMs: 16200,
+      type: 'wave',
+      enemyType: 'heavy',
+      count: 4,
+      drops: [{ enemyIndex: 2, type: 'shot' }],
+    },
+    {
+      atMs: 20600,
+      type: 'wave',
+      enemyType: 'heavy',
+      count: 4,
+      drops: [{ enemyIndex: 3, type: 'score' }],
     },
   ];
 }

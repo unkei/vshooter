@@ -6,6 +6,7 @@ import {
   applyPowerUp,
   computePowerUpAlpha,
   createPowerUpPosition,
+  powerUpVisualStyle,
 } from '../systems/PowerUpManager';
 
 describe('applyPowerUp', () => {
@@ -59,5 +60,23 @@ describe('applyPowerUp', () => {
     expect(computePowerUpAlpha(POWER_UP_BLINK_AFTER_MS - 1)).toBe(1);
     expect(computePowerUpAlpha(POWER_UP_BLINK_AFTER_MS + 100)).toBeLessThan(1);
     expect(computePowerUpAlpha(POWER_UP_LIFETIME_MS + 1)).toBe(0);
+  });
+
+  it('provides deterministic readable visual styles for each item type', () => {
+    expect(powerUpVisualStyle('shot')).toEqual({
+      color: 0x6ffcff,
+      strokeColor: 0x102a3a,
+      label: 'P',
+    });
+    expect(powerUpVisualStyle('life')).toEqual({
+      color: 0x61ff77,
+      strokeColor: 0x123819,
+      label: 'L',
+    });
+    expect(powerUpVisualStyle('score')).toEqual({
+      color: 0xfff06a,
+      strokeColor: 0x3a3008,
+      label: '$',
+    });
   });
 });

@@ -1,5 +1,14 @@
 type SoundName = 'shot' | 'enemyDown' | 'explosion' | 'damage' | 'pickup' | 'boss';
 type MusicMode = 'gameplay' | 'clear';
+type ExternalAudioKey = MusicMode | SoundName;
+type AudioSettingKey = 'master' | 'bgm' | 'sfx';
+
+export type AudioSettings = {
+  master: number;
+  bgm: number;
+  sfx: number;
+  muted: boolean;
+};
 
 type SoundPreset = {
   frequency: number;
@@ -12,6 +21,42 @@ type AudioContextConstructor = new () => AudioContext;
 
 export const MUSIC_LAYER_COUNT = 3;
 export const CLEAR_MUSIC_LAYER_COUNT = 3;
+export const AUDIO_SETTINGS_STORAGE_KEY = 'vshooter.audioSettings';
+export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
+  master: 1,
+  bgm: 1,
+  sfx: 1,
+  muted: false,
+};
+
+export const EXTERNAL_AUDIO_KEYS: Record<ExternalAudioKey, string> = {
+  gameplay: 'vshooter.audio.music.gameplay',
+  clear: 'vshooter.audio.music.clear',
+  shot: 'vshooter.audio.sfx.shot',
+  enemyDown: 'vshooter.audio.sfx.enemyDown',
+  explosion: 'vshooter.audio.sfx.explosion',
+  damage: 'vshooter.audio.sfx.damage',
+  pickup: 'vshooter.audio.sfx.pickup',
+  boss: 'vshooter.audio.sfx.boss',
+};
+
+export const EXTERNAL_AUDIO_ASSETS = [
+  { key: EXTERNAL_AUDIO_KEYS.gameplay, path: 'assets/audio/gameplay-bgm.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.clear, path: 'assets/audio/clear-bgm.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.shot, path: 'assets/audio/shot.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.enemyDown, path: 'assets/audio/enemy-down.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.explosion, path: 'assets/audio/boss-explosion.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.damage, path: 'assets/audio/damage.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.pickup, path: 'assets/audio/pickup.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.boss, path: 'assets/audio/boss-warning.wav' },
+];
+
+export type ExternalAudioPlayback = {
+  playMusic: (mode: MusicMode, volume: number) => boolean;
+  playSound: (name: SoundName, volume: number) => boolean;
+  setMusicVolume?: (volume: number) => void;
+  stopMusic: () => void;
+};
 
 export const SOUND_PRESETS: Record<SoundName, SoundPreset> = {
   shot: {
@@ -53,12 +98,52 @@ export const SOUND_PRESETS: Record<SoundName, SoundPreset> = {
 };
 
 export class AudioManager {
+  private readonly storage: Storage | null;
+  private settings: AudioSettings;
   private context: AudioContext | null = null;
   private musicOscillators: OscillatorNode[] = [];
   private musicGains: GainNode[] = [];
   private musicTimer: ReturnType<typeof setInterval> | null = null;
   private musicStep = 0;
   private musicMode: MusicMode | null = null;
+  private externalMusicMode: MusicMode | null = null;
+  private externalPlayback: ExternalAudioPlayback | null = null;
+
+  constructor(options: { storage?: Storage | null } = {}) {
+    this.storage = options.storage === undefined ? getDefaultStorage() : options.storage;
+    this.settings = loadAudioSettings(this.storage);
+  }
+
+  getSettings(): AudioSettings {
+    return { ...this.settings };
+  }
+
+  setSettings(nextSettings: Partial<AudioSettings>): void {
+    this.settings = normalizeAudioSettings({
+      ...this.settings,
+      ...nextSettings,
+    });
+    persistAudioSettings(this.storage, this.settings);
+    this.applyGeneratedMusicVolume();
+    if (this.externalMusicMode !== null) {
+      this.externalPlayback?.setMusicVolume?.(
+        this.getEffectiveVolume('bgm', getExternalMusicBaseVolume(this.externalMusicMode)),
+      );
+    }
+  }
+
+  toggleMute(): AudioSettings {
+    this.setSettings({ muted: !this.settings.muted });
+    return this.getSettings();
+  }
+
+  setExternalPlayback(playback: ExternalAudioPlayback | null): void {
+    if (this.externalMusicMode !== null) {
+      this.externalPlayback?.stopMusic();
+      this.externalMusicMode = null;
+    }
+    this.externalPlayback = playback;
+  }
 
   async start(mode: MusicMode = 'gameplay'): Promise<void> {
     if (this.context === null) {
@@ -66,7 +151,9 @@ export class AudioManager {
     }
 
     this.primeOutput();
-    this.startMusic(mode);
+    if (!this.startExternalMusic(mode)) {
+      this.startMusic(mode);
+    }
     const resumePromise =
       this.context.state === 'suspended'
         ? this.context.resume().catch(() => undefined)
@@ -82,10 +169,20 @@ export class AudioManager {
     if (this.context.state === 'suspended') {
       void this.context.resume().catch(() => undefined);
     }
+    if (
+      this.externalPlayback?.playSound(
+        name,
+        this.getEffectiveVolume('sfx', getExternalSoundBaseVolume(name)),
+      ) === true
+    ) {
+      return;
+    }
     this.beep(SOUND_PRESETS[name]);
   }
 
   stop(): void {
+    this.externalPlayback?.stopMusic();
+    this.externalMusicMode = null;
     for (const oscillator of this.musicOscillators) {
       oscillator.stop();
     }
@@ -141,7 +238,7 @@ export class AudioManager {
       const gain = this.context.createGain();
       oscillator.type = layer.type;
       oscillator.frequency.value = layer.frequencies[0];
-      gain.gain.value = layer.gain;
+      gain.gain.value = layer.gain * this.getEffectiveVolume('bgm');
       oscillator.connect(gain);
       gain.connect(this.context.destination);
       oscillator.start();
@@ -151,6 +248,34 @@ export class AudioManager {
 
     this.musicMode = mode;
     this.musicTimer = setInterval(() => this.advanceMusic(), 280);
+  }
+
+  private startExternalMusic(mode: MusicMode): boolean {
+    if (this.externalMusicMode !== null) {
+      this.externalPlayback?.stopMusic();
+      this.externalMusicMode = null;
+    }
+    if (
+      this.externalPlayback?.playMusic(
+        mode,
+        this.getEffectiveVolume('bgm', getExternalMusicBaseVolume(mode)),
+      ) !== true
+    ) {
+      return false;
+    }
+    for (const oscillator of this.musicOscillators) {
+      oscillator.stop();
+    }
+    if (this.musicTimer !== null) {
+      clearInterval(this.musicTimer);
+      this.musicTimer = null;
+    }
+    this.musicOscillators = [];
+    this.musicGains = [];
+    this.musicStep = 0;
+    this.musicMode = mode;
+    this.externalMusicMode = mode;
+    return true;
   }
 
   private advanceMusic(): void {
@@ -175,20 +300,44 @@ export class AudioManager {
     if (this.context === null) {
       return;
     }
+    const effectiveVolume = this.getEffectiveVolume('sfx');
+    if (effectiveVolume <= 0) {
+      return;
+    }
 
     const oscillator = this.context.createOscillator();
     const gain = this.context.createGain();
     oscillator.type = preset.type;
     oscillator.frequency.value = preset.frequency;
-    gain.gain.setValueAtTime(preset.gain, this.context.currentTime);
+    gain.gain.setValueAtTime(
+      preset.gain * effectiveVolume,
+      this.context.currentTime,
+    );
     gain.gain.exponentialRampToValueAtTime(
-      0.001,
+      0.001 * effectiveVolume,
       this.context.currentTime + preset.durationSeconds,
     );
     oscillator.connect(gain);
     gain.connect(this.context.destination);
     oscillator.start();
     oscillator.stop(this.context.currentTime + preset.durationSeconds);
+  }
+
+  private getEffectiveVolume(kind: AudioSettingKey, baseVolume = 1): number {
+    if (this.settings.muted) {
+      return 0;
+    }
+    return baseVolume * this.settings.master * this.settings[kind];
+  }
+
+  private applyGeneratedMusicVolume(): void {
+    if (this.musicMode === null || this.musicGains.length === 0) {
+      return;
+    }
+    const layers = getMusicLayers(this.musicMode);
+    for (const [index, gain] of this.musicGains.entries()) {
+      gain.gain.value = layers[index].gain * this.getEffectiveVolume('bgm');
+    }
   }
 }
 
@@ -242,6 +391,67 @@ export function getSharedAudioManager(): AudioManager {
   return sharedAudioManager;
 }
 
+export function preloadExternalAudioAssets(scene: Phaser.Scene): void {
+  for (const asset of EXTERNAL_AUDIO_ASSETS) {
+    scene.load.audio(asset.key, asset.path);
+  }
+}
+
+export function createPhaserExternalAudioPlayback(
+  scene: Phaser.Scene,
+): ExternalAudioPlayback {
+  let activeMusicKey: string | null = null;
+
+  return {
+    playMusic: (mode, volume) => {
+      const key = EXTERNAL_AUDIO_KEYS[mode];
+      if (!hasCachedAudio(scene, key)) {
+        return false;
+      }
+      try {
+        if (activeMusicKey !== null && activeMusicKey !== key) {
+          scene.sound.stopByKey(activeMusicKey);
+        }
+        activeMusicKey = key;
+        return scene.sound.play(key, {
+          loop: true,
+          volume,
+        });
+      } catch {
+        activeMusicKey = null;
+        return false;
+      }
+    },
+    playSound: (name, volume) => {
+      const key = EXTERNAL_AUDIO_KEYS[name];
+      if (!hasCachedAudio(scene, key)) {
+        return false;
+      }
+      try {
+        return scene.sound.play(key, {
+          volume,
+        });
+      } catch {
+        return false;
+      }
+    },
+    setMusicVolume: (volume) => {
+      if (activeMusicKey === null) {
+        return;
+      }
+      for (const sound of scene.sound.getAll(activeMusicKey)) {
+        (sound as Phaser.Sound.BaseSound & { volume: number }).volume = volume;
+      }
+    },
+    stopMusic: () => {
+      if (activeMusicKey !== null) {
+        scene.sound.stopByKey(activeMusicKey);
+        activeMusicKey = null;
+      }
+    },
+  };
+}
+
 function createAudioContext(): AudioContext {
   const globalScope = globalThis as typeof globalThis & {
     webkitAudioContext?: AudioContextConstructor;
@@ -252,4 +462,76 @@ function createAudioContext(): AudioContext {
   }
 
   return new ContextConstructor();
+}
+
+function getDefaultStorage(): Storage | null {
+  try {
+    return globalThis.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function loadAudioSettings(storage: Storage | null): AudioSettings {
+  if (storage === null) {
+    return { ...DEFAULT_AUDIO_SETTINGS };
+  }
+  try {
+    return normalizeAudioSettings(
+      JSON.parse(storage.getItem(AUDIO_SETTINGS_STORAGE_KEY) ?? '{}') as Partial<AudioSettings>,
+    );
+  } catch {
+    return { ...DEFAULT_AUDIO_SETTINGS };
+  }
+}
+
+function persistAudioSettings(
+  storage: Storage | null,
+  settings: AudioSettings,
+): void {
+  try {
+    storage?.setItem(AUDIO_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // Storage can fail in private browsing or constrained test environments.
+  }
+}
+
+function normalizeAudioSettings(settings: Partial<AudioSettings>): AudioSettings {
+  return {
+    master: normalizeVolume(settings.master, DEFAULT_AUDIO_SETTINGS.master),
+    bgm: normalizeVolume(settings.bgm, DEFAULT_AUDIO_SETTINGS.bgm),
+    sfx: normalizeVolume(settings.sfx, DEFAULT_AUDIO_SETTINGS.sfx),
+    muted:
+      typeof settings.muted === 'boolean'
+        ? settings.muted
+        : DEFAULT_AUDIO_SETTINGS.muted,
+  };
+}
+
+function normalizeVolume(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.min(1, Math.max(0, value));
+}
+
+function hasCachedAudio(scene: Phaser.Scene, key: string): boolean {
+  return scene.cache.audio.exists(key);
+}
+
+function getExternalMusicBaseVolume(mode: MusicMode): number {
+  return mode === 'clear' ? 0.36 : 0.3;
+}
+
+function getExternalSoundBaseVolume(name: SoundName): number {
+  if (name === 'shot') {
+    return 0.42;
+  }
+  if (name === 'explosion') {
+    return 0.78;
+  }
+  if (name === 'boss' || name === 'damage') {
+    return 0.68;
+  }
+  return 0.6;
 }

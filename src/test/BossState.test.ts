@@ -2,17 +2,26 @@ import { describe, expect, it } from 'vitest';
 import {
   BOSS_DEFEAT_CLEAR_DELAY_MS,
   BOSS_DEFEAT_FADES_SPRITE,
+  BOSS_CLEAR_OVERLAY_FADES_DEFEAT_BODY,
   BOSS_DEFEAT_SPRITE_DEPTH,
   BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS,
   BOSS_DEFEAT_USES_DEDICATED_BODY,
+  BOSS_ENTRANCE_TRAVEL_MS,
   BOSS_ENTRANCE_DELAY_MS,
+  BOSS_ENTRY_START_Y,
+  BOSS_ENTRY_TARGET_Y,
   BOSS_HIT_FEEDBACK_MODE,
   BOSS_HIT_FLASH_DURATION_MS,
   BOSS_HIT_FLASH_MIN_INTERVAL_MS,
   BOSS_HIT_FLASH_OVERLAY_ALPHA,
   BOSS_LOCKS_VISUAL_STATE_ON_HIT,
   BOSS_MAX_HP,
+  BOSS_PRE_WARNING_GRACE_MS,
   BOSS_PRESERVES_BASE_SPRITE_DURING_HIT_FLASH,
+  BOSS_RUSH_ATTACK_ENABLED_BY_DEFAULT,
+  BOSS_RUSH_DURATION_MS,
+  BOSS_RUSH_INTERVAL_MS,
+  BOSS_RUSH_TARGET_Y,
   BOSS_USES_CAMERA_FLASH,
   createBossDefeatBursts,
   configureBossBody,
@@ -75,6 +84,19 @@ describe('isRenderableBossSprite', () => {
     expect(BOSS_ENTRANCE_DELAY_MS).toBeGreaterThanOrEqual(1500);
   });
 
+  it('uses a readable staged boss entrance before attacks begin', () => {
+    expect(BOSS_PRE_WARNING_GRACE_MS).toBe(650);
+    expect(BOSS_ENTRANCE_TRAVEL_MS).toBe(900);
+    expect(BOSS_ENTRY_START_Y).toBe(-150);
+    expect(BOSS_ENTRY_TARGET_Y).toBe(120);
+    expect(BOSS_PRE_WARNING_GRACE_MS).toBeGreaterThan(0);
+    expect(BOSS_ENTRANCE_TRAVEL_MS).toBeGreaterThan(0);
+    expect(BOSS_ENTRY_START_Y).toBeLessThan(BOSS_ENTRY_TARGET_Y);
+    expect(BOSS_ENTRANCE_DELAY_MS).toBeGreaterThanOrEqual(
+      BOSS_PRE_WARNING_GRACE_MS + BOSS_ENTRANCE_TRAVEL_MS,
+    );
+  });
+
   it('leaves time for a boss defeat reaction before the clear screen', () => {
     expect(BOSS_DEFEAT_CLEAR_DELAY_MS).toBeGreaterThanOrEqual(1200);
   });
@@ -114,12 +136,34 @@ describe('isRenderableBossSprite', () => {
     expect(BOSS_DEFEAT_FADES_SPRITE).toBe(false);
   });
 
+  it('fades the remaining boss body only behind the stage clear overlay', () => {
+    expect(BOSS_CLEAR_OVERLAY_FADES_DEFEAT_BODY).toBe(true);
+  });
+
+  it('defines the stage 2 boss rush as an opt-in pressure spike', () => {
+    expect(BOSS_RUSH_ATTACK_ENABLED_BY_DEFAULT).toBe(false);
+    expect(BOSS_RUSH_INTERVAL_MS).toBe(5200);
+    expect(BOSS_RUSH_DURATION_MS).toBe(1200);
+    expect(BOSS_RUSH_TARGET_Y).toBe(260);
+    expect(BOSS_RUSH_TARGET_Y).toBeGreaterThan(BOSS_ENTRY_TARGET_Y);
+  });
+
   it('creates several boss defeat bursts around the boss center', () => {
     const bursts = createBossDefeatBursts(240, 120);
 
     expect(bursts).toHaveLength(7);
     expect(bursts[0]).toMatchObject({ x: 240, y: 120, delayMs: 0 });
     expect(new Set(bursts.map((burst) => burst.delayMs)).size).toBeGreaterThan(1);
+  });
+
+  it('keeps defeat bursts active through most of the clear delay', () => {
+    const bursts = createBossDefeatBursts(240, 120);
+    const lastBurstDelayMs = Math.max(...bursts.map((burst) => burst.delayMs));
+
+    expect(lastBurstDelayMs).toBeGreaterThanOrEqual(
+      BOSS_DEFEAT_CLEAR_DELAY_MS * 0.7,
+    );
+    expect(lastBurstDelayMs).toBeLessThan(BOSS_DEFEAT_CLEAR_DELAY_MS);
   });
 
   it('ignores missing boss bodies when disabling defeat collision', () => {

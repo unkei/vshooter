@@ -15,6 +15,9 @@ export type PointerInput = {
   y: number;
   shoot: boolean;
   source?: 'mouse' | 'touch';
+  mode?: 'direct' | 'virtualStick';
+  originX?: number;
+  originY?: number;
 };
 
 export type GamepadInput = {
@@ -38,7 +41,8 @@ export type NormalizedInputState = {
 };
 
 const DEAD_ZONE = 0.2;
-export const TOUCH_PLAYER_Y_OFFSET = 72;
+const ANALOG_RESPONSE_CURVE = 1.5;
+const VIRTUAL_STICK_RADIUS = 40;
 
 export function normalizeInput(raw: RawInputState): NormalizedInputState {
   const keyboardX =
@@ -46,21 +50,22 @@ export function normalizeInput(raw: RawInputState): NormalizedInputState {
   const keyboardY =
     (raw.keyboard?.down ? 1 : 0) - (raw.keyboard?.up ? 1 : 0);
 
-  const gamepadX = applyDeadZone(raw.gamepad?.axisX ?? 0);
-  const gamepadY = applyDeadZone(raw.gamepad?.axisY ?? 0);
+  const gamepadMove = applyRadialDeadZone({
+    x: raw.gamepad?.axisX ?? 0,
+    y: raw.gamepad?.axisY ?? 0,
+  });
+  const pointerMode = getPointerMode(raw.pointer);
+  const pointerMove = getPointerMove(raw.pointer);
   const move = normalizeVector({
-    x: gamepadX !== 0 ? gamepadX : keyboardX,
-    y: gamepadY !== 0 ? gamepadY : keyboardY,
+    x: pointerMove?.x ?? (isMoving(gamepadMove) ? gamepadMove.x : keyboardX),
+    y: pointerMove?.y ?? (isMoving(gamepadMove) ? gamepadMove.y : keyboardY),
   });
 
   const pointerTarget =
-    raw.pointer?.active === true
+    raw.pointer?.active === true && pointerMode !== 'virtualStick'
       ? {
           x: raw.pointer.x,
-          y:
-            raw.pointer.source === 'touch'
-              ? raw.pointer.y - TOUCH_PLAYER_Y_OFFSET
-              : raw.pointer.y,
+          y: raw.pointer.y,
         }
       : null;
 
@@ -72,8 +77,44 @@ export function normalizeInput(raw: RawInputState): NormalizedInputState {
   };
 }
 
-function applyDeadZone(value: number): number {
-  return Math.abs(value) < DEAD_ZONE ? 0 : value;
+function applyRadialDeadZone(vector: Vector2): Vector2 {
+  const length = Math.hypot(vector.x, vector.y);
+  if (length <= DEAD_ZONE) {
+    return { x: 0, y: 0 };
+  }
+
+  const clampedLength = Math.min(length, 1);
+  const scaledLength = (clampedLength - DEAD_ZONE) / (1 - DEAD_ZONE);
+  const curvedLength = scaledLength ** ANALOG_RESPONSE_CURVE;
+  const directionX = vector.x / length;
+  const directionY = vector.y / length;
+
+  return {
+    x: directionX * curvedLength,
+    y: directionY * curvedLength,
+  };
+}
+
+function getPointerMove(pointer: PointerInput | undefined): Vector2 | null {
+  if (pointer?.active !== true || getPointerMode(pointer) !== 'virtualStick') {
+    return null;
+  }
+
+  const originX = pointer.originX ?? pointer.x;
+  const originY = pointer.originY ?? pointer.y;
+
+  return normalizeVector({
+    x: (pointer.x - originX) / VIRTUAL_STICK_RADIUS,
+    y: (pointer.y - originY) / VIRTUAL_STICK_RADIUS,
+  });
+}
+
+function getPointerMode(pointer: PointerInput | undefined): 'direct' | 'virtualStick' {
+  return pointer?.mode ?? (pointer?.source === 'touch' ? 'virtualStick' : 'direct');
+}
+
+function isMoving(vector: Vector2): boolean {
+  return vector.x !== 0 || vector.y !== 0;
 }
 
 function normalizeVector(vector: Vector2): Vector2 {

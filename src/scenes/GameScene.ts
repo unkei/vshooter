@@ -6,24 +6,56 @@ import {
   PLAYER_MAX_SHOT_LEVEL,
 } from '../game/constants';
 import { BossController } from '../game/BossController';
-import {
-  BOSS_DEFEAT_CLEAR_DELAY_MS,
-  BOSS_ENTRANCE_DELAY_MS,
-} from '../game/bossState';
 import { EnemyManager } from '../game/EnemyManager';
 import { PlayerController } from '../game/PlayerController';
 import { ProjectileManager } from '../game/ProjectileManager';
+import { syncArcadeBody } from '../game/physics';
 import type { PowerUpType } from '../game/types';
-import { ensureGameTextures } from '../game/visualAssets';
-import { getSharedAudioManager } from '../systems/AudioManager';
-import { KeyboardReleaseGate } from '../systems/InputGate';
+import {
+  createCharacterAnimations,
+  ensureGameTextures,
+  PLAYER_TEXTURE_KEY,
+  preloadExternalVisualAssets,
+} from '../game/visualAssets';
+import {
+  createPhaserExternalAudioPlayback,
+  getSharedAudioManager,
+  preloadExternalAudioAssets,
+} from '../systems/AudioManager';
+import { FreshPressGate, KeyboardReleaseGate } from '../systems/InputGate';
 import { normalizeInput, type RawInputState } from '../systems/InputManager';
 import { PowerUpDropManager } from '../systems/PowerUpManager';
 import { ScoreManager } from '../systems/ScoreManager';
-import { createDefaultStage, StageDirector } from '../systems/StageDirector';
+import {
+  createStageDefinition,
+  StageDefinition,
+  StageNumber,
+  StageDirector,
+} from '../systems/StageDirector';
 import { VibrationManager } from '../systems/VibrationManager';
+import {
+  BOSS_DEFEAT_CLEAR_DELAY_MS,
+  BOSS_ENTRANCE_TRAVEL_MS,
+  BOSS_PRE_WARNING_GRACE_MS,
+} from '../game/bossState';
+import {
+  gameplayResultOverlayConfig,
+  type GameplayResultStatus,
+} from './gameplayResultOverlay';
+import { arcadeHeadingTextStyle } from './screenTextStyles';
+import {
+  STAGE_INTRO_WARP_DURATION_MS,
+  stageIntroStartY,
+} from './stageIntro';
+import { buildGameplayHudLine } from './gameHud';
 
 type CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
+
+export type GameSceneData = {
+  stageNumber?: StageNumber;
+  initialScore?: number;
+  initialMaxCombo?: number;
+};
 
 export class GameScene extends Phaser.Scene {
   private cursors!: CursorKeys;
@@ -35,6 +67,7 @@ export class GameScene extends Phaser.Scene {
   private powerUps!: PowerUpDropManager;
   private score!: ScoreManager;
   private stage!: StageDirector;
+  private stageDefinition: StageDefinition = createStageDefinition(1);
   private vibration = new VibrationManager();
   private audio = getSharedAudioManager();
   private startedAtMs: number | null = null;
@@ -43,9 +76,29 @@ export class GameScene extends Phaser.Scene {
   private clearPending = false;
   private bossEntrancePending = false;
   private keyboardGate!: KeyboardReleaseGate;
+  private activeTouchPointerId: number | null = null;
+  private touchOrigin: { x: number; y: number } | null = null;
+  private dataFromRun: GameSceneData = {};
+  private resultOverlayText: string | null = null;
+  private resultOverlayStatus: GameplayResultStatus | null = null;
+  private stageIntroPending = false;
+  private gameOverReturnTimer: Phaser.Time.TimerEvent | null = null;
+  private gameOverKeyboardGate = new FreshPressGate();
+  private gameOverPointerGate = new FreshPressGate();
+  private gameOverGamepadGate = new FreshPressGate();
 
   constructor() {
     super('GameScene');
+  }
+
+  preload(): void {
+    preloadExternalVisualAssets(this);
+    preloadExternalAudioAssets(this);
+  }
+
+  init(data: GameSceneData = {}): void {
+    this.dataFromRun = data;
+    this.stageDefinition = createStageDefinition(data.stageNumber ?? 1);
   }
 
   create(): void {
@@ -53,11 +106,22 @@ export class GameScene extends Phaser.Scene {
     this.clearPending = false;
     this.bossEntrancePending = false;
     this.startedAtMs = null;
+    this.activeTouchPointerId = null;
+    this.touchOrigin = null;
+    this.resultOverlayText = null;
+    this.resultOverlayStatus = null;
+    this.stageIntroPending = false;
+    this.gameOverReturnTimer = null;
+    this.gameOverKeyboardGate = new FreshPressGate();
+    this.gameOverPointerGate = new FreshPressGate();
+    this.gameOverGamepadGate = new FreshPressGate();
     this.input.keyboard?.resetKeys();
     this.keyboardGate = new KeyboardReleaseGate();
     this.cameras.main.setBackgroundColor(0x050710);
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
     ensureGameTextures(this);
+    createCharacterAnimations(this);
+    this.audio.setExternalPlayback(createPhaserExternalAudioPlayback(this));
     this.addStarfield();
 
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -69,16 +133,26 @@ export class GameScene extends Phaser.Scene {
     void this.audio.start();
     this.projectiles = new ProjectileManager(this);
     this.player = new PlayerController(this);
+    this.startStageIntro();
     this.enemies = new EnemyManager(this, this.projectiles);
-    this.boss = new BossController(this, this.projectiles);
+    this.boss = new BossController(this, this.projectiles, {
+      rushAttack: this.stageDefinition.boss.rushAttack,
+    });
     this.powerUps = new PowerUpDropManager(this);
-    this.score = new ScoreManager({ comboTimeoutMs: 1800 });
-    this.stage = new StageDirector(createDefaultStage());
+    this.score = new ScoreManager({
+      comboTimeoutMs: 1800,
+      initialScore: this.dataFromRun.initialScore,
+      initialMaxCombo: this.dataFromRun.initialMaxCombo,
+    });
+    this.stage = new StageDirector(this.stageDefinition.events);
 
     this.hud = this.add.text(12, 12, '', {
-      fontSize: '16px',
+      fontFamily: 'Arial Black, Arial, sans-serif',
+      fontSize: '14px',
       color: '#ffffff',
-    });
+      stroke: '#000000',
+      strokeThickness: 4,
+    }).setDepth(70);
 
     this.physics.add.overlap(
       this.projectiles.playerBullets,
@@ -111,78 +185,110 @@ export class GameScene extends Phaser.Scene {
 
   update(timeMs: number, deltaMs: number): void {
     if (this.finished) {
+      if (this.resultOverlayStatus === 'gameover') {
+        this.updateGameOverBackdrop(timeMs, deltaMs);
+        this.handleGameOverReturnInput();
+      }
       return;
     }
     if (this.clearPending) {
+      return;
+    }
+    if (this.stageIntroPending) {
+      this.updateHud();
       return;
     }
     if (this.startedAtMs === null) {
       this.startedAtMs = timeMs;
     }
 
-    const input = normalizeInput(this.readInput());
-    const canFirePlayerShot = !this.bossEntrancePending;
-    if (this.player.update(input, timeMs, deltaMs)) {
-      if (canFirePlayerShot) {
-        this.projectiles.firePlayerShot(
-          this.player.sprite.x,
-          this.player.sprite.y,
-          this.player.shotLevel,
-        );
-        this.audio.play('shot');
+    const elapsedMs = timeMs - this.startedAtMs!;
+    const events = this.stage.update(elapsedMs);
+    for (const event of events) {
+      if (event.type === 'wave') {
+        this.enemies.spawnWave(event.enemyType, event.count, {
+          pressure: event.pressure,
+          drops: event.drops,
+        });
       }
     }
 
-    const elapsedMs = timeMs - this.startedAtMs;
-    for (const event of this.stage.update(elapsedMs)) {
-      this.enemies.spawnWave(event.enemyType, event.count, {
-        pressure: event.pressure,
-        drops: event.drops,
-      });
-    }
-
-    this.enemies.update(timeMs, deltaMs, this.player.sprite.x, this.player.sprite.y);
-    if (this.stage.consumeBossReady(this.enemies.activeCount())) {
+    const eventReady = this.stage.consumeBossReady(this.enemies.activeCount());
+    if (eventReady) {
       this.startBossEntrance();
     }
 
+    const rawInput = this.getRawInput();
+    const input = normalizeInput({
+      ...rawInput,
+      keyboard: this.keyboardGate.filter(
+        rawInput.keyboard ?? {
+          left: false,
+          right: false,
+          up: false,
+          down: false,
+          shoot: false,
+          confirm: false,
+        },
+      ),
+    });
+
+    const fired = this.player.update(input, timeMs, deltaMs);
+    if (fired) {
+      this.projectiles.firePlayerShot(
+        this.player.sprite.x,
+        this.player.sprite.y,
+        this.player.shotLevel,
+      );
+    }
+
+    this.enemies.update(
+      timeMs,
+      deltaMs,
+      this.player.sprite.x,
+      this.player.sprite.y,
+    );
     this.boss.update(timeMs, deltaMs);
-    this.powerUps.update(timeMs, deltaMs);
     this.projectiles.update();
-    this.checkBossHits();
+    this.powerUps.update(timeMs, deltaMs);
     this.updateHud();
   }
 
-  private readInput(): RawInputState {
-    const pointer = this.input.activePointer;
+  private getRawInput(): RawInputState {
     const pad = this.input.gamepad?.pad1;
-    const axisX = pad?.axes[0]?.getValue() ?? 0;
-    const axisY = pad?.axes[1]?.getValue() ?? 0;
+    const isTouch = this.input.activePointer.isDown && this.input.activePointer.id === this.activeTouchPointerId;
 
-    const keyboard = this.keyboardGate.filter({
-      left: this.cursors.left.isDown || this.keys.A.isDown,
-      right: this.cursors.right.isDown || this.keys.D.isDown,
-      up: this.cursors.up.isDown || this.keys.W.isDown,
-      down: this.cursors.down.isDown || this.keys.S.isDown,
-      shoot: this.keys.SPACE.isDown,
-      confirm: this.keys.ENTER.isDown,
-    });
+    if (this.input.activePointer.isDown && this.activeTouchPointerId === null) {
+      this.activeTouchPointerId = this.input.activePointer.id;
+      this.touchOrigin = { x: this.input.activePointer.x, y: this.input.activePointer.y };
+    } else if (!this.input.activePointer.isDown && this.activeTouchPointerId !== null) {
+      this.activeTouchPointerId = null;
+      this.touchOrigin = null;
+    }
 
     return {
-      keyboard,
+      keyboard: {
+        left: this.cursors.left.isDown || this.keys.A.isDown,
+        right: this.cursors.right.isDown || this.keys.D.isDown,
+        up: this.cursors.up.isDown || this.keys.W.isDown,
+        down: this.cursors.down.isDown || this.keys.S.isDown,
+        shoot: this.cursors.space.isDown || this.keys.SPACE.isDown,
+        confirm: this.keys.ENTER.isDown,
+      },
       pointer: {
-        active: pointer.isDown,
-        x: pointer.x,
-        y: pointer.y,
-        shoot: pointer.isDown,
-        source: pointer.wasTouch ? 'touch' : 'mouse',
+        active: isTouch,
+        x: this.input.activePointer.x,
+        y: this.input.activePointer.y,
+        shoot: isTouch,
+        originX: this.touchOrigin?.x,
+        originY: this.touchOrigin?.y,
       },
       gamepad: {
-        axisX,
-        axisY,
+        axisX: pad?.axes[0].getValue() ?? 0,
+        axisY: pad?.axes[1].getValue() ?? 0,
         shoot: Boolean(
           pad?.buttons[0]?.pressed ||
-            pad?.buttons[5]?.pressed ||
+            pad?.buttons[6]?.pressed ||
             pad?.buttons[7]?.pressed,
         ),
         confirm: Boolean(pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed),
@@ -213,11 +319,16 @@ export class GameScene extends Phaser.Scene {
   private onPlayerHit(
     threat: Phaser.Types.Physics.Arcade.GameObjectWithBody,
   ): void {
+    if (this.finished) {
+      return;
+    }
+
     threat.destroy();
     if (!this.player.damage(this.time.now)) {
       return;
     }
 
+    this.emitDamageSmoke(this.player.sprite.x, this.player.sprite.y);
     this.audio.play('damage');
     this.vibration.damage(this.player.lives, PLAYER_MAX_LIVES);
     this.score.registerDamage();
@@ -227,6 +338,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onPowerUp(item: Phaser.Types.Physics.Arcade.GameObjectWithBody): void {
+    if (this.finished) {
+      return;
+    }
+
     const type = item.getData('type') as PowerUpType;
     item.destroy();
     this.audio.play('pickup');
@@ -241,8 +356,11 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
-  private checkBossHits(): void {
-    if (!this.boss.isActive() || this.boss.sprite === null) {
+  private onBossHit(
+    _player: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+    _boss: Phaser.Types.Physics.Arcade.GameObjectWithBody,
+  ): void {
+    if (!this.boss.isAttackable() || this.boss.sprite === null) {
       return;
     }
 
@@ -253,6 +371,7 @@ export class GameScene extends Phaser.Scene {
         bullet.destroy();
         if (this.boss.damage(3)) {
           this.audio.play('explosion');
+          this.vibration.bossDefeat();
           this.projectiles.clearPlayerBullets();
           this.projectiles.clearEnemyBullets();
           this.score.addBossDefeat(2500);
@@ -276,6 +395,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.boss.damage(Number.MAX_SAFE_INTEGER)) {
       this.audio.play('explosion');
+      this.vibration.bossDefeat();
       this.projectiles.clearPlayerBullets();
       this.projectiles.clearEnemyBullets();
       this.score.addBossDefeat(2500);
@@ -315,11 +435,38 @@ export class GameScene extends Phaser.Scene {
     return this.boss.debugVisualState();
   }
 
-  debugPlayerState(): { x: number; y: number } {
+  debugPlayerState(): { x: number; y: number; visible: boolean } | null {
+    if (!this.player?.sprite) {
+      return null;
+    }
     return {
       x: this.player.sprite.x,
       y: this.player.sprite.y,
+      visible: this.player.sprite.visible,
     };
+  }
+
+  debugBackdropState(): {
+    playerVisible: boolean;
+    enemyCount: number;
+    firstEnemyY: number | null;
+    enemyBulletCount: number;
+  } | null {
+    const firstEnemy = this.enemies.enemies.getChildren()[0] as
+      | Phaser.GameObjects.Sprite
+      | undefined;
+    const firstEnemyY = firstEnemy !== undefined ? firstEnemy.y : null;
+
+    return {
+      playerVisible: this.player.sprite.visible,
+      enemyCount: this.enemies.activeCount(),
+      firstEnemyY,
+      enemyBulletCount: this.projectiles.enemyBullets.getChildren().length,
+    };
+  }
+
+  debugResultOverlayText(): string | null {
+    return this.resultOverlayText;
   }
 
   private scheduleStageClear(): void {
@@ -338,56 +485,99 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.bossEntrancePending = true;
-    this.audio.play('boss');
     this.projectiles.clearPlayerBullets();
-    this.projectiles.clearEnemyBullets();
 
-    const warning = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36, 'WARNING', {
-        fontSize: '34px',
-        color: '#ff3768',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5)
-      .setDepth(60);
-    const subtext = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36 + 42, 'BOSS APPROACHING', {
-        fontSize: '16px',
-        color: '#ffffff',
-      })
-      .setOrigin(0.5)
-      .setDepth(60);
-
-    this.tweens.add({
-      targets: [warning, subtext],
-      alpha: 0.25,
-      duration: 160,
-      yoyo: true,
-      repeat: 5,
-      ease: 'Sine.easeInOut',
-    });
-
-    this.time.delayedCall(BOSS_ENTRANCE_DELAY_MS, () => {
-      warning.destroy();
-      subtext.destroy();
+    this.time.delayedCall(BOSS_PRE_WARNING_GRACE_MS, () => {
       if (this.finished || this.clearPending) {
         return;
       }
 
-      this.bossEntrancePending = false;
+      this.audio.play('boss');
+      this.vibration.bossEntrance();
+      this.projectiles.clearEnemyBullets();
+
+      const warning = this.add
+        .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36, 'WARNING', {
+          fontSize: '34px',
+          color: '#ff3768',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5)
+        .setDepth(60);
+      const subtext = this.add
+        .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.36 + 42, 'BOSS APPROACHING', {
+          fontSize: '16px',
+          color: '#ffffff',
+        })
+        .setOrigin(0.5)
+        .setDepth(60);
+
+      this.tweens.add({
+        targets: [warning, subtext],
+        alpha: 0.25,
+        duration: 160,
+        yoyo: true,
+        repeat: 5,
+        ease: 'Sine.easeInOut',
+      });
+
       this.boss.spawn();
       this.cameras.main.shake(180, 0.006);
+
+      this.time.delayedCall(BOSS_ENTRANCE_TRAVEL_MS, () => {
+        warning.destroy();
+        subtext.destroy();
+        if (this.finished || this.clearPending) {
+          return;
+        }
+
+        this.bossEntrancePending = false;
+      });
     });
   }
 
   private updateHud(): void {
     const snapshot = this.score.snapshot();
     this.hud.setText(
-      `LIFE ${this.player.lives}  SHOT ${this.player.shotLevel}  SCORE ${snapshot.score}  COMBO ${snapshot.combo}`,
+      buildGameplayHudLine({
+        stageNumber: this.stageDefinition.stageNumber,
+        lives: this.player.lives,
+        maxLives: PLAYER_MAX_LIVES,
+        shotLevel: this.player.shotLevel,
+        score: snapshot.score,
+        combo: snapshot.combo,
+      }),
     );
   }
 
-  private finish(status: 'clear' | 'gameover'): void {
+  private emitDamageSmoke(x: number, y: number): void {
+    const smokeColors = [0xd8d2d8, 0xff9fb4, 0x8d8796];
+    for (let i = 0; i < 6; i += 1) {
+      const angle = (Math.PI * 2 * i) / 6 + Phaser.Math.FloatBetween(-0.2, 0.2);
+      const distance = Phaser.Math.Between(8, 18);
+      const smoke = this.add
+        .circle(
+          x + Math.cos(angle) * distance,
+          y + Math.sin(angle) * distance,
+          Phaser.Math.Between(4, 8),
+          smokeColors[i % smokeColors.length],
+          0.72,
+        )
+        .setDepth(45);
+      this.tweens.add({
+        targets: smoke,
+        x: smoke.x + Math.cos(angle) * Phaser.Math.Between(18, 34),
+        y: smoke.y + Math.sin(angle) * Phaser.Math.Between(18, 34) + 8,
+        alpha: 0,
+        scale: 1.8,
+        duration: 450,
+        ease: 'Sine.easeOut',
+        onComplete: () => smoke.destroy(),
+      });
+    }
+  }
+
+  private finish(status: GameplayResultStatus): void {
     if (this.finished) {
       return;
     }
@@ -395,28 +585,139 @@ export class GameScene extends Phaser.Scene {
     this.finished = true;
     this.input.keyboard?.resetKeys();
     this.audio.stop();
+    this.projectiles.clearPlayerBullets();
+    if (status === 'clear') {
+      this.projectiles.clearEnemyBullets();
+    }
+    const overlay = gameplayResultOverlayConfig(status);
+    if (status === 'clear') {
+      this.boss.fadeDefeatBodyBehindClear(overlay.nextDelayMs);
+    }
+    this.showResultOverlay(overlay.text, overlay.color);
+
     if (status === 'clear') {
       const bonuses = this.score.addStageClearBonuses();
-      this.score.finishRun();
       const snapshot = this.score.snapshot();
-      this.scene.start('ClearBonusScene', {
-        score: snapshot.score,
-        clearBonus: bonuses.clearBonus,
-        comboBonus: bonuses.comboBonus,
-        maxCombo: snapshot.maxCombo,
-        highScore: snapshot.highScore,
+      if (this.stageDefinition.nextStageNumber === null) {
+        this.score.finishRun();
+      }
+      this.time.delayedCall(overlay.nextDelayMs, () => {
+        this.scene.start('ClearBonusScene', {
+          score: snapshot.score,
+          clearBonus: bonuses.clearBonus,
+          comboBonus: bonuses.comboBonus,
+          maxCombo: snapshot.maxCombo,
+          highScore:
+            this.stageDefinition.nextStageNumber === null
+              ? this.score.snapshot().highScore
+              : snapshot.highScore,
+          nextStageNumber: this.stageDefinition.nextStageNumber,
+        });
       });
       return;
     }
 
+    this.hidePlayerForGameOver();
     this.score.finishRun();
-    const snapshot = this.score.snapshot();
-    this.scene.start('ResultScene', {
-      status,
-      score: snapshot.score,
-      maxCombo: snapshot.maxCombo,
-      highScore: snapshot.highScore,
+    this.gameOverKeyboardGate = new FreshPressGate();
+    this.gameOverPointerGate = new FreshPressGate();
+    this.gameOverGamepadGate = new FreshPressGate();
+    this.gameOverReturnTimer = this.time.delayedCall(overlay.nextDelayMs, () =>
+      this.returnToTitleFromGameOver(),
+    );
+  }
+
+  private showResultOverlay(text: string, color: string): void {
+    this.resultOverlayText = text;
+    this.resultOverlayStatus = text === 'GAME OVER' ? 'gameover' : 'clear';
+    this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x02030a, 0.48)
+      .setDepth(85);
+    this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 16, text, arcadeHeadingTextStyle(color, '46px'))
+      .setOrigin(0.5)
+      .setDepth(86);
+  }
+
+  private hidePlayerForGameOver(): void {
+    this.player.sprite.setVisible(false);
+    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body | null;
+    if (body) {
+      body.enable = false;
+    }
+  }
+
+  private updateGameOverBackdrop(timeMs: number, deltaMs: number): void {
+    this.enemies.update(timeMs, deltaMs, this.player.sprite.x, this.player.sprite.y);
+    this.boss.update(timeMs, deltaMs);
+    this.powerUps.update(timeMs, deltaMs);
+    this.projectiles.update();
+    this.updateHud();
+  }
+
+  private startStageIntro(): void {
+    this.stageIntroPending = true;
+    const targetY = this.player.sprite.y;
+    this.player.sprite.y = stageIntroStartY(targetY);
+    this.player.sprite.setAlpha(0.35);
+    this.player.sprite.setScale(0.72, 1.25);
+    syncArcadeBody(this.player.sprite);
+
+    const warp = this.add
+      .ellipse(this.player.sprite.x, targetY + 18, 72, 18, 0x6ffcff, 0.14)
+      .setStrokeStyle(3, 0xffffff, 0.65)
+      .setDepth(18);
+    this.tweens.add({
+      targets: warp,
+      alpha: 0,
+      scaleX: 1.85,
+      scaleY: 1.5,
+      duration: STAGE_INTRO_WARP_DURATION_MS,
+      ease: 'Sine.easeOut',
+      onComplete: () => warp.destroy(),
     });
+    this.tweens.add({
+      targets: this.player.sprite,
+      y: targetY,
+      alpha: 1,
+      scaleX: 1,
+      scaleY: 1,
+      duration: STAGE_INTRO_WARP_DURATION_MS,
+      ease: 'Cubic.easeOut',
+      onUpdate: () => syncArcadeBody(this.player.sprite),
+      onComplete: () => {
+        this.player.sprite.y = targetY;
+        this.player.sprite.setAlpha(1);
+        this.player.sprite.setScale(1);
+        syncArcadeBody(this.player.sprite);
+        this.stageIntroPending = false;
+      },
+    });
+  }
+
+  private handleGameOverReturnInput(): void {
+    const pad = this.input.gamepad?.pad1;
+    const keyboardConfirm = this.keys.ENTER.isDown;
+    const pointerConfirm = this.input.activePointer.isDown;
+    const gamepadConfirm = Boolean(
+      pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed,
+    );
+
+    if (
+      this.gameOverKeyboardGate.accepts(keyboardConfirm) ||
+      this.gameOverPointerGate.accepts(pointerConfirm) ||
+      this.gameOverGamepadGate.accepts(gamepadConfirm)
+    ) {
+      this.returnToTitleFromGameOver();
+    }
+  }
+
+  private returnToTitleFromGameOver(): void {
+    this.gameOverReturnTimer?.remove(false);
+    this.gameOverReturnTimer = null;
+    getSharedAudioManager().stop();
+    this.input.keyboard?.resetKeys();
+    this.scene.start('TitleScene');
   }
 
   private addStarfield(): void {

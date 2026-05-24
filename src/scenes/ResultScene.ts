@@ -1,12 +1,17 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../game/constants';
-import { getSharedAudioManager } from '../systems/AudioManager';
+import {
+  createPhaserExternalAudioPlayback,
+  getSharedAudioManager,
+} from '../systems/AudioManager';
 import { FreshPressGate } from '../systems/InputGate';
 import {
   CLEAR_RESULT_RETURN_DELAY_MS,
+  newRunGameSceneData,
   resultPromptText,
   resultReturnsToTitleAutomatically,
 } from './resultFlow';
+import { arcadeHeadingTextStyle, UI_FONT_FAMILY } from './screenTextStyles';
 
 export type ResultSceneData = {
   status: 'clear' | 'gameover';
@@ -40,6 +45,8 @@ export class ResultScene extends Phaser.Scene {
     this.keyboardRetryGate = new FreshPressGate();
     this.pointerRetryGate = new FreshPressGate();
     this.gamepadRetryGate = new FreshPressGate();
+    const audio = getSharedAudioManager();
+    audio.setExternalPlayback(createPhaserExternalAudioPlayback(this));
     this.enterKey =
       this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER) ?? null;
     this.cameras.main.setBackgroundColor(0x050710);
@@ -47,11 +54,7 @@ export class ResultScene extends Phaser.Scene {
     const color = this.dataFromRun.status === 'clear' ? '#6ffcff' : '#ff4fd8';
 
     this.add
-      .text(GAME_WIDTH / 2, 180, title, {
-        fontFamily: 'Arial Black, sans-serif',
-        fontSize: '42px',
-        color,
-      })
+      .text(GAME_WIDTH / 2, 180, title, arcadeHeadingTextStyle(color))
       .setOrigin(0.5);
 
     this.add
@@ -64,6 +67,7 @@ export class ResultScene extends Phaser.Scene {
           `HIGH SCORE ${this.dataFromRun.highScore}`,
         ],
         {
+          fontFamily: UI_FONT_FAMILY,
           fontSize: '22px',
           color: '#ffffff',
           align: 'center',
@@ -78,11 +82,25 @@ export class ResultScene extends Phaser.Scene {
         500,
         resultPromptText(this.dataFromRun.status),
         {
+          fontFamily: UI_FONT_FAMILY,
           fontSize: '18px',
           color: '#fff06a',
         },
       )
       .setOrigin(0.5);
+
+    const audioStatus = this.add
+      .text(GAME_WIDTH / 2, 540, this.audioStatusText(audio), {
+        fontFamily: UI_FONT_FAMILY,
+        fontSize: '15px',
+        color: '#9fffe0',
+      })
+      .setOrigin(0.5);
+
+    this.input.keyboard?.on('keydown-M', () => {
+      audio.toggleMute();
+      audioStatus.setText(this.audioStatusText(audio));
+    });
 
     if (resultReturnsToTitleAutomatically(this.dataFromRun.status)) {
       this.time.delayedCall(CLEAR_RESULT_RETURN_DELAY_MS, () => this.returnToTitle());
@@ -113,12 +131,16 @@ export class ResultScene extends Phaser.Scene {
   private retry(): void {
     this.input.keyboard?.resetKeys();
     void getSharedAudioManager().start();
-    this.scene.start('GameScene');
+    this.scene.start('GameScene', newRunGameSceneData());
   }
 
   private returnToTitle(): void {
     getSharedAudioManager().stop();
     this.input.keyboard?.resetKeys();
     this.scene.start('TitleScene');
+  }
+
+  private audioStatusText(audio: ReturnType<typeof getSharedAudioManager>): string {
+    return `M: Audio ${audio.getSettings().muted ? 'Muted' : 'On'}`;
   }
 }

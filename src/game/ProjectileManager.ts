@@ -5,6 +5,12 @@ import { syncArcadeBody } from './physics';
 type Projectile = Phaser.GameObjects.Arc & {
   body: Phaser.Physics.Arcade.Body;
 };
+type ProjectileVisualStyle = {
+  fillColor: number;
+  strokeColor: number;
+  strokeAlpha: number;
+  strokeWidth: number;
+};
 
 export const PROJECTILE_RADIUS = 6;
 export const PROJECTILE_SPEED_SCALE = 0.7;
@@ -21,14 +27,21 @@ export class ProjectileManager {
   firePlayerShot(x: number, y: number, shotLevel: number): void {
     const offsets = shotLevel === 1 ? [0] : [-10, 10];
     for (const offset of offsets) {
-      this.createBullet(this.playerBullets, x + offset, y - 18, 0, -560, 0x6ffcff);
+      this.createBullet(
+        this.playerBullets,
+        x + offset,
+        y - 18,
+        0,
+        -560,
+        'player',
+      );
     }
     if (shotLevel >= 3) {
-      this.createBullet(this.playerBullets, x - 16, y - 12, -90, -500, 0x6ffcff);
-      this.createBullet(this.playerBullets, x + 16, y - 12, 90, -500, 0x6ffcff);
+      this.createBullet(this.playerBullets, x - 16, y - 12, -90, -500, 'player');
+      this.createBullet(this.playerBullets, x + 16, y - 12, 90, -500, 'player');
     }
     if (shotLevel >= 4) {
-      this.createBullet(this.playerBullets, x, y - 24, 0, -680, 0xffffff);
+      this.createBullet(this.playerBullets, x, y - 24, 0, -680, 'playerHeavy');
     }
   }
 
@@ -39,7 +52,7 @@ export class ProjectileManager {
       y,
       Math.cos(angleRad) * speed,
       Math.sin(angleRad) * speed,
-      0xff4fd8,
+      'enemy',
     );
   }
 
@@ -76,17 +89,52 @@ export class ProjectileManager {
     y: number,
     velocityX: number,
     velocityY: number,
-    color: number,
+    visual: 'player' | 'playerHeavy' | 'enemy',
   ): void {
     const scaledVelocityX = velocityX * PROJECTILE_SPEED_SCALE;
     const scaledVelocityY = velocityY * PROJECTILE_SPEED_SCALE;
-    const bullet = this.scene.add.circle(x, y, PROJECTILE_RADIUS, color, 1) as Projectile;
-    bullet.setStrokeStyle(1, 0xffffff, 0.75);
+    const style = this.projectileVisualStyle(visual);
+    const bullet = this.scene.add.circle(
+      x,
+      y,
+      PROJECTILE_RADIUS,
+      style.fillColor,
+      1,
+    ) as Projectile;
+    bullet.setStrokeStyle(style.strokeWidth, style.strokeColor, style.strokeAlpha);
     bullet.setData('velocity', { x: scaledVelocityX, y: scaledVelocityY });
     this.scene.physics.add.existing(bullet);
     bullet.body.setCircle(PROJECTILE_RADIUS);
     bullet.body.setVelocity(scaledVelocityX, scaledVelocityY);
     group.add(bullet);
+  }
+
+  private projectileVisualStyle(
+    visual: 'player' | 'playerHeavy' | 'enemy',
+  ): ProjectileVisualStyle {
+    switch (visual) {
+      case 'player':
+        return {
+          fillColor: 0xb8ffff,
+          strokeColor: 0x117e98,
+          strokeAlpha: 0.95,
+          strokeWidth: 3,
+        };
+      case 'playerHeavy':
+        return {
+          fillColor: 0xffffff,
+          strokeColor: 0x6ffcff,
+          strokeAlpha: 1,
+          strokeWidth: 3,
+        };
+      case 'enemy':
+        return {
+          fillColor: 0xff4fd8,
+          strokeColor: 0x3a0038,
+          strokeAlpha: 1,
+          strokeWidth: 3,
+        };
+    }
   }
 
   private moveGroup(group: Phaser.Physics.Arcade.Group): void {

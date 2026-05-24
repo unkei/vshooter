@@ -3,6 +3,8 @@ type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
 export type ScoreManagerOptions = {
   comboTimeoutMs: number;
   storage?: StorageLike;
+  initialScore?: number;
+  initialMaxCombo?: number;
 };
 
 export type ScoreSnapshot = {
@@ -35,6 +37,8 @@ export class ScoreManager {
   constructor(options: ScoreManagerOptions) {
     this.comboTimeoutMs = options.comboTimeoutMs;
     this.storage = options.storage ?? globalThis.localStorage;
+    this.score = options.initialScore ?? 0;
+    this.maxCombo = options.initialMaxCombo ?? 0;
     this.highScore = this.readHighScore();
   }
 

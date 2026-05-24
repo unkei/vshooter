@@ -1,4 +1,7 @@
 export const POWER_UP_VIBRATION_PATTERN = [18, 35, 18] as const;
+export const BOSS_ENTRANCE_VIBRATION_PATTERN = [55] as const;
+export const BOSS_DEFEAT_VIBRATION_PATTERN = [90, 45, 120] as const;
+export const WARP_VIBRATION_PATTERN = [35, 25, 35, 25, 70] as const;
 
 export type VibrationPattern = number | number[];
 
@@ -57,6 +60,21 @@ export class VibrationManager {
   powerUp(): void {
     const pattern = [...POWER_UP_VIBRATION_PATTERN];
     this.vibrate(pattern, createHapticPulses(pattern, 0.5));
+  }
+
+  bossEntrance(): void {
+    const pattern = [...BOSS_ENTRANCE_VIBRATION_PATTERN];
+    this.vibrate(pattern, createHapticPulses(pattern, 0.65));
+  }
+
+  bossDefeat(): void {
+    const pattern = [...BOSS_DEFEAT_VIBRATION_PATTERN];
+    this.vibrate(pattern, createHapticPulses(pattern, 0.9));
+  }
+
+  warp(): void {
+    const pattern = [...WARP_VIBRATION_PATTERN];
+    this.vibrate(pattern, createHapticPulses(pattern, 0.7));
   }
 
   private vibrate(pattern: VibrationPattern, pulses: HapticPulse[]): void {

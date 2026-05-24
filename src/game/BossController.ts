@@ -4,8 +4,15 @@ import {
   BOSS_HIT_FLASH_DURATION_MS,
   BOSS_HIT_FLASH_OVERLAY_ALPHA,
   BOSS_MAX_HP,
+  BOSS_ENTRANCE_TRAVEL_MS,
+  BOSS_ENTRY_START_Y,
+  BOSS_ENTRY_TARGET_Y,
   BOSS_DEFEAT_SPRITE_DEPTH,
   BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS,
+  BOSS_RUSH_ATTACK_ENABLED_BY_DEFAULT,
+  BOSS_RUSH_DURATION_MS,
+  BOSS_RUSH_INTERVAL_MS,
+  BOSS_RUSH_TARGET_Y,
   configureBossBody,
   createBossDefeatBursts,
   disableBossBody,
@@ -14,16 +21,24 @@ import {
 } from './bossState';
 import { syncArcadeBody } from './physics';
 import type { ProjectileManager } from './ProjectileManager';
-import { BOSS_TEXTURE_KEY } from './visualAssets';
+import {
+  BOSS_TEXTURE_KEY,
+  CHARACTER_ANIMATION_KEYS,
+  playCharacterAnimation,
+} from './visualAssets';
 
-type BossSprite = Phaser.GameObjects.Image & {
+type BossSprite = Phaser.GameObjects.Sprite & {
   body: Phaser.Physics.Arcade.Body;
+};
+
+export type BossControllerOptions = {
+  rushAttack?: boolean;
 };
 
 export class BossController {
   sprite: BossSprite | null = null;
-  private hitFlashOverlay: Phaser.GameObjects.Image | null = null;
-  private defeatBody: Phaser.GameObjects.Image | null = null;
+  private hitFlashOverlay: Phaser.GameObjects.Sprite | null = null;
+  private defeatBody: Phaser.GameObjects.Sprite | null = null;
   private hp = 0;
   private readonly maxHp = BOSS_MAX_HP;
   private nextFireAtMs = 0;
@@ -31,11 +46,20 @@ export class BossController {
   private defeatStarted = false;
   private hitFlashUntilMs = 0;
   private lastHitFlashStartedAtMs = -Infinity;
+  private entranceCompletesAtMs = 0;
+  private nextRushAtMs = Infinity;
+  private rushStartedAtMs: number | null = null;
+  private rushBurstFired = false;
+  private readonly rushAttackEnabled: boolean;
 
   constructor(
     private readonly scene: Phaser.Scene,
     private readonly projectiles: ProjectileManager,
-  ) {}
+    options: BossControllerOptions = {},
+  ) {
+    this.rushAttackEnabled =
+      options.rushAttack ?? BOSS_RUSH_ATTACK_ENABLED_BY_DEFAULT;
+  }
 
   spawn(): void {
     if (this.sprite !== null) {
@@ -46,7 +70,35 @@ export class BossController {
     this.defeatStarted = false;
     this.hitFlashUntilMs = 0;
     this.lastHitFlashStartedAtMs = -Infinity;
+    this.entranceCompletesAtMs = this.scene.time.now + BOSS_ENTRANCE_TRAVEL_MS;
+    this.nextFireAtMs = this.entranceCompletesAtMs;
+    this.nextRushAtMs = this.rushAttackEnabled
+      ? this.entranceCompletesAtMs + BOSS_RUSH_INTERVAL_MS
+      : Infinity;
+    this.rushStartedAtMs = null;
+    this.rushBurstFired = false;
     this.createSprite();
+    if (this.sprite !== null) {
+      this.scene.tweens.add({
+        targets: this.sprite,
+        y: BOSS_ENTRY_TARGET_Y,
+        duration: BOSS_ENTRANCE_TRAVEL_MS,
+        ease: 'Sine.easeOut',
+        onUpdate: () => {
+          if (this.sprite !== null) {
+            syncArcadeBody(this.sprite);
+            this.lockVisualState();
+          }
+        },
+        onComplete: () => {
+          if (this.sprite !== null) {
+            this.sprite.y = BOSS_ENTRY_TARGET_Y;
+            syncArcadeBody(this.sprite);
+            this.lockVisualState();
+          }
+        },
+      });
+    }
     this.healthBar = this.scene.add.graphics();
     this.healthBar.setDepth(30);
   }
@@ -68,8 +120,16 @@ export class BossController {
       return;
     }
 
-    this.sprite.y = 120 + Math.sin(timeMs / 1200) * 12;
-    this.sprite.x = GAME_WIDTH / 2 + Math.sin(timeMs / 900) * 120;
+    if (timeMs < this.entranceCompletesAtMs) {
+      syncArcadeBody(this.sprite);
+      this.lockVisualState();
+      this.drawHealthBar();
+      return;
+    }
+
+    const activeTimeMs = timeMs - this.entranceCompletesAtMs;
+    this.sprite.x = GAME_WIDTH / 2 + Math.sin(activeTimeMs / 900) * 120;
+    this.sprite.y = this.calculateBossY(timeMs, activeTimeMs);
     syncArcadeBody(this.sprite);
     this.lockVisualState();
 
@@ -110,6 +170,10 @@ export class BossController {
 
   isActive(): boolean {
     return this.hp > 0 && !this.defeatStarted;
+  }
+
+  isAttackable(): boolean {
+    return this.isActive() && this.scene.time.now >= this.entranceCompletesAtMs;
   }
 
   debugVisualState(): {
@@ -158,18 +222,36 @@ export class BossController {
     };
   }
 
+  fadeDefeatBodyBehindClear(durationMs: number): void {
+    if (this.defeatBody === null) {
+      return;
+    }
+
+    this.scene.tweens.add({
+      targets: this.defeatBody,
+      alpha: 0,
+      duration: durationMs,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.defeatBody?.destroy();
+        this.defeatBody = null;
+      },
+    });
+  }
+
   private createSprite(): void {
     this.sprite?.destroy();
     this.hitFlashOverlay?.destroy();
     this.defeatBody?.destroy();
     this.defeatBody = null;
-    this.sprite = this.scene.add.image(
+    this.sprite = this.scene.add.sprite(
       GAME_WIDTH / 2,
-      120,
+      BOSS_ENTRY_START_Y,
       BOSS_TEXTURE_KEY,
     ) as BossSprite;
+    playCharacterAnimation(this.sprite, CHARACTER_ANIMATION_KEYS.boss);
     this.sprite.setDepth(20);
-    this.hitFlashOverlay = this.scene.add.image(
+    this.hitFlashOverlay = this.scene.add.sprite(
       this.sprite.x,
       this.sprite.y,
       BOSS_TEXTURE_KEY,
@@ -180,9 +262,65 @@ export class BossController {
     this.hitFlashOverlay.setVisible(false);
     this.lockVisualState();
     this.scene.physics.add.existing(this.sprite);
-    this.sprite.body.setSize(136, 64);
+    this.sprite.body.setSize(124, 168);
     configureBossBody(this.sprite.body);
     syncArcadeBody(this.sprite);
+  }
+
+  private calculateBossY(timeMs: number, activeTimeMs: number): number {
+    const baseY = BOSS_ENTRY_TARGET_Y + Math.sin(activeTimeMs / 1200) * 12;
+    if (!this.rushAttackEnabled) {
+      return baseY;
+    }
+
+    this.updateRushState(timeMs);
+    if (this.rushStartedAtMs === null) {
+      return baseY;
+    }
+
+    const elapsedRushMs = timeMs - this.rushStartedAtMs;
+    const rushProgress = Phaser.Math.Clamp(
+      elapsedRushMs / BOSS_RUSH_DURATION_MS,
+      0,
+      1,
+    );
+    const rushDepth =
+      rushProgress < 0.5
+        ? Phaser.Math.Easing.Sine.InOut(rushProgress * 2)
+        : Phaser.Math.Easing.Sine.InOut((1 - rushProgress) * 2);
+
+    return Phaser.Math.Linear(baseY, BOSS_RUSH_TARGET_Y, rushDepth);
+  }
+
+  private updateRushState(timeMs: number): void {
+    if (this.rushStartedAtMs === null && timeMs >= this.nextRushAtMs) {
+      this.rushStartedAtMs = timeMs;
+      this.rushBurstFired = false;
+    }
+
+    if (this.rushStartedAtMs === null) {
+      return;
+    }
+
+    const elapsedRushMs = timeMs - this.rushStartedAtMs;
+    if (!this.rushBurstFired && elapsedRushMs >= BOSS_RUSH_DURATION_MS * 0.45) {
+      this.rushBurstFired = true;
+      if (this.sprite !== null) {
+        this.projectiles.fireRadialBurst(
+          this.sprite.x,
+          this.sprite.y + 36,
+          24,
+          155,
+          timeMs / 520,
+        );
+      }
+    }
+
+    if (elapsedRushMs >= BOSS_RUSH_DURATION_MS) {
+      this.rushStartedAtMs = null;
+      this.rushBurstFired = false;
+      this.nextRushAtMs = timeMs + BOSS_RUSH_INTERVAL_MS;
+    }
   }
 
   private lockVisualState(): void {
@@ -249,7 +387,8 @@ export class BossController {
     this.sprite.destroy();
     this.sprite = null;
 
-    this.defeatBody = this.scene.add.image(x, y, BOSS_TEXTURE_KEY);
+    this.defeatBody = this.scene.add.sprite(x, y, BOSS_TEXTURE_KEY);
+    playCharacterAnimation(this.defeatBody, CHARACTER_ANIMATION_KEYS.boss);
     this.defeatBody.setDepth(BOSS_DEFEAT_SPRITE_DEPTH);
     this.defeatBody.setVisible(true);
     this.defeatBody.setAlpha(1);
@@ -259,11 +398,10 @@ export class BossController {
     this.defeatBody.setScale(scaleX, scaleY);
     this.scene.tweens.add({
       targets: this.defeatBody,
-      angle: 18,
-      scaleX: 1.35,
-      scaleY: 1.35,
+      y: y + 145,
+      angle: angle + 5,
       duration: BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS,
-      ease: 'Cubic.easeOut',
+      ease: 'Sine.easeIn',
       onComplete: () => {
         this.defeatBody?.destroy();
         this.defeatBody = null;
@@ -285,7 +423,7 @@ export class BossController {
       targets: ring,
       alpha: 0,
       radius,
-      duration: 520,
+      duration: 700,
       ease: 'Quad.easeOut',
       onComplete: () => ring.destroy(),
     });

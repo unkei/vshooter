@@ -3,6 +3,9 @@ import {
   VibrationManager,
   createDamageVibrationPattern,
   POWER_UP_VIBRATION_PATTERN,
+  BOSS_ENTRANCE_VIBRATION_PATTERN,
+  BOSS_DEFEAT_VIBRATION_PATTERN,
+  WARP_VIBRATION_PATTERN,
 } from '../systems/VibrationManager';
 
 describe('VibrationManager', () => {
@@ -22,6 +25,12 @@ describe('VibrationManager', () => {
     expect(POWER_UP_VIBRATION_PATTERN).toEqual([18, 35, 18]);
   });
 
+  it('defines distinct haptic patterns for boss and warp events', () => {
+    expect(BOSS_ENTRANCE_VIBRATION_PATTERN).toEqual([55]);
+    expect(BOSS_DEFEAT_VIBRATION_PATTERN).toEqual([90, 45, 120]);
+    expect(WARP_VIBRATION_PATTERN).toEqual([35, 25, 35, 25, 70]);
+  });
+
   it('does nothing when the browser has no vibration support', () => {
     vi.stubGlobal('navigator', {});
 
@@ -36,9 +45,15 @@ describe('VibrationManager', () => {
 
     vibration.damage(1, 3);
     vibration.powerUp();
+    vibration.bossEntrance();
+    vibration.bossDefeat();
+    vibration.warp();
 
     expect(vibrate).toHaveBeenNthCalledWith(1, [70, 35, 70]);
     expect(vibrate).toHaveBeenNthCalledWith(2, POWER_UP_VIBRATION_PATTERN);
+    expect(vibrate).toHaveBeenNthCalledWith(3, BOSS_ENTRANCE_VIBRATION_PATTERN);
+    expect(vibrate).toHaveBeenNthCalledWith(4, BOSS_DEFEAT_VIBRATION_PATTERN);
+    expect(vibrate).toHaveBeenNthCalledWith(5, WARP_VIBRATION_PATTERN);
   });
 
   it('uses available gamepad haptics for supported devices', () => {

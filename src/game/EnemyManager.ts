@@ -5,13 +5,21 @@ import {
   DEFAULT_HEAVY_FIRE_INTERVAL_MS,
   FINAL_WAVE_HEAVY_BULLET_COUNT,
   FINAL_WAVE_HEAVY_FIRE_INTERVAL_MS,
+  HEAVY_ENEMY_HP,
+  REGULAR_ENEMY_FIRE_INTERVAL_MS,
+  STRAIGHT_ENEMY_HP,
+  SWAY_ENEMY_HP,
 } from './enemyTuning';
 import { configureManualArcadeBody, syncArcadeBody } from './physics';
 import type { EnemyType, PowerUpType } from './types';
 import type { ProjectileManager } from './ProjectileManager';
-import { ENEMY_TEXTURE_KEYS } from './visualAssets';
+import {
+  CHARACTER_ANIMATION_KEYS,
+  ENEMY_TEXTURE_KEYS,
+  playCharacterAnimation,
+} from './visualAssets';
 
-type EnemySprite = Phaser.GameObjects.Image & {
+type EnemySprite = Phaser.GameObjects.Sprite & {
   body: Phaser.Physics.Arcade.Body;
 };
 
@@ -110,13 +118,14 @@ export class EnemyManager {
     options: { pressure?: 'normal' | 'reduced'; powerUpDrop?: PowerUpType },
   ): void {
     const config: Record<EnemyType, { hp: number; speed: number; points: number }> = {
-      straight: { hp: 2, speed: 80, points: 100 },
-      sway: { hp: 3, speed: 65, points: 140 },
-      heavy: { hp: 8, speed: 42, points: 300 },
+      straight: { hp: STRAIGHT_ENEMY_HP, speed: 80, points: 100 },
+      sway: { hp: SWAY_ENEMY_HP, speed: 65, points: 140 },
+      heavy: { hp: HEAVY_ENEMY_HP, speed: 42, points: 300 },
     };
     const reducedPressure = options.pressure === 'reduced';
     const size = type === 'heavy' ? 34 : 24;
-    const enemy = this.scene.add.image(x, y, ENEMY_TEXTURE_KEYS[type]) as EnemySprite;
+    const enemy = this.scene.add.sprite(x, y, ENEMY_TEXTURE_KEYS[type]) as EnemySprite;
+    playCharacterAnimation(enemy, CHARACTER_ANIMATION_KEYS.enemy[type]);
     this.scene.physics.add.existing(enemy);
     enemy.body.setSize(size, size);
     configureManualArcadeBody(enemy.body);
@@ -129,7 +138,7 @@ export class EnemyManager {
           ? reducedPressure
             ? FINAL_WAVE_HEAVY_FIRE_INTERVAL_MS
             : DEFAULT_HEAVY_FIRE_INTERVAL_MS
-          : 1300,
+          : REGULAR_ENEMY_FIRE_INTERVAL_MS,
       nextFireAtMs: 800 + Math.random() * 700,
       originX: x,
       speed: config[type].speed,

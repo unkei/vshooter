@@ -10,11 +10,15 @@ import {
   PLAYER_SPEED,
 } from './constants';
 import { approachVelocity, syncArcadeBody } from './physics';
-import { PLAYER_TEXTURE_KEY } from './visualAssets';
+import {
+  CHARACTER_ANIMATION_KEYS,
+  PLAYER_TEXTURE_KEY,
+  playCharacterAnimation,
+} from './visualAssets';
 import type { NormalizedInputState } from '../systems/InputManager';
 
 export class PlayerController {
-  readonly sprite: Phaser.GameObjects.Image;
+  readonly sprite: Phaser.GameObjects.Sprite;
   lives = PLAYER_INITIAL_LIVES;
   shotLevel = 1;
   private lastShotAtMs = -Infinity;
@@ -23,11 +27,12 @@ export class PlayerController {
   private velocityY = 0;
 
   constructor(private readonly scene: Phaser.Scene) {
-    this.sprite = scene.add.image(
+    this.sprite = scene.add.sprite(
       GAME_WIDTH / 2,
       GAME_HEIGHT - 70,
       PLAYER_TEXTURE_KEY,
     );
+    playCharacterAnimation(this.sprite, CHARACTER_ANIMATION_KEYS.player);
     scene.physics.add.existing(this.sprite);
     const body = this.sprite.body as Phaser.Physics.Arcade.Body;
     body.setCircle(11, 13, 8);
