@@ -225,6 +225,12 @@ item pickup, and boss warning. Phaser scenes may preload those files and attach 
 scene-backed playback adapter to the shared audio manager, but the shared manager
 must keep the generated Web Audio path as the fallback when a key is missing,
 the browser rejects playback, or the scene adapter is not available.
+Scene transitions must not leave external BGM playing through an old scene
+adapter. Replacing the playback adapter should stop any music owned by the
+previous adapter, and starting the same external music again should replace the
+previous instance instead of layering another loop. Regression expectation:
+entering game over stops the active gameplay BGM, and retrying from game over
+does not produce doubled BGM from the previous run.
 
 iOS Safari requires Web Audio unlock to happen inside the same user gesture that
 starts the game. The title pointer/keyboard start path should start or resume the

@@ -267,4 +267,58 @@ describe('AudioManager', () => {
 
     expect(context.oscillators.length).toBeGreaterThan(oscillatorCountAfterStart);
   });
+
+  it('stops external music owned by the previous scene adapter when replacing it', () => {
+    const context = new FakeAudioContext();
+    context.state = 'running';
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        constructor() {
+          return context;
+        }
+      },
+    );
+    const firstStopMusic = vi.fn();
+    const audio = new AudioManager();
+    audio.setExternalPlayback({
+      playMusic: () => true,
+      playSound: () => false,
+      stopMusic: firstStopMusic,
+    });
+
+    void audio.start();
+    audio.setExternalPlayback({
+      playMusic: () => true,
+      playSound: () => false,
+      stopMusic: vi.fn(),
+    });
+
+    expect(firstStopMusic).toHaveBeenCalledTimes(1);
+  });
+
+  it('replaces an existing external music loop before starting the same mode again', () => {
+    const context = new FakeAudioContext();
+    context.state = 'running';
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        constructor() {
+          return context;
+        }
+      },
+    );
+    const stopMusic = vi.fn();
+    const audio = new AudioManager();
+    audio.setExternalPlayback({
+      playMusic: () => true,
+      playSound: () => false,
+      stopMusic,
+    });
+
+    void audio.start();
+    void audio.start();
+
+    expect(stopMusic).toHaveBeenCalledTimes(1);
+  });
 });

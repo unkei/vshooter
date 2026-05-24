@@ -88,9 +88,14 @@ export class AudioManager {
   private musicTimer: ReturnType<typeof setInterval> | null = null;
   private musicStep = 0;
   private musicMode: MusicMode | null = null;
+  private externalMusicMode: MusicMode | null = null;
   private externalPlayback: ExternalAudioPlayback | null = null;
 
   setExternalPlayback(playback: ExternalAudioPlayback | null): void {
+    if (this.externalMusicMode !== null) {
+      this.externalPlayback?.stopMusic();
+      this.externalMusicMode = null;
+    }
     this.externalPlayback = playback;
   }
 
@@ -126,6 +131,7 @@ export class AudioManager {
 
   stop(): void {
     this.externalPlayback?.stopMusic();
+    this.externalMusicMode = null;
     for (const oscillator of this.musicOscillators) {
       oscillator.stop();
     }
@@ -194,6 +200,10 @@ export class AudioManager {
   }
 
   private startExternalMusic(mode: MusicMode): boolean {
+    if (this.externalMusicMode !== null) {
+      this.externalPlayback?.stopMusic();
+      this.externalMusicMode = null;
+    }
     if (this.externalPlayback?.playMusic(mode) !== true) {
       return false;
     }
@@ -208,6 +218,7 @@ export class AudioManager {
     this.musicGains = [];
     this.musicStep = 0;
     this.musicMode = mode;
+    this.externalMusicMode = mode;
     return true;
   }
 
