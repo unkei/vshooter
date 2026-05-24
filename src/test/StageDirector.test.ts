@@ -51,6 +51,18 @@ describe('StageDirector', () => {
     expect(events.every((event) => event.type === 'wave')).toBe(true);
   });
 
+  it('places at least two shot upgrade drops before heavy waves dominate', () => {
+    const waves = createDefaultStage();
+    const firstHeavyWaveIndex = waves.findIndex((wave) => wave.enemyType === 'heavy');
+    const earlyShotDrops = waves
+      .slice(0, firstHeavyWaveIndex)
+      .flatMap((wave) => wave.drops ?? [])
+      .filter((drop) => drop.type === 'shot');
+
+    expect(firstHeavyWaveIndex).toBeGreaterThan(0);
+    expect(earlyShotDrops).toHaveLength(2);
+  });
+
   it('marks specific enemies as deterministic power-up carriers', () => {
     const waves = createDefaultStage();
     const drops = waves.flatMap((wave) => wave.drops ?? []);
@@ -62,6 +74,6 @@ describe('StageDirector', () => {
         { enemyIndex: 3, type: 'score' },
       ]),
     );
-    expect(drops).toHaveLength(5);
+    expect(drops).toHaveLength(6);
   });
 });

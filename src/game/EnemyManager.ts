@@ -5,6 +5,10 @@ import {
   DEFAULT_HEAVY_FIRE_INTERVAL_MS,
   FINAL_WAVE_HEAVY_BULLET_COUNT,
   FINAL_WAVE_HEAVY_FIRE_INTERVAL_MS,
+  HEAVY_ENEMY_HP,
+  REGULAR_ENEMY_FIRE_INTERVAL_MS,
+  STRAIGHT_ENEMY_HP,
+  SWAY_ENEMY_HP,
 } from './enemyTuning';
 import { configureManualArcadeBody, syncArcadeBody } from './physics';
 import type { EnemyType, PowerUpType } from './types';
@@ -114,9 +118,9 @@ export class EnemyManager {
     options: { pressure?: 'normal' | 'reduced'; powerUpDrop?: PowerUpType },
   ): void {
     const config: Record<EnemyType, { hp: number; speed: number; points: number }> = {
-      straight: { hp: 2, speed: 80, points: 100 },
-      sway: { hp: 3, speed: 65, points: 140 },
-      heavy: { hp: 8, speed: 42, points: 300 },
+      straight: { hp: STRAIGHT_ENEMY_HP, speed: 80, points: 100 },
+      sway: { hp: SWAY_ENEMY_HP, speed: 65, points: 140 },
+      heavy: { hp: HEAVY_ENEMY_HP, speed: 42, points: 300 },
     };
     const reducedPressure = options.pressure === 'reduced';
     const size = type === 'heavy' ? 34 : 24;
@@ -134,7 +138,7 @@ export class EnemyManager {
           ? reducedPressure
             ? FINAL_WAVE_HEAVY_FIRE_INTERVAL_MS
             : DEFAULT_HEAVY_FIRE_INTERVAL_MS
-          : 1300,
+          : REGULAR_ENEMY_FIRE_INTERVAL_MS,
       nextFireAtMs: 800 + Math.random() * 700,
       originX: x,
       speed: config[type].speed,

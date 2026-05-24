@@ -70,6 +70,7 @@ export function createDefaultStage(): StageEvent[] {
       count: 5,
       drops: [
         { enemyIndex: 1, type: 'life' },
+        { enemyIndex: 2, type: 'shot' },
         { enemyIndex: 3, type: 'score' },
       ],
     },

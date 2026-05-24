@@ -512,6 +512,14 @@ and bullet density together. Regression expectation: a player who misses one
 shot upgrade can still reasonably clear stage 1 with careful play, while a
 player who collects upgrades still feels rewarded with a smoother clear.
 
+The first stage 1 tuning pass should keep the six-wave structure and broad stage
+length, add a second deterministic shot upgrade opportunity before the heavy
+waves dominate, slightly lower heavy enemy durability, and reduce heavy enemy
+bullet pressure from the previous stronger tuning. Regression expectation: stage
+1 has at least two shot upgrade drops, the default heavy bullet count remains
+below the previous stronger value of 5, and the final heavy wave remains lower
+pressure than the earlier heavy wave.
+
 After the final regular wave is cleared, the boss should not appear immediately.
 The game should leave a short readable pause where remaining bullets and the
 current screen state are still visible, then play a warning cue, then run a boss
