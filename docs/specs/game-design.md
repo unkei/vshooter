@@ -32,6 +32,13 @@ coordinate screens and lifecycle events, while gameplay responsibilities should
 live in small focused managers/controllers. This keeps the first stage simple but
 makes later stages, enemy patterns, and UI expansion easier.
 
+## Terminology
+
+Use `docs/specs/glossary.md` as the shared glossary for design discussion,
+implementation plans, playtest feedback, and code-facing names where practical.
+When adding new gameplay concepts, update the glossary so future conversations
+use the same terms consistently.
+
 ## Scenes
 
 ### `TitleScene`
@@ -452,6 +459,109 @@ Rules:
 - Keep bullet density relatively high.
 - Avoid unavoidable patterns.
 - Use clear telegraphing for boss phase changes and dangerous attacks.
+
+## Near-Term Polish Goals
+
+The next development phase should make stage 1 a polished baseline stage, then
+move the current stronger bullet pressure into stage 2. The goal is to improve
+feel, readability, and event pacing before expanding content broadly.
+
+### Control Feel
+
+Gamepad controls should support fine positioning. The player should be able to
+make small alignment corrections to line up shots or avoid nearby bullets without
+overshooting. Diagonal input must not feel faster than horizontal or vertical
+input, so movement should normalize diagonal magnitude after analog/deadzone
+processing.
+
+The first control polish pass should resolve this by applying radial deadzone
+scaling and a gentle response curve to analog stick input. Movement just beyond
+the deadzone should produce a small movement value instead of jumping to the raw
+axis value. Regression expectation: gamepad diagonal movement magnitude never
+exceeds cardinal-direction movement, and a near-deadzone stick input can move the
+player slowly enough for fine positioning.
+
+Touch direct controls currently make the game too easy because the player ship
+can chase the finger position too quickly. Touch control should be revisited with
+touch virtual stick controls as the primary candidate: the initial touch point
+acts as the stick center, and finger movement from that center drives movement
+like a lever. If both touch direct controls and touch virtual stick controls are
+kept, expose them as a simple option rather than mixing both behaviors
+implicitly.
+
+The first touch polish pass should make touch virtual stick controls the default
+touch behavior while preserving direct pointer targeting for mouse input.
+Regression expectation: touch input produces movement from the touch origin and
+does not create a direct pointer target, while mouse input still targets the
+pointer position directly.
+
+The player hitbox, invincibility window, and shot fire rate are acceptable for
+now and should not be changed heavily during the first polish pass unless
+playtesting exposes a direct problem.
+
+### Stage 1 Tuning
+
+Stage 1 length and early-wave training value are broadly acceptable. The next
+pass should lower stage 1 difficulty slightly by thinning bullet density and
+reducing how sharply the stage diverges between upgraded and non-upgraded runs.
+Missing an early shot upgrade should make the stage harder, but it should not
+make the rest of the stage feel disproportionately punishing.
+
+The stage 1 tuning pass should review shot upgrade placement, enemy durability,
+and bullet density together. Regression expectation: a player who misses one
+shot upgrade can still reasonably clear stage 1 with careful play, while a
+player who collects upgrades still feels rewarded with a smoother clear.
+
+After the final regular wave is cleared, the boss should not appear immediately.
+The game should leave a short readable pause where remaining bullets and the
+current screen state are still visible, then play a warning cue, then run a boss
+entrance animation before the boss becomes attackable.
+
+### Boss Entrance and Defeat
+
+Boss entrance should be a staged sequence: warning cue, visible entrance motion,
+then attack start. The transition should feel intentional instead of abruptly
+replacing the final wave state.
+
+Boss defeat should move away from the current zoom-and-tilt emphasis. The boss
+body should stay readable, explosions should last longer, and the defeat should
+feel like the boss is falling or breaking down before the clear bonus screen
+starts.
+
+### Stage 2 Direction
+
+Add stage 2 after stage 1 has a stable polish baseline. Stage 2 should inherit
+roughly the current stage 1 bullet pressure, while stage 1 becomes more
+approachable.
+
+Stage 2 boss design should add a boss rush attack. The boss occasionally moves
+downward toward the player area at a moderately fast speed, attacks, then returns
+to its normal position. This should be tested as a pressure spike, not a
+near-unavoidable collision threat.
+
+### Visual and UI Feedback
+
+Life state is currently too hard to read. Improve the HUD life display, and add
+damage smoke when the player takes accepted damage. Low-life state should be
+readable without requiring the player to parse small text during dense action.
+
+The title screen should look more like part of the same game world as the
+character art. The title lettering and font treatment should become more
+substantial and visually polished.
+
+Player bullets, enemy bullets, and power-up items should receive stronger visual
+assets or code-generated effects. They must remain highly readable at gameplay
+speed and must not blend into the background or each other.
+
+The clear warp-out should show a stronger warp route, gate, or path effect before
+the player ship leaves. Clear bonus counting should use a more readable and
+polished font treatment so the player understands how the bonus enters the final
+score.
+
+### Score Direction
+
+The current score and bonus direction is acceptable. Near-term work should focus
+on presentation clarity rather than changing score rules.
 
 ## Persistence
 

@@ -51,6 +51,8 @@ export class GameScene extends Phaser.Scene {
   private clearPending = false;
   private bossEntrancePending = false;
   private keyboardGate!: KeyboardReleaseGate;
+  private activeTouchPointerId: number | null = null;
+  private touchOrigin: { x: number; y: number } | null = null;
 
   constructor() {
     super('GameScene');
@@ -66,6 +68,8 @@ export class GameScene extends Phaser.Scene {
     this.clearPending = false;
     this.bossEntrancePending = false;
     this.startedAtMs = null;
+    this.activeTouchPointerId = null;
+    this.touchOrigin = null;
     this.input.keyboard?.resetKeys();
     this.keyboardGate = new KeyboardReleaseGate();
     this.cameras.main.setBackgroundColor(0x050710);
@@ -173,6 +177,21 @@ export class GameScene extends Phaser.Scene {
     const pad = this.input.gamepad?.pad1;
     const axisX = pad?.axes[0]?.getValue() ?? 0;
     const axisY = pad?.axes[1]?.getValue() ?? 0;
+    const pointerSource = pointer.wasTouch ? 'touch' : 'mouse';
+    const pointerId = pointer.id;
+
+    if (pointer.isDown && pointerSource === 'touch') {
+      if (
+        this.activeTouchPointerId !== pointerId ||
+        this.touchOrigin === null
+      ) {
+        this.activeTouchPointerId = pointerId;
+        this.touchOrigin = { x: pointer.x, y: pointer.y };
+      }
+    } else {
+      this.activeTouchPointerId = null;
+      this.touchOrigin = null;
+    }
 
     const keyboard = this.keyboardGate.filter({
       left: this.cursors.left.isDown || this.keys.A.isDown,
@@ -190,7 +209,10 @@ export class GameScene extends Phaser.Scene {
         x: pointer.x,
         y: pointer.y,
         shoot: pointer.isDown,
-        source: pointer.wasTouch ? 'touch' : 'mouse',
+        source: pointerSource,
+        mode: pointerSource === 'touch' ? 'virtualStick' : 'direct',
+        originX: this.touchOrigin?.x,
+        originY: this.touchOrigin?.y,
       },
       gamepad: {
         axisX,
