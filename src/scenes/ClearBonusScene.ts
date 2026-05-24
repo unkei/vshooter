@@ -8,7 +8,11 @@ import {
   playCharacterAnimation,
   preloadExternalVisualAssets,
 } from '../game/visualAssets';
-import { getSharedAudioManager } from '../systems/AudioManager';
+import {
+  createPhaserExternalAudioPlayback,
+  getSharedAudioManager,
+  preloadExternalAudioAssets,
+} from '../systems/AudioManager';
 import { buildClearBonusLines } from './clearBonusDisplay';
 
 export type ClearBonusSceneData = {
@@ -38,12 +42,15 @@ export class ClearBonusScene extends Phaser.Scene {
 
   preload(): void {
     preloadExternalVisualAssets(this);
+    preloadExternalAudioAssets(this);
   }
 
   create(): void {
     this.input.keyboard?.resetKeys();
     this.cameras.main.setBackgroundColor(0x050710);
-    void getSharedAudioManager().start('clear');
+    const audio = getSharedAudioManager();
+    audio.setExternalPlayback(createPhaserExternalAudioPlayback(this));
+    void audio.start('clear');
     ensureGameTextures(this);
     createCharacterAnimations(this);
     this.addStarfield();

@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../game/constants';
-import { getSharedAudioManager } from '../systems/AudioManager';
+import {
+  createPhaserExternalAudioPlayback,
+  getSharedAudioManager,
+} from '../systems/AudioManager';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -8,7 +11,9 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create(): void {
-    getSharedAudioManager().stop();
+    const audio = getSharedAudioManager();
+    audio.setExternalPlayback(createPhaserExternalAudioPlayback(this));
+    audio.stop();
     this.cameras.main.setBackgroundColor(0x050710);
     this.addStarfield();
 

@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../game/constants';
-import { getSharedAudioManager } from '../systems/AudioManager';
+import {
+  createPhaserExternalAudioPlayback,
+  getSharedAudioManager,
+} from '../systems/AudioManager';
 import { FreshPressGate } from '../systems/InputGate';
 import {
   CLEAR_RESULT_RETURN_DELAY_MS,
@@ -40,6 +43,7 @@ export class ResultScene extends Phaser.Scene {
     this.keyboardRetryGate = new FreshPressGate();
     this.pointerRetryGate = new FreshPressGate();
     this.gamepadRetryGate = new FreshPressGate();
+    getSharedAudioManager().setExternalPlayback(createPhaserExternalAudioPlayback(this));
     this.enterKey =
       this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER) ?? null;
     this.cameras.main.setBackgroundColor(0x050710);

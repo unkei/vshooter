@@ -19,7 +19,11 @@ import {
   ensureGameTextures,
   preloadExternalVisualAssets,
 } from '../game/visualAssets';
-import { getSharedAudioManager } from '../systems/AudioManager';
+import {
+  createPhaserExternalAudioPlayback,
+  getSharedAudioManager,
+  preloadExternalAudioAssets,
+} from '../systems/AudioManager';
 import { KeyboardReleaseGate } from '../systems/InputGate';
 import { normalizeInput, type RawInputState } from '../systems/InputManager';
 import { PowerUpDropManager } from '../systems/PowerUpManager';
@@ -54,6 +58,7 @@ export class GameScene extends Phaser.Scene {
 
   preload(): void {
     preloadExternalVisualAssets(this);
+    preloadExternalAudioAssets(this);
   }
 
   create(): void {
@@ -67,6 +72,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
     ensureGameTextures(this);
     createCharacterAnimations(this);
+    this.audio.setExternalPlayback(createPhaserExternalAudioPlayback(this));
     this.addStarfield();
 
     this.cursors = this.input.keyboard!.createCursorKeys();

@@ -219,6 +219,12 @@ External audio must preserve the same browser unlock expectations as generated
 audio. If external BGM or sound effects are unavailable, fail to load, or cannot
 start under browser autoplay rules, generated Web Audio playback should continue
 to provide the playable fallback.
+External audio should use stable logical keys for gameplay BGM, clear BGM, and
+the core sound effects: player shot, enemy defeat, boss explosion, player damage,
+item pickup, and boss warning. Phaser scenes may preload those files and attach a
+scene-backed playback adapter to the shared audio manager, but the shared manager
+must keep the generated Web Audio path as the fallback when a key is missing,
+the browser rejects playback, or the scene adapter is not available.
 
 iOS Safari requires Web Audio unlock to happen inside the same user gesture that
 starts the game. The title pointer/keyboard start path should start or resume the

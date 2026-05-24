@@ -1,5 +1,6 @@
 type SoundName = 'shot' | 'enemyDown' | 'explosion' | 'damage' | 'pickup' | 'boss';
 type MusicMode = 'gameplay' | 'clear';
+type ExternalAudioKey = MusicMode | SoundName;
 
 type SoundPreset = {
   frequency: number;
@@ -12,6 +13,34 @@ type AudioContextConstructor = new () => AudioContext;
 
 export const MUSIC_LAYER_COUNT = 3;
 export const CLEAR_MUSIC_LAYER_COUNT = 3;
+
+export const EXTERNAL_AUDIO_KEYS: Record<ExternalAudioKey, string> = {
+  gameplay: 'vshooter.audio.music.gameplay',
+  clear: 'vshooter.audio.music.clear',
+  shot: 'vshooter.audio.sfx.shot',
+  enemyDown: 'vshooter.audio.sfx.enemyDown',
+  explosion: 'vshooter.audio.sfx.explosion',
+  damage: 'vshooter.audio.sfx.damage',
+  pickup: 'vshooter.audio.sfx.pickup',
+  boss: 'vshooter.audio.sfx.boss',
+};
+
+export const EXTERNAL_AUDIO_ASSETS = [
+  { key: EXTERNAL_AUDIO_KEYS.gameplay, path: 'assets/audio/gameplay-bgm.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.clear, path: 'assets/audio/clear-bgm.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.shot, path: 'assets/audio/shot.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.enemyDown, path: 'assets/audio/enemy-down.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.explosion, path: 'assets/audio/boss-explosion.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.damage, path: 'assets/audio/damage.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.pickup, path: 'assets/audio/pickup.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.boss, path: 'assets/audio/boss-warning.wav' },
+];
+
+export type ExternalAudioPlayback = {
+  playMusic: (mode: MusicMode) => boolean;
+  playSound: (name: SoundName) => boolean;
+  stopMusic: () => void;
+};
 
 export const SOUND_PRESETS: Record<SoundName, SoundPreset> = {
   shot: {
@@ -59,6 +88,11 @@ export class AudioManager {
   private musicTimer: ReturnType<typeof setInterval> | null = null;
   private musicStep = 0;
   private musicMode: MusicMode | null = null;
+  private externalPlayback: ExternalAudioPlayback | null = null;
+
+  setExternalPlayback(playback: ExternalAudioPlayback | null): void {
+    this.externalPlayback = playback;
+  }
 
   async start(mode: MusicMode = 'gameplay'): Promise<void> {
     if (this.context === null) {
@@ -66,7 +100,9 @@ export class AudioManager {
     }
 
     this.primeOutput();
-    this.startMusic(mode);
+    if (!this.startExternalMusic(mode)) {
+      this.startMusic(mode);
+    }
     const resumePromise =
       this.context.state === 'suspended'
         ? this.context.resume().catch(() => undefined)
@@ -82,10 +118,14 @@ export class AudioManager {
     if (this.context.state === 'suspended') {
       void this.context.resume().catch(() => undefined);
     }
+    if (this.externalPlayback?.playSound(name) === true) {
+      return;
+    }
     this.beep(SOUND_PRESETS[name]);
   }
 
   stop(): void {
+    this.externalPlayback?.stopMusic();
     for (const oscillator of this.musicOscillators) {
       oscillator.stop();
     }
@@ -151,6 +191,24 @@ export class AudioManager {
 
     this.musicMode = mode;
     this.musicTimer = setInterval(() => this.advanceMusic(), 280);
+  }
+
+  private startExternalMusic(mode: MusicMode): boolean {
+    if (this.externalPlayback?.playMusic(mode) !== true) {
+      return false;
+    }
+    for (const oscillator of this.musicOscillators) {
+      oscillator.stop();
+    }
+    if (this.musicTimer !== null) {
+      clearInterval(this.musicTimer);
+      this.musicTimer = null;
+    }
+    this.musicOscillators = [];
+    this.musicGains = [];
+    this.musicStep = 0;
+    this.musicMode = mode;
+    return true;
   }
 
   private advanceMusic(): void {
@@ -242,6 +300,59 @@ export function getSharedAudioManager(): AudioManager {
   return sharedAudioManager;
 }
 
+export function preloadExternalAudioAssets(scene: Phaser.Scene): void {
+  for (const asset of EXTERNAL_AUDIO_ASSETS) {
+    scene.load.audio(asset.key, asset.path);
+  }
+}
+
+export function createPhaserExternalAudioPlayback(
+  scene: Phaser.Scene,
+): ExternalAudioPlayback {
+  let activeMusicKey: string | null = null;
+
+  return {
+    playMusic: (mode) => {
+      const key = EXTERNAL_AUDIO_KEYS[mode];
+      if (!hasCachedAudio(scene, key)) {
+        return false;
+      }
+      try {
+        if (activeMusicKey !== null && activeMusicKey !== key) {
+          scene.sound.stopByKey(activeMusicKey);
+        }
+        activeMusicKey = key;
+        return scene.sound.play(key, {
+          loop: true,
+          volume: mode === 'clear' ? 0.36 : 0.3,
+        });
+      } catch {
+        activeMusicKey = null;
+        return false;
+      }
+    },
+    playSound: (name) => {
+      const key = EXTERNAL_AUDIO_KEYS[name];
+      if (!hasCachedAudio(scene, key)) {
+        return false;
+      }
+      try {
+        return scene.sound.play(key, {
+          volume: getExternalSoundVolume(name),
+        });
+      } catch {
+        return false;
+      }
+    },
+    stopMusic: () => {
+      if (activeMusicKey !== null) {
+        scene.sound.stopByKey(activeMusicKey);
+        activeMusicKey = null;
+      }
+    },
+  };
+}
+
 function createAudioContext(): AudioContext {
   const globalScope = globalThis as typeof globalThis & {
     webkitAudioContext?: AudioContextConstructor;
@@ -252,4 +363,21 @@ function createAudioContext(): AudioContext {
   }
 
   return new ContextConstructor();
+}
+
+function hasCachedAudio(scene: Phaser.Scene, key: string): boolean {
+  return scene.cache.audio.exists(key);
+}
+
+function getExternalSoundVolume(name: SoundName): number {
+  if (name === 'shot') {
+    return 0.42;
+  }
+  if (name === 'explosion') {
+    return 0.78;
+  }
+  if (name === 'boss' || name === 'damage') {
+    return 0.68;
+  }
+  return 0.6;
 }
