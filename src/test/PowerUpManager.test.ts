@@ -6,6 +6,7 @@ import {
   applyPowerUp,
   computePowerUpAlpha,
   createPowerUpPosition,
+  powerUpCollectionEnabledDuringInvincibility,
   powerUpVisualStyle,
 } from '../systems/PowerUpManager';
 
@@ -78,5 +79,9 @@ describe('applyPowerUp', () => {
       strokeColor: 0x3a3008,
       label: '$',
     });
+  });
+
+  it('allows power-up collection during post-hit invincibility', () => {
+    expect(powerUpCollectionEnabledDuringInvincibility()).toBe(true);
   });
 });

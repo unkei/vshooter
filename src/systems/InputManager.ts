@@ -43,6 +43,7 @@ export type NormalizedInputState = {
 const DEAD_ZONE = 0.2;
 const ANALOG_RESPONSE_CURVE = 1.5;
 const VIRTUAL_STICK_RADIUS = 40;
+export const TOUCH_POINTER_TARGET_OFFSET_Y = 58;
 
 export function normalizeInput(raw: RawInputState): NormalizedInputState {
   const keyboardX =
@@ -65,7 +66,10 @@ export function normalizeInput(raw: RawInputState): NormalizedInputState {
     raw.pointer?.active === true && pointerMode !== 'virtualStick'
       ? {
           x: raw.pointer.x,
-          y: raw.pointer.y,
+          y:
+            raw.pointer.source === 'touch'
+              ? raw.pointer.y - TOUCH_POINTER_TARGET_OFFSET_Y
+              : raw.pointer.y,
         }
       : null;
 

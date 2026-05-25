@@ -61,6 +61,8 @@ describe('StageDirector', () => {
     expect(stage.stageNumber).toBe(1);
     expect(stage.nextStageNumber).toBe(2);
     expect(stage.boss.rushAttack).toBe(false);
+    expect(stage.boss.maxHp).toBe(1260);
+    expect(stage.boss.maxHp).toBeLessThan(createStageDefinition(2).boss.maxHp);
     expect(stage.events).toEqual(createDefaultStage());
   });
 
@@ -72,6 +74,7 @@ describe('StageDirector', () => {
     expect(stage.stageNumber).toBe(2);
     expect(stage.nextStageNumber).toBeNull();
     expect(stage.boss.rushAttack).toBe(true);
+    expect(stage.boss.maxHp).toBe(1890);
     expect(waves).toHaveLength(6);
     expect(waves.map((event) => event.enemyType)).toEqual([
       'straight',

@@ -1,4 +1,11 @@
-type SoundName = 'shot' | 'enemyDown' | 'explosion' | 'damage' | 'pickup' | 'boss';
+type SoundName =
+  | 'shot'
+  | 'bossHit'
+  | 'enemyDown'
+  | 'explosion'
+  | 'damage'
+  | 'pickup'
+  | 'boss';
 type MusicMode = 'gameplay' | 'clear';
 type ExternalAudioKey = MusicMode | SoundName;
 type AudioSettingKey = 'master' | 'bgm' | 'sfx';
@@ -33,6 +40,7 @@ export const EXTERNAL_AUDIO_KEYS: Record<ExternalAudioKey, string> = {
   gameplay: 'vshooter.audio.music.gameplay',
   clear: 'vshooter.audio.music.clear',
   shot: 'vshooter.audio.sfx.shot',
+  bossHit: 'vshooter.audio.sfx.bossHit',
   enemyDown: 'vshooter.audio.sfx.enemyDown',
   explosion: 'vshooter.audio.sfx.explosion',
   damage: 'vshooter.audio.sfx.damage',
@@ -44,6 +52,7 @@ export const EXTERNAL_AUDIO_ASSETS = [
   { key: EXTERNAL_AUDIO_KEYS.gameplay, path: 'assets/audio/gameplay-bgm.wav' },
   { key: EXTERNAL_AUDIO_KEYS.clear, path: 'assets/audio/clear-bgm.wav' },
   { key: EXTERNAL_AUDIO_KEYS.shot, path: 'assets/audio/shot.wav' },
+  { key: EXTERNAL_AUDIO_KEYS.bossHit, path: 'assets/audio/boss-hit.wav' },
   { key: EXTERNAL_AUDIO_KEYS.enemyDown, path: 'assets/audio/enemy-down.wav' },
   { key: EXTERNAL_AUDIO_KEYS.explosion, path: 'assets/audio/boss-explosion.wav' },
   { key: EXTERNAL_AUDIO_KEYS.damage, path: 'assets/audio/damage.wav' },
@@ -64,6 +73,12 @@ export const SOUND_PRESETS: Record<SoundName, SoundPreset> = {
     durationSeconds: 0.022,
     type: 'triangle',
     gain: 0.08,
+  },
+  bossHit: {
+    frequency: 1280,
+    durationSeconds: 0.035,
+    type: 'square',
+    gain: 0.0175,
   },
   enemyDown: {
     frequency: 180,
@@ -526,6 +541,9 @@ function getExternalMusicBaseVolume(mode: MusicMode): number {
 function getExternalSoundBaseVolume(name: SoundName): number {
   if (name === 'shot') {
     return 0.42;
+  }
+  if (name === 'bossHit') {
+    return 0.12;
   }
   if (name === 'explosion') {
     return 0.78;

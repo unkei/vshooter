@@ -214,6 +214,7 @@ describe('AudioManager', () => {
       { key: 'vshooter.audio.music.gameplay', path: 'assets/audio/gameplay-bgm.wav' },
       { key: 'vshooter.audio.music.clear', path: 'assets/audio/clear-bgm.wav' },
       { key: 'vshooter.audio.sfx.shot', path: 'assets/audio/shot.wav' },
+      { key: 'vshooter.audio.sfx.bossHit', path: 'assets/audio/boss-hit.wav' },
       { key: 'vshooter.audio.sfx.enemyDown', path: 'assets/audio/enemy-down.wav' },
       { key: 'vshooter.audio.sfx.explosion', path: 'assets/audio/boss-explosion.wav' },
       { key: 'vshooter.audio.sfx.damage', path: 'assets/audio/damage.wav' },
@@ -459,10 +460,11 @@ describe('AudioManager', () => {
 
     void audio.start();
     audio.play('shot');
+    audio.play('bossHit');
     audio.toggleMute();
 
     expect(playedMusic).toEqual([0.075]);
-    expect(playedSounds).toEqual([0.0525]);
+    expect(playedSounds).toEqual([0.0525, 0.015]);
     expect(updatedMusic).toEqual([0]);
   });
 

@@ -27,6 +27,25 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
     (window as unknown as { __vshooterDebug?: { defeatBoss?: () => void } })
       .__vshooterDebug?.defeatBoss?.();
   });
+  await waitForBossDefeatBodyGone(page);
+  await page.waitForFunction(
+    () => {
+      const player = (
+        window as unknown as {
+          __vshooterDebug?: {
+            getPlayerState?: () => { x: number; y: number; visible: boolean } | null;
+          };
+        }
+      ).__vshooterDebug?.getPlayerState?.();
+      return (
+        player?.visible === true &&
+        Math.abs(player.x - 240) <= 4 &&
+        Math.abs(player.y - 634) <= 4
+      );
+    },
+    undefined,
+    { timeout: 1_600 },
+  );
   await waitForResultOverlay(page, 'STAGE CLEAR');
   expect(await windowText(page)).toContain('GameScene');
   await waitForBossDefeatBodyFade(page);
@@ -494,6 +513,18 @@ async function waitForBossDefeatBodyFade(page: Page): Promise<void> {
         return true;
       }
       return state.alpha < 1;
+    },
+    undefined,
+    { timeout: 25_000 },
+  );
+}
+
+async function waitForBossDefeatBodyGone(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const debug = (window as unknown as { __vshooterDebug?: any }).__vshooterDebug;
+      const state = debug?.getBossVisualState?.();
+      return !state || state.defeatBodyVisible === false;
     },
     undefined,
     { timeout: 25_000 },

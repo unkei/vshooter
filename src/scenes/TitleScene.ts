@@ -5,14 +5,25 @@ import {
   getSharedAudioManager,
 } from '../systems/AudioManager';
 import { newRunGameSceneData } from './resultFlow';
-import { UI_FONT_FAMILY, titleLayerTextStyle } from './screenTextStyles';
+import { titleLayerTextStyle, titleSecondaryTextStyle } from './screenTextStyles';
+import {
+  TITLE_STARFIELD_MAX_SCROLL_SPEED,
+  TITLE_STARFIELD_MIN_SCROLL_SPEED,
+  TITLE_STARFIELD_STAR_COUNT,
+  advanceTitleStar,
+  type TitleStarState,
+} from './titleStarfield';
 
 export class TitleScene extends Phaser.Scene {
+  private titleStars: Array<{ shape: Phaser.GameObjects.Arc; state: TitleStarState }> =
+    [];
+
   constructor() {
     super('TitleScene');
   }
 
   create(): void {
+    this.titleStars = [];
     const audio = getSharedAudioManager();
     audio.setExternalPlayback(createPhaserExternalAudioPlayback(this));
     audio.stop();
@@ -22,36 +33,40 @@ export class TitleScene extends Phaser.Scene {
     this.addTitleLockup();
 
     this.add
-      .text(GAME_WIDTH / 2, 280, 'Keyboard / Pointer / Gamepad', {
-        fontFamily: UI_FONT_FAMILY,
-        fontSize: '18px',
-        color: '#ffffff',
-      })
+      .text(
+        GAME_WIDTH / 2,
+        280,
+        'Keyboard / Pointer / Gamepad',
+        titleSecondaryTextStyle('#ffffff', '18px'),
+      )
       .setOrigin(0.5);
 
     const highScore = Number(localStorage.getItem('vshooter.highScore') ?? 0);
     this.add
-      .text(GAME_WIDTH / 2, 330, `HIGH SCORE ${highScore}`, {
-        fontFamily: UI_FONT_FAMILY,
-        fontSize: '20px',
-        color: '#fff06a',
-      })
+      .text(
+        GAME_WIDTH / 2,
+        330,
+        `HIGH SCORE ${highScore}`,
+        titleSecondaryTextStyle('#fff06a', '20px'),
+      )
       .setOrigin(0.5);
 
     this.add
-      .text(GAME_WIDTH / 2, 430, 'Press Enter / Click / Gamepad Start', {
-        fontFamily: UI_FONT_FAMILY,
-        fontSize: '18px',
-        color: '#ff4fd8',
-      })
+      .text(
+        GAME_WIDTH / 2,
+        430,
+        'Press Enter / Click / Gamepad Start',
+        titleSecondaryTextStyle('#ff4fd8', '18px'),
+      )
       .setOrigin(0.5);
 
     const audioStatus = this.add
-      .text(GAME_WIDTH / 2, 475, this.audioStatusText(audio), {
-        fontFamily: UI_FONT_FAMILY,
-        fontSize: '15px',
-        color: '#9fffe0',
-      })
+      .text(
+        GAME_WIDTH / 2,
+        475,
+        this.audioStatusText(audio),
+        titleSecondaryTextStyle('#9fffe0', '15px'),
+      )
       .setOrigin(0.5);
 
     this.input.keyboard?.on('keydown-M', () => {
@@ -62,7 +77,9 @@ export class TitleScene extends Phaser.Scene {
     this.input.once('pointerdown', () => this.startGame());
   }
 
-  update(): void {
+  update(_timeMs: number, deltaMs: number): void {
+    this.updateStarfield(deltaMs);
+
     const pad = this.input.gamepad?.pad1;
     if (pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed) {
       this.startGame();
@@ -79,14 +96,38 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private addStarfield(): void {
-    for (let i = 0; i < 90; i += 1) {
-      this.add.circle(
-        Phaser.Math.Between(0, GAME_WIDTH),
-        Phaser.Math.Between(0, GAME_HEIGHT),
-        Phaser.Math.FloatBetween(0.7, 1.8),
+    for (let i = 0; i < TITLE_STARFIELD_STAR_COUNT; i += 1) {
+      const state: TitleStarState = {
+        x: Phaser.Math.Between(0, GAME_WIDTH),
+        y: Phaser.Math.Between(0, GAME_HEIGHT),
+        radius: Phaser.Math.FloatBetween(0.7, 1.8),
+        alpha: Phaser.Math.FloatBetween(0.25, 0.85),
+        speed: Phaser.Math.FloatBetween(
+          TITLE_STARFIELD_MIN_SCROLL_SPEED,
+          TITLE_STARFIELD_MAX_SCROLL_SPEED,
+        ),
+      };
+      const shape = this.add.circle(
+        state.x,
+        state.y,
+        state.radius,
         0xffffff,
-        Phaser.Math.FloatBetween(0.25, 0.85),
+        state.alpha,
       );
+      this.titleStars.push({ shape, state });
+    }
+  }
+
+  private updateStarfield(deltaMs: number): void {
+    for (const star of this.titleStars) {
+      star.state = advanceTitleStar(
+        star.state,
+        deltaMs,
+        GAME_WIDTH,
+        GAME_HEIGHT,
+        () => Phaser.Math.Between(0, GAME_WIDTH),
+      );
+      star.shape.setPosition(star.state.x, star.state.y);
     }
   }
 
@@ -115,13 +156,12 @@ export class TitleScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(centerX, titleY + 48, 'NEON SKY DEFENSE', {
-        fontFamily: UI_FONT_FAMILY,
-        fontSize: '14px',
-        color: '#fff06a',
-        stroke: '#32124f',
-        strokeThickness: 3,
-      })
+      .text(
+        centerX,
+        titleY + 48,
+        'NEON SKY DEFENSE',
+        titleSecondaryTextStyle('#fff06a', '14px'),
+      )
       .setOrigin(0.5);
   }
 

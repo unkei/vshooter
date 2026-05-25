@@ -81,6 +81,10 @@ export function powerUpVisualStyle(type: PowerUpType): PowerUpVisualStyle {
   }
 }
 
+export function powerUpCollectionEnabledDuringInvincibility(): boolean {
+  return true;
+}
+
 export class PowerUpDropManager {
   readonly items: Phaser.Physics.Arcade.Group;
 

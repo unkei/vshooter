@@ -21,7 +21,7 @@ describe('gameplay result overlay', () => {
   });
 
   it('uses a longer readable stage clear overlay before bonus presentation', () => {
-    expect(STAGE_CLEAR_OVERLAY_DELAY_MS).toBeGreaterThanOrEqual(2_500);
+    expect(STAGE_CLEAR_OVERLAY_DELAY_MS).toBe(2_000);
     expect(gameplayResultOverlayConfig('clear')).toMatchObject({
       text: 'STAGE CLEAR',
       color: '#6ffcff',

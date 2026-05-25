@@ -1,6 +1,6 @@
 export type GameplayResultStatus = 'clear' | 'gameover';
 
-export const STAGE_CLEAR_OVERLAY_DELAY_MS = 3000;
+export const STAGE_CLEAR_OVERLAY_DELAY_MS = 2000;
 export const GAME_OVER_RETURN_TO_TITLE_DELAY_MS = 5000;
 
 export type GameplayResultOverlayConfig = {

@@ -34,7 +34,7 @@ import {
 } from '../systems/StageDirector';
 import { VibrationManager } from '../systems/VibrationManager';
 import {
-  BOSS_DEFEAT_CLEAR_DELAY_MS,
+  BOSS_DEFEAT_BODY_DISAPPEAR_DELAY_MS,
   BOSS_ENTRANCE_TRAVEL_MS,
   BOSS_PRE_WARNING_GRACE_MS,
 } from '../game/bossState';
@@ -42,6 +42,11 @@ import {
   gameplayResultOverlayConfig,
   type GameplayResultStatus,
 } from './gameplayResultOverlay';
+import {
+  CLEAR_WARP_ORIGIN_X,
+  CLEAR_WARP_ORIGIN_Y,
+  preClearPlayerAlignDurationMs,
+} from './clearWarp';
 import { arcadeHeadingTextStyle } from './screenTextStyles';
 import {
   STAGE_INTRO_WARP_DURATION_MS,
@@ -137,6 +142,7 @@ export class GameScene extends Phaser.Scene {
     this.enemies = new EnemyManager(this, this.projectiles);
     this.boss = new BossController(this, this.projectiles, {
       rushAttack: this.stageDefinition.boss.rushAttack,
+      maxHp: this.stageDefinition.boss.maxHp,
     });
     this.powerUps = new PowerUpDropManager(this);
     this.score = new ScoreManager({
@@ -249,6 +255,7 @@ export class GameScene extends Phaser.Scene {
 
     const fired = this.player.update(input, timeMs, deltaMs);
     if (fired) {
+      this.audio.play('shot');
       this.projectiles.firePlayerShot(
         this.player.sprite.x,
         this.player.sprite.y,
@@ -294,6 +301,8 @@ export class GameScene extends Phaser.Scene {
         x: this.input.activePointer.x,
         y: this.input.activePointer.y,
         shoot: isTouch,
+        source: 'touch',
+        mode: 'direct',
         originX: this.touchOrigin?.x,
         originY: this.touchOrigin?.y,
       },
@@ -378,6 +387,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     bullet.destroy();
+    this.audio.play('bossHit');
     if (this.boss.damage(3)) {
       this.audio.play('explosion');
       this.vibration.bossDefeat();
@@ -419,6 +429,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.boss.damage(Number.MAX_SAFE_INTEGER)) {
+      this.audio.play('bossHit');
       this.audio.play('explosion');
       this.vibration.bossDefeat();
       this.projectiles.clearPlayerBullets();
@@ -501,7 +512,37 @@ export class GameScene extends Phaser.Scene {
 
     this.clearPending = true;
     this.projectiles.clearPlayerBullets();
-    this.time.delayedCall(BOSS_DEFEAT_CLEAR_DELAY_MS, () => this.finish('clear'));
+    this.time.delayedCall(BOSS_DEFEAT_BODY_DISAPPEAR_DELAY_MS, () => {
+      const durationMs = this.movePlayerToClearWarpOrigin();
+      this.time.delayedCall(durationMs, () => this.finish('clear'));
+    });
+  }
+
+  private movePlayerToClearWarpOrigin(): number {
+    const player = this.player.sprite;
+    const durationMs = preClearPlayerAlignDurationMs(player.x, player.y);
+    this.tweens.killTweensOf(player);
+    player.setVisible(true);
+    player.setAlpha(1);
+    player.setScale(1);
+
+    const body = player.body as Phaser.Physics.Arcade.Body | null;
+    body?.setVelocity(0, 0);
+
+    this.tweens.add({
+      targets: player,
+      x: CLEAR_WARP_ORIGIN_X,
+      y: CLEAR_WARP_ORIGIN_Y,
+      duration: durationMs,
+      ease: 'Linear',
+      onUpdate: () => syncArcadeBody(player),
+      onComplete: () => {
+        player.x = CLEAR_WARP_ORIGIN_X;
+        player.y = CLEAR_WARP_ORIGIN_Y;
+        syncArcadeBody(player);
+      },
+    });
+    return durationMs;
   }
 
   private startBossEntrance(): void {
@@ -615,9 +656,6 @@ export class GameScene extends Phaser.Scene {
       this.projectiles.clearEnemyBullets();
     }
     const overlay = gameplayResultOverlayConfig(status);
-    if (status === 'clear') {
-      this.boss.fadeDefeatBodyBehindClear(overlay.nextDelayMs);
-    }
     this.showResultOverlay(overlay.text, overlay.color);
 
     if (status === 'clear') {

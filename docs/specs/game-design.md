@@ -216,6 +216,8 @@ and key sound effects may be added after the asset pipeline exists.
 Initial sounds:
 
 - Player shot.
+- Boss hit from player bullets, with a short harder metallic impact that remains
+  distinct from the softer repeated shot sound.
 - Enemy defeat.
 - Boss explosion.
 - Player damage.
@@ -232,10 +234,10 @@ start under browser autoplay rules, generated Web Audio playback should continue
 to provide the playable fallback.
 External audio should use stable logical keys for gameplay BGM, clear BGM, and
 the core sound effects: player shot, enemy defeat, boss explosion, player damage,
-item pickup, and boss warning. Phaser scenes may preload those files and attach a
-scene-backed playback adapter to the shared audio manager, but the shared manager
-must keep the generated Web Audio path as the fallback when a key is missing,
-the browser rejects playback, or the scene adapter is not available.
+item pickup, boss warning, and boss hit. Phaser scenes may preload those files
+and attach a scene-backed playback adapter to the shared audio manager, but the
+shared manager must keep the generated Web Audio path as the fallback when a key
+is missing, the browser rejects playback, or the scene adapter is not available.
 Scene transitions must not leave external BGM playing through an old scene
 adapter. Replacing the playback adapter should stop any music owned by the
 previous adapter, and starting the same external music again should replace the
@@ -263,6 +265,11 @@ Repeated sounds should be restrained:
 - Player shot sound plays very frequently during hold-to-fire, so it should be
   short and softer than alert sounds such as player damage or boss warning, but
   still audible during normal play.
+- Boss-hit impact sound plays rapidly while sustained fire is landing, so it
+  should stay harder in tone than the shot sound but quieter than alert effects
+  and restrained enough not to dominate the boss fight. Current tuning should be
+  half of the previous boss-hit volume pass, and the next tuning pass halves it
+  once more.
 - Sound effects should remain clearly audible over the BGM on mobile speakers.
   The player shot should be louder than the original restrained prototype while
   staying short enough not to smear during hold-to-fire. Damage, pickup, enemy
@@ -351,9 +358,10 @@ Current tuning target:
   normal hits, and defeat should keep the boss sprite continuously opaque while
   using text, bursts, scale, or rotation for feedback instead.
 - When player bullets hit the boss, the hit should destroy the bullet, reduce HP,
-  and briefly flash the boss tint. Regression expectation: boss hit feedback is
-  visible, while boss position, opacity, visibility, scale, and blend state remain
-  stable.
+  briefly flash the boss tint, and play a short hard boss-hit impact sound that
+  differs from the player shot sound. Regression expectation: boss hit feedback
+  is visible and audible, while boss position, opacity, visibility, scale, and
+  blend state remain stable.
 - Sustained rapid-fire hits must not keep the boss in a permanent flash state.
   Normal boss tint should be visible between hit flashes even while bullets are
   landing continuously. Regression expectation: during continuous boss damage,
@@ -522,11 +530,12 @@ player who collects upgrades still feels rewarded with a smoother clear.
 
 The first stage 1 tuning pass should keep the six-wave structure and broad stage
 length, add a second deterministic shot upgrade opportunity before the heavy
-waves dominate, slightly lower heavy enemy durability, and reduce heavy enemy
-bullet pressure from the previous stronger tuning. Regression expectation: stage
-1 has at least two shot upgrade drops, the default heavy bullet count remains
-below the previous stronger value of 5, and the final heavy wave remains lower
-pressure than the earlier heavy wave.
+waves dominate, slightly lower heavy enemy durability, reduce heavy enemy bullet
+pressure from the previous stronger tuning, and use a lower boss HP budget than
+later stages. Regression expectation: stage 1 has at least two shot upgrade
+drops, the default heavy bullet count remains below the previous stronger value
+of 5, the final heavy wave remains lower pressure than the earlier heavy wave,
+and stage 1 boss HP is lower than stage 2 boss HP.
 
 After the final regular wave is cleared, the boss should not appear immediately.
 The game should leave a short readable pause where remaining bullets and the
@@ -565,17 +574,27 @@ remains visible and opaque late in the sequence while explosion bursts are still
 appearing.
 
 Boss defeat should trigger a stronger haptic pulse when the defeat reaction
-starts. The normal defeat reaction should still avoid fading the boss body too
-early, but once the `STAGE CLEAR` overlay appears, the remaining boss defeat body
-should fade out behind the overlay. Regression expectation: boss defeat haptics
-fire once on defeat, the defeat body remains visible during the late explosion
-window, then fades during the stage-clear overlay.
+starts. The normal defeat reaction should keep the boss body visible through the
+late explosion window, then remove it before the player ship starts moving to the
+clear warp origin. Regression expectation: boss defeat haptics fire once on
+defeat, the defeat body remains visible during the late explosion window, then is
+gone before player alignment and the stage-clear overlay.
 
 When the defeat reaction completes, `STAGE CLEAR` should appear as an overlay on
 top of the gameplay screen before the clear bonus presentation starts. Regression
 expectation: active scene remains `GameScene` while the stage-clear overlay is
 visible, and only transitions to the clear bonus flow after a longer readable
-overlay delay of roughly 3 seconds.
+overlay delay of roughly 2 seconds.
+
+After the boss is defeated, the boss defeat body should disappear before the
+player ship starts moving to the center-lower clear warp origin used by the clear
+bonus scene. The movement should use the normal player movement speed. This
+makes the following warp animation begin from the ship's visible position instead
+of snapping from an arbitrary combat location while preserving the boss defeat as
+the first visual beat. Regression expectation: once boss defeat starts, player
+firing is paused, player bullets are cleared, the boss defeat body disappears,
+then the player ship moves toward the shared clear warp origin at the normal
+movement speed before the stage-clear overlay and clear bonus warp-out.
 
 ### Stage 2 Direction
 
@@ -630,12 +649,16 @@ life gauge remains visually separated below it.
 
 The title screen should look more like part of the same game world as the
 character art. The title lettering and font treatment should become more
-substantial and visually polished.
+substantial and visually polished. The title starfield should scroll downward
+while the title screen is active instead of remaining static.
 
 The first title polish pass may remain code-generated, but should use layered
 arcade-style title text with a darker depth layer, a bright main layer, and a
 simple neon frame or wing-like accent. Regression expectation: title input,
-audio mute toggling, high score display, and start behavior remain unchanged.
+audio mute toggling, high score display, start behavior, and title starfield
+scrolling remain unchanged. The title screen's secondary text, including device
+input labels, high score, start prompt, and audio status, should use the same
+bold arcade font treatment as score and bonus text instead of the plain UI font.
 
 Large screen headings should share one arcade heading treatment. Title lettering,
 the gameplay result overlays, and clear bonus headings should use the same font
@@ -656,7 +679,8 @@ non-player gameplay visuals moving, accepts a fresh confirm input for immediate
 title return, and otherwise reaches `TitleScene` without requiring input.
 
 Player bullets, enemy bullets, and power-up items should receive stronger visual
-assets or code-generated effects. They must remain highly readable at gameplay
+assets or code-generated effects. Enemy bullets should use an orange treatment
+with a vivid bright center gradient. They must remain highly readable at gameplay
 speed and must not blend into the background or each other.
 
 The first bullet and item readability pass may stay code-generated, but bullets
@@ -664,7 +688,9 @@ should get stronger core/outline treatment without changing collision radius or
 speed. Power-up items should be readable by both color and a short type label so
 item type remains clear if colors blend on a display. Regression expectation:
 bullet collision radius and speed constants remain unchanged, and each power-up
-type has a distinct label.
+type has a distinct label. Power-up collection must remain enabled during
+post-hit invincibility; invincibility only suppresses additional damage, not item
+pickup.
 
 The clear warp-out should show a stronger warp route, gate, or path effect before
 the player ship leaves. Clear bonus counting should use a more readable and
@@ -673,7 +699,9 @@ score.
 
 The first clear bonus presentation pass should keep the score math unchanged,
 but use stronger text styling and a more visible warp route or gate effect than a
-single simple rectangle.
+single simple rectangle. After the ship warp animation completes, keep the clear
+bonus scene readable for a longer beat before routing to the next stage or title;
+this hold should be longer than the stage-clear overlay.
 
 Warp-out should also trigger haptic feedback when the warp route activates, so
 the stage transition feels physical on devices with vibration support. Regression

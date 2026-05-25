@@ -16,6 +16,12 @@ import {
 import { VibrationManager } from '../systems/VibrationManager';
 import type { StageNumber } from '../systems/StageDirector';
 import { buildClearBonusLines } from './clearBonusDisplay';
+import {
+  CLEAR_BONUS_ROUTE_DELAY_MS,
+  CLEAR_WARP_PLAYER_DELAY_MS,
+  CLEAR_WARP_PLAYER_DURATION_MS,
+} from './clearBonusTiming';
+import { CLEAR_WARP_ORIGIN_X, CLEAR_WARP_ORIGIN_Y } from './clearWarp';
 import { arcadeHeadingTextStyle } from './screenTextStyles';
 
 export type ClearBonusSceneData = {
@@ -107,7 +113,7 @@ export class ClearBonusScene extends Phaser.Scene {
     });
 
     const player = this.add
-      .sprite(GAME_WIDTH / 2, GAME_HEIGHT - 86, PLAYER_TEXTURE_KEY)
+      .sprite(CLEAR_WARP_ORIGIN_X, CLEAR_WARP_ORIGIN_Y, PLAYER_TEXTURE_KEY)
       .setDepth(20);
     playCharacterAnimation(player, CHARACTER_ANIMATION_KEYS.player);
     const warpRails = [
@@ -179,12 +185,12 @@ export class ClearBonusScene extends Phaser.Scene {
       y: -60,
       scaleX: 0.35,
       scaleY: 1.55,
-      duration: 1450,
-      delay: 650,
+      duration: CLEAR_WARP_PLAYER_DURATION_MS,
+      delay: CLEAR_WARP_PLAYER_DELAY_MS,
       ease: 'Cubic.easeIn',
     });
 
-    this.time.delayedCall(2600, () => {
+    this.time.delayedCall(CLEAR_BONUS_ROUTE_DELAY_MS, () => {
       if (
         this.dataFromRun.nextStageNumber !== null &&
         this.dataFromRun.nextStageNumber !== undefined

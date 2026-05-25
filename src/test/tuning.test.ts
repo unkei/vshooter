@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { PLAYER_ACCELERATION } from '../game/constants';
-import { PROJECTILE_RADIUS, PROJECTILE_SPEED_SCALE } from '../game/ProjectileManager';
+import {
+  PROJECTILE_RADIUS,
+  PROJECTILE_SPEED_SCALE,
+  projectileVisualStyle,
+} from '../game/ProjectileManager';
 import { SOUND_PRESETS } from '../systems/AudioManager';
 import {
   DEFAULT_HEAVY_BULLET_COUNT,
@@ -22,6 +26,15 @@ describe('play tuning constants', () => {
     expect(SOUND_PRESETS.shot.gain).toBeGreaterThanOrEqual(0.07);
     expect(SOUND_PRESETS.shot.gain).toBeLessThanOrEqual(0.09);
     expect(SOUND_PRESETS.shot.type).not.toBe('square');
+  });
+
+  it('uses a hard short sound for repeated boss bullet impacts', () => {
+    expect(SOUND_PRESETS.bossHit.durationSeconds).toBeLessThanOrEqual(0.04);
+    expect(SOUND_PRESETS.bossHit.type).toBe('square');
+    expect(SOUND_PRESETS.bossHit.frequency).toBeGreaterThan(SOUND_PRESETS.shot.frequency);
+    expect(SOUND_PRESETS.bossHit.gain).toBe(0.0175);
+    expect(SOUND_PRESETS.bossHit.gain).toBeLessThan(SOUND_PRESETS.shot.gain);
+    expect(SOUND_PRESETS.bossHit.gain).toBeLessThan(SOUND_PRESETS.damage.gain);
   });
 
   it('keeps alert and reward effects clearly audible over the BGM', () => {
@@ -62,5 +75,14 @@ describe('play tuning constants', () => {
   it('uses larger and slower projectiles for readability', () => {
     expect(PROJECTILE_RADIUS).toBe(6);
     expect(PROJECTILE_SPEED_SCALE).toBe(0.7);
+  });
+
+  it('renders enemy bullets as orange gradients with a vivid center', () => {
+    expect(projectileVisualStyle('enemy')).toMatchObject({
+      textureKey: 'vshooter.projectile.enemy.orangeGradient',
+      fillColor: 0xff7a18,
+      centerColor: 0xffff8a,
+      strokeColor: 0x7a1f00,
+    });
   });
 });

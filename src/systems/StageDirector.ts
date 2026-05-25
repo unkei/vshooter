@@ -1,3 +1,4 @@
+import { BOSS_MAX_HP } from '../game/bossState';
 import type { EnemyType, PowerUpType } from '../game/types';
 
 export type StagePowerUpDrop = {
@@ -23,6 +24,7 @@ export type StageDefinition = {
   nextStageNumber: StageNumber | null;
   boss: {
     rushAttack: boolean;
+    maxHp: number;
   };
 };
 
@@ -75,6 +77,7 @@ export function createStageDefinition(stageNumber: StageNumber): StageDefinition
       nextStageNumber: null,
       boss: {
         rushAttack: true,
+        maxHp: BOSS_MAX_HP,
       },
     };
   }
@@ -85,6 +88,7 @@ export function createStageDefinition(stageNumber: StageNumber): StageDefinition
     nextStageNumber: 2,
     boss: {
       rushAttack: false,
+      maxHp: 1260,
     },
   };
 }

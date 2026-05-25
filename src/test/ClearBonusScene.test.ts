@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { ClearBonusSceneData } from '../scenes/ClearBonusScene';
+import {
+  CLEAR_BONUS_ROUTE_DELAY_MS,
+  CLEAR_WARP_PLAYER_DELAY_MS,
+  CLEAR_WARP_PLAYER_DURATION_MS,
+} from '../scenes/clearBonusTiming';
 import { buildClearBonusLines } from '../scenes/clearBonusDisplay';
+import { STAGE_CLEAR_OVERLAY_DELAY_MS } from '../scenes/gameplayResultOverlay';
 
 describe('ClearBonusSceneData', () => {
   it('carries score and bonus details before the next route', () => {
@@ -47,5 +53,14 @@ describe('ClearBonusSceneData', () => {
       'TOTAL 5000',
     ]);
     expect(buildClearBonusLines(data, 1000, 250)).toContain('TOTAL 6250');
+  });
+
+  it('keeps the clear bonus scene visible after the player warp animation', () => {
+    const warpCompleteAtMs = CLEAR_WARP_PLAYER_DELAY_MS + CLEAR_WARP_PLAYER_DURATION_MS;
+
+    expect(CLEAR_BONUS_ROUTE_DELAY_MS).toBeGreaterThanOrEqual(
+      4_500,
+    );
+    expect(CLEAR_BONUS_ROUTE_DELAY_MS).toBeGreaterThan(STAGE_CLEAR_OVERLAY_DELAY_MS);
   });
 });

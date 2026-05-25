@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeInput } from '../systems/InputManager';
+import {
+  TOUCH_POINTER_TARGET_OFFSET_Y,
+  normalizeInput,
+} from '../systems/InputManager';
 
 describe('normalizeInput', () => {
   it('combines keyboard axes and clamps diagonal movement', () => {
@@ -109,5 +112,23 @@ describe('normalizeInput', () => {
     expect(input.pointerTarget).toBeNull();
     expect(input.move.x).toBeCloseTo(0.75, 3);
     expect(input.move.y).toBe(0);
+  });
+
+  it('offsets direct touch pointer targets upward so the ship is visible above the finger', () => {
+    const input = normalizeInput({
+      pointer: {
+        active: true,
+        x: 240,
+        y: 560,
+        shoot: true,
+        source: 'touch',
+        mode: 'direct',
+      },
+    });
+
+    expect(input.pointerTarget).toEqual({
+      x: 240,
+      y: 560 - TOUCH_POINTER_TARGET_OFFSET_Y,
+    });
   });
 });

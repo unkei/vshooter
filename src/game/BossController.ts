@@ -33,6 +33,7 @@ type BossSprite = Phaser.GameObjects.Sprite & {
 
 export type BossControllerOptions = {
   rushAttack?: boolean;
+  maxHp?: number;
 };
 
 export class BossController {
@@ -41,7 +42,7 @@ export class BossController {
   private hitFlashOverlay: Phaser.GameObjects.Sprite | null = null;
   private defeatBody: Phaser.GameObjects.Sprite | null = null;
   private hp = 0;
-  private readonly maxHp = BOSS_MAX_HP;
+  private readonly maxHp: number;
   private nextFireAtMs = 0;
   private healthBar: Phaser.GameObjects.Graphics | null = null;
   private defeatStarted = false;
@@ -58,6 +59,7 @@ export class BossController {
     private readonly projectiles: ProjectileManager,
     options: BossControllerOptions = {},
   ) {
+    this.maxHp = options.maxHp ?? BOSS_MAX_HP;
     this.rushAttackEnabled =
       options.rushAttack ?? BOSS_RUSH_ATTACK_ENABLED_BY_DEFAULT;
     this.group = this.scene.physics.add.group();

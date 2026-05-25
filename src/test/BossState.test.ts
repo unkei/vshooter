@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   BOSS_DEFEAT_CLEAR_DELAY_MS,
+  BOSS_DEFEAT_BODY_DISAPPEAR_DELAY_MS,
   BOSS_DEFEAT_FADES_SPRITE,
   BOSS_CLEAR_OVERLAY_FADES_DEFEAT_BODY,
   BOSS_DEFEAT_SPRITE_DEPTH,
@@ -109,6 +110,15 @@ describe('isRenderableBossSprite', () => {
     expect(BOSS_DEFEAT_SPRITE_DEPTH).toBeGreaterThanOrEqual(34);
   });
 
+  it('waits until the boss defeat body disappears before moving the player to clear warp', () => {
+    expect(BOSS_DEFEAT_BODY_DISAPPEAR_DELAY_MS).toBeGreaterThanOrEqual(
+      BOSS_DEFEAT_CLEAR_DELAY_MS,
+    );
+    expect(BOSS_DEFEAT_SPRITE_DESTROY_DELAY_MS).toBeGreaterThanOrEqual(
+      BOSS_DEFEAT_BODY_DISAPPEAR_DELAY_MS,
+    );
+  });
+
   it('uses a short stable flash for normal boss hits', () => {
     expect(BOSS_HIT_FEEDBACK_MODE).toBe('tint-flash');
     expect(BOSS_HIT_FLASH_DURATION_MS).toBeGreaterThanOrEqual(60);
@@ -136,8 +146,8 @@ describe('isRenderableBossSprite', () => {
     expect(BOSS_DEFEAT_FADES_SPRITE).toBe(false);
   });
 
-  it('fades the remaining boss body only behind the stage clear overlay', () => {
-    expect(BOSS_CLEAR_OVERLAY_FADES_DEFEAT_BODY).toBe(true);
+  it('removes the boss defeat body before player alignment instead of fading it behind clear', () => {
+    expect(BOSS_CLEAR_OVERLAY_FADES_DEFEAT_BODY).toBe(false);
   });
 
   it('defines the stage 2 boss rush as an opt-in pressure spike', () => {
