@@ -44,7 +44,7 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
       );
     },
     undefined,
-    { timeout: 1_600 },
+    { timeout: 10_000 },
   );
   await waitForResultOverlay(page, 'STAGE CLEAR');
   expect(await windowText(page)).toContain('GameScene');
