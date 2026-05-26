@@ -58,9 +58,7 @@ describe('ClearBonusSceneData', () => {
   it('keeps the clear bonus scene visible after the player warp animation', () => {
     const warpCompleteAtMs = CLEAR_WARP_PLAYER_DELAY_MS + CLEAR_WARP_PLAYER_DURATION_MS;
 
-    expect(CLEAR_BONUS_ROUTE_DELAY_MS).toBeGreaterThanOrEqual(
-      4_500,
-    );
+    expect(CLEAR_BONUS_ROUTE_DELAY_MS).toBe(4_500);
     expect(CLEAR_BONUS_ROUTE_DELAY_MS).toBeGreaterThan(STAGE_CLEAR_OVERLAY_DELAY_MS);
   });
 });
