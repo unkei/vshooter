@@ -4,6 +4,7 @@ import {
   createPhaserExternalAudioPlayback,
   getSharedAudioManager,
 } from '../systems/AudioManager';
+import { firstActiveGamepad, gamepadConfirmPressed } from '../systems/GamepadInput';
 import { newRunGameSceneData } from './resultFlow';
 import { titleLayerTextStyle, titleSecondaryTextStyle } from './screenTextStyles';
 import {
@@ -80,8 +81,11 @@ export class TitleScene extends Phaser.Scene {
   update(_timeMs: number, deltaMs: number): void {
     this.updateStarfield(deltaMs);
 
-    const pad = this.input.gamepad?.pad1;
-    if (pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed) {
+    const pad = firstActiveGamepad(
+      this.input.gamepad?.pad1,
+      navigator.getGamepads?.() ?? [],
+    );
+    if (gamepadConfirmPressed(pad)) {
       this.startGame();
     }
   }

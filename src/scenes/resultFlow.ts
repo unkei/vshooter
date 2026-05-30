@@ -1,6 +1,6 @@
 import type { ResultSceneData } from './ResultScene';
 
-export const CLEAR_RESULT_RETURN_DELAY_MS = 3600;
+export const CLEAR_RESULT_RETURN_DELAY_MS = 3000;
 
 export function newRunGameSceneData(): {
   stageNumber: 1;

@@ -23,7 +23,17 @@ import {
   preloadExternalAudioAssets,
 } from '../systems/AudioManager';
 import { FreshPressGate, KeyboardReleaseGate } from '../systems/InputGate';
-import { normalizeInput, type RawInputState } from '../systems/InputManager';
+import {
+  firstActiveGamepad,
+  gamepadAxisValue,
+  gamepadConfirmPressed,
+  gamepadShotPressed,
+} from '../systems/GamepadInput';
+import {
+  normalizeInput,
+  touchPointerTargetOffsetY,
+  type RawInputState,
+} from '../systems/InputManager';
 import { PowerUpDropManager } from '../systems/PowerUpManager';
 import { ScoreManager } from '../systems/ScoreManager';
 import {
@@ -53,6 +63,7 @@ import {
   stageIntroStartY,
 } from './stageIntro';
 import { buildGameplayHudLine } from './gameHud';
+import { viewportPointToGamePoint } from './viewportTouch';
 
 type CursorKeys = Phaser.Types.Input.Keyboard.CursorKeys;
 
@@ -83,6 +94,8 @@ export class GameScene extends Phaser.Scene {
   private keyboardGate!: KeyboardReleaseGate;
   private activeTouchPointerId: number | null = null;
   private touchOrigin: { x: number; y: number } | null = null;
+  private viewportTouch: { id: number; x: number; y: number; active: boolean } | null =
+    null;
   private dataFromRun: GameSceneData = {};
   private resultOverlayText: string | null = null;
   private resultOverlayStatus: GameplayResultStatus | null = null;
@@ -113,6 +126,7 @@ export class GameScene extends Phaser.Scene {
     this.startedAtMs = null;
     this.activeTouchPointerId = null;
     this.touchOrigin = null;
+    this.viewportTouch = null;
     this.resultOverlayText = null;
     this.resultOverlayStatus = null;
     this.stageIntroPending = false;
@@ -128,6 +142,7 @@ export class GameScene extends Phaser.Scene {
     createCharacterAnimations(this);
     this.audio.setExternalPlayback(createPhaserExternalAudioPlayback(this));
     this.addStarfield();
+    this.installViewportTouchInput();
 
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.keys = this.input.keyboard!.addKeys('W,A,S,D,SPACE,ENTER') as Record<
@@ -276,15 +291,29 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getRawInput(): RawInputState {
-    const pad = this.input.gamepad?.pad1;
-    const isTouch = this.input.activePointer.isDown && this.input.activePointer.id === this.activeTouchPointerId;
+    const pad = firstActiveGamepad(
+      this.input.gamepad?.pad1,
+      navigator.getGamepads?.() ?? [],
+    );
+    const activePointer = this.input.activePointer;
+    const pointerIsTouch =
+      activePointer.isDown &&
+      this.activeTouchPointerId !== null &&
+      activePointer.id === this.activeTouchPointerId;
+    const viewportTouch = this.viewportTouch?.active === true ? this.viewportTouch : null;
+    const isTouch = viewportTouch !== null || pointerIsTouch;
+    const touchX = viewportTouch?.x ?? activePointer.x;
+    const touchY = viewportTouch?.y ?? activePointer.y;
 
-    if (this.input.activePointer.isDown && this.activeTouchPointerId === null) {
-      this.activeTouchPointerId = this.input.activePointer.id;
-      this.touchOrigin = { x: this.input.activePointer.x, y: this.input.activePointer.y };
-    } else if (!this.input.activePointer.isDown && this.activeTouchPointerId !== null) {
+    if (activePointer.isDown && this.activeTouchPointerId === null) {
+      this.activeTouchPointerId = activePointer.id;
+      this.touchOrigin = { x: activePointer.x, y: activePointer.y };
+    } else if (!activePointer.isDown && this.activeTouchPointerId !== null && viewportTouch === null) {
       this.activeTouchPointerId = null;
       this.touchOrigin = null;
+    }
+    if (viewportTouch !== null && this.touchOrigin === null) {
+      this.touchOrigin = { x: viewportTouch.x, y: viewportTouch.y };
     }
 
     return {
@@ -298,25 +327,88 @@ export class GameScene extends Phaser.Scene {
       },
       pointer: {
         active: isTouch,
-        x: this.input.activePointer.x,
-        y: this.input.activePointer.y,
+        x: touchX,
+        y: touchY,
         shoot: isTouch,
         source: 'touch',
         mode: 'direct',
         originX: this.touchOrigin?.x,
         originY: this.touchOrigin?.y,
+        targetOffsetY: touchPointerTargetOffsetY({
+          displayHeightPx: this.game.canvas.getBoundingClientRect().height,
+          gameHeight: GAME_HEIGHT,
+        }),
       },
       gamepad: {
-        axisX: pad?.axes[0].getValue() ?? 0,
-        axisY: pad?.axes[1].getValue() ?? 0,
-        shoot: Boolean(
-          pad?.buttons[0]?.pressed ||
-            pad?.buttons[6]?.pressed ||
-            pad?.buttons[7]?.pressed,
-        ),
-        confirm: Boolean(pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed),
+        axisX: gamepadAxisValue(pad, 0),
+        axisY: gamepadAxisValue(pad, 1),
+        shoot: gamepadShotPressed(pad),
+        confirm: gamepadConfirmPressed(pad),
       },
     };
+  }
+
+  private installViewportTouchInput(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.addEventListener('pointerdown', this.handleViewportPointerDown, {
+      passive: false,
+    });
+    window.addEventListener('pointermove', this.handleViewportPointerMove, {
+      passive: false,
+    });
+    window.addEventListener('pointerup', this.handleViewportPointerUp);
+    window.addEventListener('pointercancel', this.handleViewportPointerUp);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      window.removeEventListener('pointerdown', this.handleViewportPointerDown);
+      window.removeEventListener('pointermove', this.handleViewportPointerMove);
+      window.removeEventListener('pointerup', this.handleViewportPointerUp);
+      window.removeEventListener('pointercancel', this.handleViewportPointerUp);
+    });
+  }
+
+  private readonly handleViewportPointerDown = (event: PointerEvent): void => {
+    if (event.pointerType !== 'touch') {
+      return;
+    }
+    this.setViewportTouch(event);
+  };
+
+  private readonly handleViewportPointerMove = (event: PointerEvent): void => {
+    if (this.viewportTouch?.active !== true || event.pointerId !== this.viewportTouch.id) {
+      return;
+    }
+    this.setViewportTouch(event);
+  };
+
+  private readonly handleViewportPointerUp = (event: PointerEvent): void => {
+    if (this.viewportTouch?.id !== event.pointerId) {
+      return;
+    }
+    this.viewportTouch = null;
+    this.activeTouchPointerId = null;
+    this.touchOrigin = null;
+  };
+
+  private setViewportTouch(event: PointerEvent): void {
+    const rect = this.game.canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      return;
+    }
+
+    const point = viewportPointToGamePoint(
+      { x: event.clientX, y: event.clientY },
+      rect,
+    );
+    this.viewportTouch = {
+      id: event.pointerId,
+      x: point.x,
+      y: point.y,
+      active: true,
+    };
+    event.preventDefault();
   }
 
   private onEnemyHit(
@@ -759,12 +851,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleGameOverReturnInput(): void {
-    const pad = this.input.gamepad?.pad1;
+    const pad = firstActiveGamepad(
+      this.input.gamepad?.pad1,
+      navigator.getGamepads?.() ?? [],
+    );
     const keyboardConfirm = this.keys.ENTER.isDown;
     const pointerConfirm = this.input.activePointer.isDown;
-    const gamepadConfirm = Boolean(
-      pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed,
-    );
+    const gamepadConfirm = gamepadConfirmPressed(pad);
 
     if (
       this.gameOverKeyboardGate.accepts(keyboardConfirm) ||

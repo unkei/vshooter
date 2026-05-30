@@ -87,7 +87,7 @@ export const SOUND_PRESETS: Record<SoundName, SoundPreset> = {
     gain: 0.13,
   },
   explosion: {
-    frequency: 72,
+    frequency: 56,
     durationSeconds: 0.48,
     type: 'sawtooth',
     gain: 0.2,

@@ -4,6 +4,7 @@ import {
   createPhaserExternalAudioPlayback,
   getSharedAudioManager,
 } from '../systems/AudioManager';
+import { firstActiveGamepad, gamepadConfirmPressed } from '../systems/GamepadInput';
 import { FreshPressGate } from '../systems/InputGate';
 import {
   CLEAR_RESULT_RETURN_DELAY_MS,
@@ -112,12 +113,13 @@ export class ResultScene extends Phaser.Scene {
       return;
     }
 
-    const pad = this.input.gamepad?.pad1;
+    const pad = firstActiveGamepad(
+      this.input.gamepad?.pad1,
+      navigator.getGamepads?.() ?? [],
+    );
     const keyboardConfirm = this.enterKey?.isDown ?? false;
     const pointerConfirm = this.input.activePointer.isDown;
-    const gamepadConfirm = Boolean(
-      pad?.buttons[9]?.pressed || pad?.buttons[0]?.pressed,
-    );
+    const gamepadConfirm = gamepadConfirmPressed(pad);
 
     if (
       this.keyboardRetryGate.accepts(keyboardConfirm) ||

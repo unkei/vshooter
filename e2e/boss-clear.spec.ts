@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 test('debug boss defeat reaches stage clear flow without browser errors', async ({ page }) => {
+  test.setTimeout(45_000);
   const browserErrors: string[] = [];
   page.on('pageerror', (error) => browserErrors.push(error.message));
   page.on('console', (message) => {
@@ -62,6 +63,7 @@ test('debug boss defeat reaches stage clear flow without browser errors', async 
   expect(await windowText(page)).toContain('GameScene');
   await waitForBossDefeatBodyFade(page);
   await waitForActiveScene(page, 'ClearBonusScene', 30_000);
+  await waitForActiveScene(page, 'EndingScene', 30_000);
   await waitForActiveScene(page, 'TitleScene', 30_000);
 
   expect(await windowText(page)).toContain('TitleScene');

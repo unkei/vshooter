@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   TOUCH_POINTER_TARGET_OFFSET_Y,
+  touchPointerTargetOffsetY,
   normalizeInput,
 } from '../systems/InputManager';
 
@@ -123,12 +124,32 @@ describe('normalizeInput', () => {
         shoot: true,
         source: 'touch',
         mode: 'direct',
+        targetOffsetY: 78,
       },
     });
 
     expect(input.pointerTarget).toEqual({
       x: 240,
-      y: 560 - TOUCH_POINTER_TARGET_OFFSET_Y,
+      y: 560 - 78,
     });
+  });
+
+  it('keeps the default touch offset available for callers without display metrics', () => {
+    expect(touchPointerTargetOffsetY()).toBe(TOUCH_POINTER_TARGET_OFFSET_Y);
+  });
+
+  it('scales touch offset from physical display pixels into game units', () => {
+    expect(
+      touchPointerTargetOffsetY({
+        displayHeightPx: 520,
+        gameHeight: 720,
+      }),
+    ).toBeGreaterThan(TOUCH_POINTER_TARGET_OFFSET_Y);
+    expect(
+      touchPointerTargetOffsetY({
+        displayHeightPx: 1440,
+        gameHeight: 720,
+      }),
+    ).toBe(TOUCH_POINTER_TARGET_OFFSET_Y);
   });
 });

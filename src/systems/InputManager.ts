@@ -18,6 +18,7 @@ export type PointerInput = {
   mode?: 'direct' | 'virtualStick';
   originX?: number;
   originY?: number;
+  targetOffsetY?: number;
 };
 
 export type GamepadInput = {
@@ -44,6 +45,30 @@ const DEAD_ZONE = 0.2;
 const ANALOG_RESPONSE_CURVE = 1.5;
 const VIRTUAL_STICK_RADIUS = 40;
 export const TOUCH_POINTER_TARGET_OFFSET_Y = 58;
+const TOUCH_POINTER_TARGET_PHYSICAL_OFFSET_PX = 88;
+const TOUCH_POINTER_TARGET_MAX_OFFSET_Y = 96;
+
+export function touchPointerTargetOffsetY(
+  metrics?: {
+    displayHeightPx: number;
+    gameHeight: number;
+  },
+): number {
+  if (
+    metrics === undefined ||
+    metrics.displayHeightPx <= 0 ||
+    metrics.gameHeight <= 0
+  ) {
+    return TOUCH_POINTER_TARGET_OFFSET_Y;
+  }
+
+  const displayScale = metrics.displayHeightPx / metrics.gameHeight;
+  const gameOffset = Math.round(TOUCH_POINTER_TARGET_PHYSICAL_OFFSET_PX / displayScale);
+  return Math.min(
+    TOUCH_POINTER_TARGET_MAX_OFFSET_Y,
+    Math.max(TOUCH_POINTER_TARGET_OFFSET_Y, gameOffset),
+  );
+}
 
 export function normalizeInput(raw: RawInputState): NormalizedInputState {
   const keyboardX =
@@ -68,7 +93,8 @@ export function normalizeInput(raw: RawInputState): NormalizedInputState {
           x: raw.pointer.x,
           y:
             raw.pointer.source === 'touch'
-              ? raw.pointer.y - TOUCH_POINTER_TARGET_OFFSET_Y
+              ? raw.pointer.y -
+                (raw.pointer.targetOffsetY ?? TOUCH_POINTER_TARGET_OFFSET_Y)
               : raw.pointer.y,
         }
       : null;
