@@ -412,7 +412,7 @@ Current tuning target:
   awarded bonus values. The warp route should look like a group of circular
   gates: rings fade in from the player-side ring upward, then expand from the
   player-side ring upward as the player ship passes through each ring. Each
-  passed ring fades out while shrinking so it reads as spent. Regression
+  passed ring fades out while expanding so it reads as spent. Regression
   expectation: ring fade-in and expansion timings are both staggered from the
   lower/player-side ring to the upper ring within the player warp travel window,
   and the remaining route fade finishes before the clear-bonus route transition.

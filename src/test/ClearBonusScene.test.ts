@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import type { ClearBonusSceneData } from '../scenes/ClearBonusScene';
 import { clearBonusNextScene } from '../scenes/clearBonusRoute';
 import {
+  CLEAR_WARP_RING_EXPAND_DURATION_MS,
+  CLEAR_WARP_RING_GROW_FADE_OUT_DURATION_MS,
   CLEAR_WARP_RING_FADE_IN_DELAYS_MS,
   CLEAR_WARP_RING_FADE_IN_DURATION_MS,
   CLEAR_WARP_RING_PASS_DELAYS_MS,
-  CLEAR_WARP_RING_SHRINK_FADE_DURATION_MS,
   CLEAR_WARP_GATE_FADE_DURATION_MS,
   CLEAR_WARP_GATE_FADE_START_MS,
   CLEAR_BONUS_ROUTE_DELAY_MS,
@@ -88,7 +89,10 @@ describe('ClearBonusSceneData', () => {
       CLEAR_WARP_RING_PASS_DELAYS_MS[2],
     );
     expect(CLEAR_WARP_RING_PASS_DELAYS_MS[0]).toBeLessThan(warpCompleteAtMs);
-    expect(CLEAR_WARP_RING_SHRINK_FADE_DURATION_MS).toBeGreaterThan(0);
+    expect(CLEAR_WARP_RING_EXPAND_DURATION_MS).toBeGreaterThan(0);
+    expect(CLEAR_WARP_RING_GROW_FADE_OUT_DURATION_MS).toBe(
+      CLEAR_WARP_RING_EXPAND_DURATION_MS,
+    );
     expect(CLEAR_WARP_GATE_FADE_START_MS).toBeGreaterThan(warpCompleteAtMs);
     expect(
       CLEAR_WARP_GATE_FADE_START_MS + CLEAR_WARP_GATE_FADE_DURATION_MS,

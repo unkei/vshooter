@@ -20,8 +20,8 @@ import {
   CLEAR_WARP_RING_FADE_IN_DELAYS_MS,
   CLEAR_WARP_RING_FADE_IN_DURATION_MS,
   CLEAR_WARP_RING_EXPAND_DURATION_MS,
+  CLEAR_WARP_RING_GROW_FADE_OUT_DURATION_MS,
   CLEAR_WARP_RING_PASS_DELAYS_MS,
-  CLEAR_WARP_RING_SHRINK_FADE_DURATION_MS,
   CLEAR_WARP_GATE_FADE_DURATION_MS,
   CLEAR_WARP_GATE_FADE_START_MS,
   CLEAR_BONUS_ROUTE_DELAY_MS,
@@ -192,20 +192,16 @@ export class ClearBonusScene extends Phaser.Scene {
         targets: ring,
         scaleX: 2.55,
         scaleY: 2,
-        alpha: 0.88,
         duration: CLEAR_WARP_RING_EXPAND_DURATION_MS,
         delay: CLEAR_WARP_RING_PASS_DELAYS_MS[index],
         ease: 'Back.easeOut',
-        onComplete: () => {
-          this.tweens.add({
-            targets: ring,
-            scaleX: 0.48,
-            scaleY: 0.38,
-            alpha: 0,
-            duration: CLEAR_WARP_RING_SHRINK_FADE_DURATION_MS,
-            ease: 'Sine.easeIn',
-          });
-        },
+      });
+      this.tweens.add({
+        targets: ring,
+        alpha: 0,
+        duration: CLEAR_WARP_RING_GROW_FADE_OUT_DURATION_MS,
+        delay: CLEAR_WARP_RING_PASS_DELAYS_MS[index],
+        ease: 'Sine.easeIn',
       });
     });
     this.tweens.add({
