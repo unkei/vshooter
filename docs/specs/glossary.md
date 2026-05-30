@@ -12,6 +12,8 @@ screens, enemies, controls, and visual feedback.
   bullets, the player, power-ups, and boss fights.
 - Clear bonus screen: The post-boss screen that shows score breakdown, clear
   bonuses, and the player warp-out sequence.
+- Ending screen: The final story screen after clearing the last stage. It shows
+  the resolved story message and staff roll before returning to the title.
 - Result screen: The final result screen after game over or clear flow. It shows
   score, max combo, high score, and retry/title choices.
 - Stage: A complete playable sequence of waves followed by a boss.

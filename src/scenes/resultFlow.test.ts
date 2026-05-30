@@ -10,6 +10,7 @@ describe('result flow', () => {
   it('returns clear results to the title automatically after a readable delay', () => {
     expect(resultReturnsToTitleAutomatically('clear')).toBe(true);
     expect(CLEAR_RESULT_RETURN_DELAY_MS).toBeGreaterThanOrEqual(2500);
+    expect(CLEAR_RESULT_RETURN_DELAY_MS).toBeLessThan(3600);
   });
 
   it('does not auto-return from legacy game-over result scenes', () => {

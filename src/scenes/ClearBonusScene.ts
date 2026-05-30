@@ -17,11 +17,19 @@ import { VibrationManager } from '../systems/VibrationManager';
 import type { StageNumber } from '../systems/StageDirector';
 import { buildClearBonusLines } from './clearBonusDisplay';
 import {
+  CLEAR_WARP_RING_FADE_IN_DELAYS_MS,
+  CLEAR_WARP_RING_FADE_IN_DURATION_MS,
+  CLEAR_WARP_RING_EXPAND_DURATION_MS,
+  CLEAR_WARP_RING_PASS_DELAYS_MS,
+  CLEAR_WARP_RING_SHRINK_FADE_DURATION_MS,
+  CLEAR_WARP_GATE_FADE_DURATION_MS,
+  CLEAR_WARP_GATE_FADE_START_MS,
   CLEAR_BONUS_ROUTE_DELAY_MS,
   CLEAR_WARP_PLAYER_DELAY_MS,
   CLEAR_WARP_PLAYER_DURATION_MS,
 } from './clearBonusTiming';
 import { CLEAR_WARP_ORIGIN_X, CLEAR_WARP_ORIGIN_Y } from './clearWarp';
+import { clearBonusNextScene } from './clearBonusRoute';
 import { arcadeHeadingTextStyle } from './screenTextStyles';
 
 export type ClearBonusSceneData = {
@@ -146,13 +154,14 @@ export class ClearBonusScene extends Phaser.Scene {
       this.add
         .ellipse(
           GAME_WIDTH / 2,
-          GAME_HEIGHT - 112 + index * 42,
-          72 - index * 12,
+          GAME_HEIGHT - 266 + index * 58,
+          54 - index * 6,
           20,
           0x6ffcff,
-          0.1,
+          0,
         )
-        .setStrokeStyle(3, index === 1 ? 0xffffff : 0x6ffcff, 0.78),
+        .setStrokeStyle(3, index === 1 ? 0xffffff : 0x6ffcff, 0.78)
+        .setScale(0.62, 0.5),
     );
     const warpVisuals = [...warpRails, ...warpRings];
     for (const visual of warpVisuals) {
@@ -169,16 +178,35 @@ export class ClearBonusScene extends Phaser.Scene {
       duration: 900,
       ease: 'Sine.easeInOut',
     });
-    this.tweens.add({
-      targets: warpRings,
-      scaleX: 1.85,
-      scaleY: 1.45,
-      y: '-=34',
-      alpha: 0.72,
-      duration: 900,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: 1,
+    warpRings.forEach((ring, index) => {
+      this.tweens.add({
+        targets: ring,
+        scaleX: 1,
+        scaleY: 1,
+        alpha: 0.54,
+        duration: CLEAR_WARP_RING_FADE_IN_DURATION_MS,
+        delay: CLEAR_WARP_RING_FADE_IN_DELAYS_MS[index],
+        ease: 'Sine.easeOut',
+      });
+      this.tweens.add({
+        targets: ring,
+        scaleX: 2.55,
+        scaleY: 2,
+        alpha: 0.88,
+        duration: CLEAR_WARP_RING_EXPAND_DURATION_MS,
+        delay: CLEAR_WARP_RING_PASS_DELAYS_MS[index],
+        ease: 'Back.easeOut',
+        onComplete: () => {
+          this.tweens.add({
+            targets: ring,
+            scaleX: 0.48,
+            scaleY: 0.38,
+            alpha: 0,
+            duration: CLEAR_WARP_RING_SHRINK_FADE_DURATION_MS,
+            ease: 'Sine.easeIn',
+          });
+        },
+      });
     });
     this.tweens.add({
       targets: player,
@@ -189,23 +217,20 @@ export class ClearBonusScene extends Phaser.Scene {
       delay: CLEAR_WARP_PLAYER_DELAY_MS,
       ease: 'Cubic.easeIn',
     });
+    this.tweens.add({
+      targets: warpRails,
+      alpha: 0,
+      scaleX: '+=0.35',
+      scaleY: '+=0.25',
+      duration: CLEAR_WARP_GATE_FADE_DURATION_MS,
+      delay: CLEAR_WARP_GATE_FADE_START_MS,
+      ease: 'Sine.easeOut',
+    });
 
     this.time.delayedCall(CLEAR_BONUS_ROUTE_DELAY_MS, () => {
-      if (
-        this.dataFromRun.nextStageNumber !== null &&
-        this.dataFromRun.nextStageNumber !== undefined
-      ) {
-        this.scene.start('GameScene', {
-          stageNumber: this.dataFromRun.nextStageNumber,
-          initialScore: this.dataFromRun.score,
-          initialMaxCombo: this.dataFromRun.maxCombo,
-        });
-        return;
-      }
-
-      getSharedAudioManager().stop();
       this.input.keyboard?.resetKeys();
-      this.scene.start('TitleScene');
+      const route = clearBonusNextScene(this.dataFromRun);
+      this.scene.start(route.key, route.data);
     });
   }
 

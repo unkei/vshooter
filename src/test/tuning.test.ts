@@ -45,6 +45,10 @@ describe('play tuning constants', () => {
     expect(SOUND_PRESETS.explosion.gain).toBeGreaterThanOrEqual(0.18);
   });
 
+  it('uses a lower generated boss explosion pitch than the previous tuning', () => {
+    expect(SOUND_PRESETS.explosion.frequency).toBeLessThan(72);
+  });
+
   it('reduces the final heavy wave bullet spread pressure', () => {
     expect(FINAL_WAVE_HEAVY_BULLET_COUNT).toBeLessThan(5);
   });

@@ -49,6 +49,10 @@ Responsibilities:
 - Show basic input hints.
 - Show the saved high score.
 - Start the game from keyboard, pointer, or gamepad input.
+- Gamepad start should work even when the browser exposes the active pad in a
+  non-zero slot instead of Phaser's `pad1`. Regression expectation: pressing
+  Start/Menu or the primary face button on any connected browser gamepad starts
+  the run from the title.
 
 ### `GameScene`
 
@@ -73,6 +77,16 @@ Responsibilities:
 - Retry must require a fresh confirm press after entering the result screen. Held
   shot, pointer, keyboard, or gamepad buttons from gameplay must not immediately
   start a new run.
+
+### `EndingScene`
+
+Responsibilities:
+
+- Show the final story resolution after stage 2 is cleared.
+- Present a message that Earth has been protected from the alien invasion.
+- Scroll a staff roll after the message. All staff names in the initial ending
+  are `unno`.
+- Return to `TitleScene` automatically after the staff roll.
 
 ## Gameplay Systems
 
@@ -118,6 +132,17 @@ Movement feel:
   visible during mobile play while preserving direct drag control. Regression
   expectation: mouse/pointer control continues to target the pointer position
   directly, while touch input offsets only the movement target upward.
+- The touch offset should adapt to the rendered game size so the ship remains
+  physically visible above the finger on small phone displays and larger
+  viewports. Regression expectation: callers without display metrics use the
+  original safe default, while smaller rendered game heights convert a larger
+  physical finger clearance into game-space offset.
+- Touch movement and shooting should continue while the active finger remains
+  down, even if that finger drifts outside the rendered play canvas into the
+  surrounding viewport. Viewport coordinates should be mapped back into extended
+  game coordinates, then normal player boundary clamping should keep the ship
+  within the play area. Regression expectation: leaving the visual canvas does
+  not cancel touch fire or movement, and re-entering continues the same drag.
 
 ### `ProjectileManager`
 
@@ -273,7 +298,8 @@ Repeated sounds should be restrained:
 - Sound effects should remain clearly audible over the BGM on mobile speakers.
   The player shot should be louder than the original restrained prototype while
   staying short enough not to smear during hold-to-fire. Damage, pickup, enemy
-  defeat, and boss warning sounds should sit above the music mix.
+  defeat, and boss warning sounds should sit above the music mix. The boss
+  explosion should read heavier and lower than the earlier generated tuning.
 - BGM should sound like an intentional looping arcade track, not a barely audible
   single-note drone. It should start with the same unlocked audio context and use
   multiple generated layers such as bass, lead, and harmony.
@@ -383,13 +409,25 @@ Current tuning target:
   bonus, and total score, then animate the player ship warping upward toward the
   next stage before entering the result/retry screen. The clear bonus scene
   should play a distinct clear BGM and count bonus displays upward from 0 to the
-  awarded bonus values.
+  awarded bonus values. The warp route should look like a group of circular
+  gates: rings fade in from the player-side ring upward, then expand from the
+  player-side ring upward as the player ship passes through each ring. Each
+  passed ring fades out while shrinking so it reads as spent. Regression
+  expectation: ring fade-in and expansion timings are both staggered from the
+  lower/player-side ring to the upper ring within the player warp travel window,
+  and the remaining route fade finishes before the clear-bonus route transition.
+- Clearing stage 1 routes from the clear bonus screen into stage 2. Clearing
+  stage 2 routes from the clear bonus screen into the ending screen instead of
+  returning directly to the title. Regression expectation: the final clear still
+  records the high score before the ending flow starts.
 - The clear result screen should be temporary. After a readable delay it should
-  stop any clear BGM and return to the title screen automatically. The title
-  screen must remain silent until the next explicit start input. Regression
-  expectation: clear BGM does not continue on the title screen, while starting
-  from the title calls the shared audio manager from the user input handler so
-  suspended Web Audio contexts can resume on iOS Safari.
+  stop any clear BGM and return to the title screen automatically. The final
+  wait should be shorter than the previous 3.6 second delay while remaining long
+  enough to read the clear state. The title screen must remain silent until the
+  next explicit start input. Regression expectation: clear BGM does not continue
+  on the title screen, while starting from the title calls the shared audio
+  manager from the user input handler so suspended Web Audio contexts can resume
+  on iOS Safari.
 - Chrome may expose connected gamepads in sparse `navigator.getGamepads()` slots
   such as index 1 with index 0 empty. Scene transitions must avoid Phaser
   shutdown errors from those sparse slots while preserving the original pad
