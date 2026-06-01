@@ -1,35 +1,42 @@
 # VShooter
 
-VShooter is a planned browser-based vertical scrolling shooter built with Vite,
+VShooter is a browser-based vertical scrolling shooter built with Vite,
 TypeScript, and Phaser.
 
-The project has an initial playable implementation. The direction is a
-system-first implementation: Phaser scenes handle screen flow, while gameplay
-logic is split into focused managers and controllers.
+The project has a playable two-stage route. The implementation is system-first:
+Phaser scenes handle screen flow, while gameplay logic is split into focused
+managers and controllers.
 
 ## Game
 
-- One-stage vertical scrolling shooter.
-- Title, gameplay, and result screens.
+- Two-stage vertical scrolling shooter.
+- Title, gameplay, clear bonus, ending, and result screens.
 - Keyboard, mouse/touch, and gamepad controls.
 - Hold-to-fire shooting.
 - Life-based casual difficulty with dense bullet patterns.
-- Item-based power-ups.
-- One boss at the end of the stage.
-- Neon/vector-style visuals.
-- Procedural BGM and sound effects with Web Audio API.
+- Deterministic item drops for shot upgrades, life recovery, and score bonuses.
+- Boss encounters at the end of each stage.
+- External character sprite sheet support with generated visual fallbacks.
+- External BGM and sound effects with generated Web Audio fallbacks.
 - Combo scoring and local high score persistence.
+- Persistent audio mute/volume settings.
+- Optional browser vibration and gamepad haptics for major feedback events.
 
 ## Current Playability Notes
 
+- Stage 1 routes through the clear bonus warp sequence into stage 2.
+- Clearing stage 2 routes through the clear bonus screen into the ending staff
+  roll.
 - Keyboard movement is intentionally slower than the first prototype and uses
   acceleration/deceleration for finer control.
 - Retrying after game over requires fresh input. Held movement, shot, pointer, or
   gamepad buttons from the previous run should not carry into the next run.
-- Boss entry clears regular enemies and enemy bullets so the boss is the clear
-  target of the phase.
-- The boss must remain visible while active and be defeatable in the first
-  playable version.
+- Boss entry waits for regular enemies to leave or be defeated, then plays a
+  warning, clears stale bullets, and moves the boss into position before attacks
+  begin.
+- Boss defeat keeps a visible boss body during the explosion sequence, shows a
+  stage-clear overlay, then enters the clear bonus flow.
+- Title and result screens expose an `M` key mute toggle.
 
 ## Development
 
@@ -45,10 +52,22 @@ Run the local dev server:
 npm run dev
 ```
 
+Run type checking:
+
+```bash
+npm run typecheck
+```
+
 Run tests:
 
 ```bash
 npm test
+```
+
+Run browser E2E tests:
+
+```bash
+npm run e2e
 ```
 
 Build:
@@ -84,5 +103,6 @@ There is also a dated mirror of the design spec at:
 
 ## Next Step
 
-Playtest and tune movement speed, shot cadence, enemy health, boss health, combo
-timing, bullet density, and item drop rates.
+Playtest and tune stage readability, movement feel, shot cadence, enemy health,
+boss health, combo timing, bullet density, deterministic item placement, and the
+stage 1 to stage 2 difficulty curve.
